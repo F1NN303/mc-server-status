@@ -1,44 +1,30 @@
 name: Update Bedrock Status
-
 on:
-  schedule:
-    - cron: "*/5 * * * *"     # alle 5 Minuten
+  schedule: [{ cron: "*/5 * * * *" }]
   workflow_dispatch: {}
-
-permissions:
-  contents: write
-
+permissions: { contents: write }
 env:
   SERVICE_NAME: "Minecraft Bedrock"
-  HOST: "important-instrumentation.gl.at.ply.gg"   # <--- deinen playit.gg Host prüfen
-  PORT: "18232"                                    # <--- deinen Port prüfen
-  FILEPATH: "data/status.json"                     # JSON liegt im Repo
-  KEEP: "2016"                                     # 7 Tage (12*24*7)
-
+  HOST: "important-instrumentation.gl.at.ply.gg"
+  PORT: "18232"
+  FILEPATH: "data/status.json"
+  KEEP: "2016"
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          persist-credentials: true
+      - uses: actions/checkout@v4
+        with: { ref: main, persist-credentials: true }
 
-      - name: Install jq & curl
-        run: sudo apt-get update && sudo apt-get install -y jq curl
+      - run: sudo apt-get update && sudo apt-get install -y jq curl
 
       - name: Ensure data/status.json exists
         shell: bash
         run: |
           mkdir -p "$(dirname "$FILEPATH")"
           if [ ! -s "$FILEPATH" ]; then
-            jq -n \
-              --arg name "$SERVICE_NAME" \
-              --arg host "$HOST" \
-              --argjson port $PORT \
-              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' \
-              > "$FILEPATH"
+            jq -n --arg name "$SERVICE_NAME" --arg host "$HOST" --argjson port $PORT \
+              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' > "$FILEPATH"
           fi
 
       - name: Fetch Bedrock status (mcstatus.io, fallback mcsrvstat.us)
@@ -63,15 +49,11 @@ jobs:
         run: |
           ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           ok='${{ steps.check.outputs.ok }}'
-          jq \
-            --arg ts "$ts" \
-            --argjson ok ${ok:-null} \
-            --argjson keep $KEEP \
-            '
+          jq --arg ts "$ts" --argjson ok ${ok:-null} --argjson keep $KEEP '
             .history += [{"ts":$ts,"ok":$ok}] |
             .history |= (.[-($keep|tonumber):] // .) |
             .generated = $ts
-            ' "$FILEPATH" > "$FILEPATH.tmp"
+          ' "$FILEPATH" > "$FILEPATH.tmp"
           mv "$FILEPATH.tmp" "$FILEPATH"
 
       - name: Commit & push to main
