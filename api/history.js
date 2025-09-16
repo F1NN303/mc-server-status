@@ -1,6 +1,6 @@
 // Liefert den serverseitig gespeicherten Verlauf aus deinem Repo.
 // Keine Env nötig – fest verdrahtete RAW-URL => keine "leere" Antwort mehr.
-const RAW = "https://raw.githubusercontent.com/F1NN303/mc-status-bedrock/main/data/status.json";
+const RAW = "https://raw.githubusercontent.com/F1NN303/mc-server-status/main/data/status.json";
 
 export default async function handler(req, res) {
   try {
