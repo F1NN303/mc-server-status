@@ -1,0 +1,88 @@
+name: Update Bedrock Status
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"     # alle 5 Minuten
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  SERVICE_NAME: "Minecraft Bedrock"
+  HOST: "important-instrumentation.gl.at.ply.gg"   # <--- deinen playit.gg Host prüfen
+  PORT: "18232"                                    # <--- deinen Port prüfen
+  FILEPATH: "data/status.json"                     # JSON liegt im Repo
+  KEEP: "2016"                                     # 7 Tage (12*24*7)
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Ensure data/status.json exists
+        shell: bash
+        run: |
+          mkdir -p "$(dirname "$FILEPATH")"
+          if [ ! -s "$FILEPATH" ]; then
+            jq -n \
+              --arg name "$SERVICE_NAME" \
+              --arg host "$HOST" \
+              --argjson port $PORT \
+              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' \
+              > "$FILEPATH"
+          fi
+
+      - name: Fetch Bedrock status (mcstatus.io, fallback mcsrvstat.us)
+        id: check
+        shell: bash
+        run: |
+          ok="null"
+          if curl -fsS "https://api.mcstatus.io/v2/status/bedrock/${HOST}:${PORT}" -o resp.json; then
+            online=$(jq -r '.online // empty' resp.json)
+            if [ "$online" = "true" ] || [ "$online" = "false" ]; then ok="$online"; fi
+          fi
+          if [ "$ok" = "null" ]; then
+            if curl -fsS "https://api.mcsrvstat.us/bedrock/2/${HOST}:${PORT}" -o resp2.json; then
+              online=$(jq -r '.online // empty' resp2.json)
+              if [ "$online" = "true" ] || [ "$online" = "false" ]; then ok="$online"; fi
+            fi
+          fi
+          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+
+      - name: Append + trim history
+        shell: bash
+        run: |
+          ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          ok='${{ steps.check.outputs.ok }}'
+          jq \
+            --arg ts "$ts" \
+            --argjson ok ${ok:-null} \
+            --argjson keep $KEEP \
+            '
+            .history += [{"ts":$ts,"ok":$ok}] |
+            .history |= (.[-($keep|tonumber):] // .) |
+            .generated = $ts
+            ' "$FILEPATH" > "$FILEPATH.tmp"
+          mv "$FILEPATH.tmp" "$FILEPATH"
+
+      - name: Commit & push to main
+        shell: bash
+        run: |
+          git config user.name  "status-bot"
+          git config user.email "status-bot@users.noreply.github.com"
+          if ! git diff --quiet -- data/status.json; then
+            git add data/status.json
+            git commit -m "status: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            git push origin main
+          else
+            echo "no changes"
+          fi
