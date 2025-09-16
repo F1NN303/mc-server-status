@@ -23,47 +23,43 @@
   <div class="legend">grün = online • rot = offline • orange = unbekannt • lokaler Verlauf (Browser) – Server wird live abgefragt</div>
 </div>
 <script>
-const API = '/api/bedrock';      // Vercel-Funktion (dieses Projekt)
-const SHOW_LAST = 288;           // ~24h bei 5-min Intervall
-const KEY = 'mc_bedrock_local_hist_v1';
+const API_HISTORY = '/api/history';  // serverseitig gespeicherter Verlauf (Vercel)
+const SHOW_LAST = 2016;              // 7 Tage anzeigen
 
 const cls = ok => ok===true ? 'g' : ok===false ? 'r' : 'o';
 const h   = (i, ok) => ok===true ? 28+(i%5)*2 : ok===false ? 12+(i%3)*2 : 18;
 
-function loadHist(){ try{ return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]} }
-function saveHist(h){ localStorage.setItem(KEY, JSON.stringify(h.slice(-2016))) } // max 7 Tage lokal
-function push(ok){ const x=loadHist(); x.push({ts:new Date().toISOString(), ok}); saveHist(x); }
-
-function render(data){
+async function load(){
+  const r = await fetch(API_HISTORY + '?t=' + Date.now(), {cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+function render(d){
   const out=document.getElementById('out'); out.innerHTML='';
-  const svc=data.service||{name:'Bedrock',host:'',port:''};
-  const arr=loadHist().slice(-SHOW_LAST);
+  const svc=d.service||{name:'Bedrock',host:'',port:''};
+  const arr=(d.history||[]).slice(-SHOW_LAST);
 
   const box=document.createElement('div'); box.className='svc';
-  const t=document.createElement('div'); t.className='name'; t.textContent=`${svc.name} — ${svc.host}:${svc.port}`; box.appendChild(t);
+  const t=document.createElement('div'); t.className='name';
+  t.textContent=`${svc.name} — ${svc.host}:${svc.port}`; box.appendChild(t);
 
   const bars=document.createElement('div'); bars.className='bars';
-  for(let i=0;i<arr.length;i++){ const v=arr[i], b=document.createElement('div'); b.className='bar '+cls(v.ok); b.style.height=h(i,v.ok)+'px'; b.title=`${v.ts} — ${v.ok===true?'online':v.ok===false?'offline':'unbekannt'}`; bars.appendChild(b) }
+  for(let i=0;i<arr.length;i++){
+    const v=arr[i], b=document.createElement('div'); b.className='bar '+cls(v.ok);
+    b.style.height=h(i,v.ok)+'px';
+    b.title=`${v.ts} — ${v.ok===true?'online':v.ok===false?'offline':'unbekannt'}`;
+    bars.appendChild(b);
+  }
   box.appendChild(bars);
 
   const m=document.createElement('div'); m.className='meta';
-  m.textContent=`Letzter API-Check: ${data.generated} • Status: ${data.ok===true?'online':data.ok===false?'offline':'unbekannt'}`;
+  m.textContent=`Letztes serverseitiges Update: ${d.generated||'–'}`;
   box.appendChild(m);
   out.appendChild(box);
 }
-
-async function tick(){
-  try{
-    const r = await fetch(API+'?t='+Date.now(), {cache:'no-store'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const j = await r.json();
-    push(j.ok); render(j);
-  }catch(e){
-    push(null); render({generated:new Date().toISOString(), service:{name:'Bedrock',host:'',port:''}, ok:null});
-  }
-}
-tick();
-setInterval(tick, 5*60*1000); // alle 5 Min
+async function run(){ try{render(await load())}catch(e){document.getElementById('out').textContent='Fehler: '+e.message} }
+run(); setInterval(run, 60*1000); // minütlich neu laden
 </script>
+
 </body>
 </html>
