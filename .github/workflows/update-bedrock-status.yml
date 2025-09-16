@@ -1,14 +1,14 @@
-name: Update Bedrock Status
+name: Store Bedrock History
 on:
   schedule: [{ cron: "*/5 * * * *" }]
   workflow_dispatch: {}
 permissions: { contents: write }
+
 env:
-  SERVICE_NAME: "Minecraft Bedrock"
-  HOST: "important-instrumentation.gl.at.ply.gg"
-  PORT: "18232"
   FILEPATH: "data/status.json"
-  KEEP: "2016"
+  KEEP: "2016"                      # 7 Tage (12*24*7)
+  API_URL: "https://<DEIN-VERCEL-PROJEKT>.vercel.app/api/bedrock"  # <-- anpassen
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -18,52 +18,41 @@ jobs:
 
       - run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      - name: Ensure data/status.json exists
-        shell: bash
+      - name: Ensure status file exists
         run: |
           mkdir -p "$(dirname "$FILEPATH")"
-          if [ ! -s "$FILEPATH" ]; then
-            jq -n --arg name "$SERVICE_NAME" --arg host "$HOST" --argjson port $PORT \
-              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' > "$FILEPATH"
-          fi
+          [ -s "$FILEPATH" ] || echo '{"generated":"","service":{"name":"Minecraft Bedrock","host":"important-instrumentation.gl.at.ply.gg","port":18232},"history":[]}' > "$FILEPATH"
 
-      - name: Fetch Bedrock status (mcstatus.io, fallback mcsrvstat.us)
-        id: check
-        shell: bash
+      - name: Pull latest status from Vercel API
+        id: ping
         run: |
-          ok="null"
-          if curl -fsS "https://api.mcstatus.io/v2/status/bedrock/${HOST}:${PORT}" -o resp.json; then
-            online=$(jq -r '.online // empty' resp.json)
-            if [ "$online" = "true" ] || [ "$online" = "false" ]; then ok="$online"; fi
-          fi
-          if [ "$ok" = "null" ]; then
-            if curl -fsS "https://api.mcsrvstat.us/bedrock/2/${HOST}:${PORT}" -o resp2.json; then
-              online=$(jq -r '.online // empty' resp2.json)
-              if [ "$online" = "true" ] || [ "$online" = "false" ]; then ok="$online"; fi
-            fi
-          fi
-          echo "ok=$ok" >> "$GITHUB_OUTPUT"
+          set -e
+          curl -fsSL "$API_URL" -o resp.json
+          echo "ok=$(jq -r '.ok // "null"' resp.json)" >> $GITHUB_OUTPUT
+          echo "ts=$(jq -r '.generated' resp.json)"     >> $GITHUB_OUTPUT
+          echo "host=$(jq -r '.service.host' resp.json)" >> $GITHUB_OUTPUT
+          echo "port=$(jq -r '.service.port' resp.json)" >> $GITHUB_OUTPUT
 
-      - name: Append + trim history
-        shell: bash
+      - name: Append + trim
         run: |
-          ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          ok='${{ steps.check.outputs.ok }}'
-          jq --arg ts "$ts" --argjson ok ${ok:-null} --argjson keep $KEEP '
+          ts='${{ steps.ping.outputs.ts }}'
+          ok='${{ steps.ping.outputs.ok }}'
+          host='${{ steps.ping.outputs.host }}'
+          port='${{ steps.ping.outputs.port }}'
+          jq --arg ts "$ts" --argjson ok ${ok:-null} --arg host "$host" --argjson port $port --argjson keep $KEEP '
+            .service.host=$host | .service.port=$port |
             .history += [{"ts":$ts,"ok":$ok}] |
             .history |= (.[-($keep|tonumber):] // .) |
-            .generated = $ts
-          ' "$FILEPATH" > "$FILEPATH.tmp"
-          mv "$FILEPATH.tmp" "$FILEPATH"
+            .generated=$ts
+          ' "$FILEPATH" > "$FILEPATH.tmp" && mv "$FILEPATH.tmp" "$FILEPATH"
 
-      - name: Commit & push to main
-        shell: bash
+      - name: Commit (skip Vercel build)
         run: |
           git config user.name  "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
-          if ! git diff --quiet -- data/status.json; then
-            git add data/status.json
-            git commit -m "status: $(date -u +"%Y-%m-%dT%H:%M:%SZ") [skip vercel]"
+          if ! git diff --quiet -- "$FILEPATH"; then
+            git add "$FILEPATH"
+            git commit -m "history: $(date -u +"%Y-%m-%dT%H:%M:%SZ") [skip vercel]"
             git push origin main
           else
             echo "no changes"
