@@ -1,10 +1,9 @@
-// api/bedrock.js
 export default async function handler(req, res) {
+  // Falls du die Env nicht setzt, greifen diese Defaults und es läuft trotzdem.
   const host = process.env.BEDROCK_HOST || "important-instrumentation.gl.at.ply.gg";
   const port = parseInt(process.env.BEDROCK_PORT || "18232", 10);
 
   async function probe() {
-    // Primär: mcstatus.io
     try {
       const r = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${host}:${port}`, { cache: "no-store" });
       if (r.ok) {
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
         if (typeof j.online === "boolean") return j.online;
       }
     } catch {}
-    // Fallback: mcsrvstat.us
     try {
       const r = await fetch(`https://api.mcsrvstat.us/bedrock/2/${host}:${port}`, { cache: "no-store" });
       if (r.ok) {
@@ -20,7 +18,7 @@ export default async function handler(req, res) {
         if (typeof j.online === "boolean") return j.online;
       }
     } catch {}
-    return null; // unbekannt
+    return null;
   }
 
   const ok = await probe();
