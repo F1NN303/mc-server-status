@@ -3,37 +3,31 @@ on:
   schedule: [{ cron: "*/5 * * * *" }]
   workflow_dispatch: {}
 permissions: { contents: write }
-
 env:
   FILEPATH: "data/status.json"
-  KEEP: "2016"                      # 7 Tage (12*24*7)
-  API_URL: "https://<DEIN-VERCEL-PROJEKT>.vercel.app/api/bedrock"  # <-- anpassen
-
+  KEEP: "2016"  # 7 Tage
+  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { ref: main, persist-credentials: true }
-
       - run: sudo apt-get update && sudo apt-get install -y jq curl
-
-      - name: Ensure status file exists
+      - name: ensure file
         run: |
           mkdir -p "$(dirname "$FILEPATH")"
           [ -s "$FILEPATH" ] || echo '{"generated":"","service":{"name":"Minecraft Bedrock","host":"important-instrumentation.gl.at.ply.gg","port":18232},"history":[]}' > "$FILEPATH"
-
-      - name: Pull latest status from Vercel API
+      - name: pull from vercel api
         id: ping
         run: |
           set -e
           curl -fsSL "$API_URL" -o resp.json
-          echo "ok=$(jq -r '.ok // "null"' resp.json)" >> $GITHUB_OUTPUT
-          echo "ts=$(jq -r '.generated' resp.json)"     >> $GITHUB_OUTPUT
+          echo "ok=$(jq -r '.ok // \"null\"' resp.json)" >> $GITHUB_OUTPUT
+          echo "ts=$(jq -r '.generated' resp.json)" >> $GITHUB_OUTPUT
           echo "host=$(jq -r '.service.host' resp.json)" >> $GITHUB_OUTPUT
           echo "port=$(jq -r '.service.port' resp.json)" >> $GITHUB_OUTPUT
-
-      - name: Append + trim
+      - name: append + trim
         run: |
           ts='${{ steps.ping.outputs.ts }}'
           ok='${{ steps.ping.outputs.ok }}'
@@ -45,8 +39,7 @@ jobs:
             .history |= (.[-($keep|tonumber):] // .) |
             .generated=$ts
           ' "$FILEPATH" > "$FILEPATH.tmp" && mv "$FILEPATH.tmp" "$FILEPATH"
-
-      - name: Commit (skip Vercel build)
+      - name: commit (skip vercel)
         run: |
           git config user.name  "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
