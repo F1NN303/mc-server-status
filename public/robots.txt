@@ -1,0 +1,2 @@
+User-agent: *
+Disallow: /secret-status-bf6a3e31/
