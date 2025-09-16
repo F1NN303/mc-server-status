@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MC Bedrock Status</title>
+<style>
+  :root{--bg:#0b0b0b;--fg:#e5e7eb;--muted:#9aa0a6;--g:#16a34a;--o:#f59e0b;--r:#ef4444;--w:10px}
+  html,body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0}
+  .wrap{max-width:980px;margin:24px auto;padding:0 16px}
+  h1{font-size:20px;margin:0 0 10px}
+  .svc{margin:14px 0 18px}.name{font-weight:700;margin-bottom:6px}
+  .bars{display:flex;gap:3px;align-items:flex-end;min-height:56px;overflow-x:auto;padding-bottom:4px}
+  .bar{width:var(--w);flex:0 0 var(--w);background:#374151;border-radius:3px}
+  .g{background:var(--g)} .o{background:var(--o)} .r{background:var(--r)}
+  .meta{font-size:12px;color:var(--muted);margin-top:6px}.legend{margin-top:10px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Minecraft Bedrock – geheimer Status</h1>
+  <div id="out">Lade …</div>
+  <div class="legend">grün = online • rot = offline • orange = unbekannt • zeigt ~7 Tage (5-Min-Intervalle)</div>
+</div>
+<script>
+const RAW_URL = 'https://raw.githubusercontent.com/F1NN303/mc-status-bedrock/main/data/status.json'; // Repo/Name ggf. anpassen
+const SHOW_LAST = 288; // ≈ 24h (2016 = 7 Tage)
+
+const cls = ok => ok===true ? 'g' : ok===false ? 'r' : 'o';
+const h   = (i, ok) => ok===true ? 28+(i%5)*2 : ok===false ? 12+(i%3)*2 : 18;
+
+async function load(){
+  const r = await fetch(RAW_URL + '?t=' + Date.now(), {cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+function render(d){
+  const out=document.getElementById('out'); out.innerHTML='';
+  const svc=d.service||{name:'Bedrock',host:'',port:''};
+  const arr=(d.history||[]).slice(-SHOW_LAST);
+
+  const box=document.createElement('div'); box.className='svc';
+  const t=document.createElement('div'); t.className='name'; t.textContent=`${svc.name} — ${svc.host}:${svc.port}`; box.appendChild(t);
+
+  const bars=document.createElement('div'); bars.className='bars';
+  for(let i=0;i<arr.length;i++){
+    const v=arr[i], b=document.createElement('div'); b.className='bar '+cls(v.ok);
+    b.style.height=h(i,v.ok)+'px';
+    b.title=`${v.ts} — ${v.ok===true?'online':v.ok===false?'offline':'unbekannt'}`;
+    bars.appendChild(b);
+  }
+  box.appendChild(bars);
+
+  const m=document.createElement('div'); m.className='meta';
+  m.textContent=`Letztes Update: ${d.generated||'–'}`;
+  box.appendChild(m);
+  out.appendChild(box);
+}
+async function run(){ try{render(await load())}catch(e){document.getElementById('out').textContent='Fehler: '+e.message} }
+run(); setInterval(run, 60*1000);
+</script>
+</body>
+</html>
