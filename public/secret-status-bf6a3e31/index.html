@@ -1,222 +1,430 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Minecraft Bedrock – Status</title>
-<meta name="color-scheme" content="dark light">
-<style>
-  :root{
-    --bg:#0b0b0b; --panel:#111318; --line:#1f2430;
-    --fg:#e6e7eb; --muted:#9aa0a6;
-    --g:#22c55e; --o:#f59e0b; --r:#ef4444;
-    --bar-w:10px; --bar-gap:3px; --radius:8px;
-    --accent:#7dd3fc;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--fg);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-  h1{font-size:20px;margin:0}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:var(--panel);
-    border:1px solid var(--line); padding:8px 12px;border-radius:999px;font-size:13px}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .grid{display:grid;grid-template-columns:1fr;gap:14px}
-  .card{background:linear-gradient(180deg,#101318 0%,#0b0d11 100%);
-    border:1px solid var(--line);border-radius:var(--radius);padding:16px}
-  .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .svc-title{font-weight:700}
-  .sub{font-size:12px;color:var(--muted)}
-  .controls{display:flex;gap:8px;flex-wrap:wrap}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .seg input{display:none}
-  .seg label{font-size:12px;color:var(--muted);padding:6px 10px;cursor:pointer;user-select:none}
-  .seg input:checked + label{background:var(--line);color:var(--fg)}
-  .bars{position:relative;display:flex;gap:var(--bar-gap);align-items:flex-end;
-    margin-top:12px;min-height:76px;overflow-x:auto;padding-bottom:6px}
-  .bar{width:var(--bar-w);flex:0 0 var(--bar-w);border-radius:4px;background:#2a2f3a}
-  .bar.g{background:var(--g)} .bar.o{background:var(--o)} .bar.r{background:var(--r)}
-  .legend{display:flex;gap:12px;margin-top:10px;color:var(--muted);font-size:12px;flex-wrap:wrap}
-  .lg{display:inline-flex;align-items:center;gap:6px}
-  .sq{width:10px;height:10px;border-radius:2px}
-  .meta{margin-top:10px;color:var(--muted);font-size:12px}
-  .hr{height:1px;background:var(--line);margin:12px 0}
-  /* Tooltip */
-  .tip{position:fixed;pointer-events:none;z-index:10;transform:translate(-50%,-120%);
-    background:#0a0c11;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
-    font-size:12px;color:var(--fg);box-shadow:0 6px 18px rgba(0,0,0,.35);display:none;min-width:180px}
-  .tip .t-line{display:flex;justify-content:space-between;gap:12px}
-  .skeleton{background:linear-gradient(90deg,#0c1016 0%,#121824 50%,#0c1016 100%);
-    background-size:200% 100%;animation:s 1.3s infinite; border-radius:6px;height:18px}
-  @keyframes s{0%{background-position:0%}100%{background-position:200%}}
-  @media (max-width:640px){ .bars{min-height:60px} }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Minecraft Bedrock – Status</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#0b0d11; --panel:#0f1320; --line:#1b2231; --line2:#111623;
+      --fg:#e6e7eb; --muted:#9aa0a6;
+      --g:#22c55e; --r:#ef4444; --u:#9aa6b2; /* unknown = grau/dezent */
+      --accent:#7dd3fc; --accent-2:#60a5fa;
+      --bar-w:10px; --bar-gap:3px; --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--fg);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}
+    .wrap{max-width:1200px;margin:28px auto;padding:0 16px}
+
+    /* Header */
+    header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
+    h1{margin:0;font-size:22px;letter-spacing:.2px}
+    .pill{display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(180deg,var(--panel),#0b0f1a);
+      border:1px solid var(--line); padding:8px 12px;border-radius:999px;font-size:13px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
+
+    /* Controls row */
+    .top-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    .seg input{display:none}
+    .seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+    .seg input:checked + label{background:var(--line);color:var(--fg)}
+    .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);user-select:none}
+    .toggle input{accent-color:var(--accent)}
+
+    /* Card / service row */
+    .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
+      border-radius:var(--radius);padding:16px}
+    .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .svc{display:flex;flex-direction:column;gap:4px}
+    .svc-name{font-weight:700}
+    .svc-host{font-size:12px;color:var(--muted)}
+    .badges{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+      border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+    .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
+    .kpi strong{color:var(--fg);font-weight:600}
+
+    /* Bars */
+    .bars-wrap{margin-top:12px}
+    .bars{position:relative;display:flex;gap:var(--bar-gap);align-items:flex-end;
+      min-height:70px;overflow-x:auto;padding:8px;border-radius:10px;background:linear-gradient(180deg,#0a0e19,#0a0d14)}
+    .bar{width:var(--bar-w);flex:0 0 var(--bar-w);border-radius:4px;background:#273040}
+    .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.u{background:var(--u)}
+    .bar:focus{outline:2px solid var(--accent-2)}
+    .dayline{position:absolute;top:0;bottom:0;width:1px;background:var(--line2);opacity:.9}
+    .daylbl{position:absolute;top:-18px;transform:translateX(-50%);font-size:11px;color:var(--muted)}
+    .hr{height:1px;background:var(--line);margin:10px 0}
+
+    .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+    .lg{display:inline-flex;align-items:center;gap:6px}
+    .sq{width:10px;height:10px;border-radius:2px}
+    .sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.u{background:var(--u)}
+
+    /* Tooltip */
+    .tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
+      background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
+      font-size:12px;color:var(--fg);box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px}
+    .t-line{display:flex;justify-content:space-between;gap:10px}
+    .skeleton{height:18px;border-radius:6px;
+      background:linear-gradient(90deg,#0c1016 0%,#141a27 50%,#0c1016 100%);background-size:200% 100%;
+      animation:s 1.2s infinite}
+
+    @keyframes s{0%{background-position:0}100%{background-position:200% 0}}
+
+    /* Incidents */
+    .incidents{margin-top:10px}
+    .incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
+    .incidents ul{margin:0;padding-left:16px;font-size:12px;color:var(--muted)}
+    .incidents li{margin:4px 0}
+
+    /* Stale banner */
+    .stale{margin-top:8px;font-size:12px;color:#fbbf24}
+
+    @media (max-width:720px){
+      .bars{min-height:60px}
+      .svc-host{font-size:11px}
+      .badge{font-size:11px}
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Minecraft Bedrock – Status</h1>
-    <div class="pill" id="now-pill">
-      <span class="dot" id="now-dot" style="background:#555"></span>
-      <span id="now-text">Lade …</span>
-    </div>
-  </header>
+  <div class="wrap">
+    <header aria-label="Seitenkopf">
+      <h1>Minecraft Bedrock – Status</h1>
+      <div class="pill" id="live-pill" aria-live="polite" title="Aktueller Live-Status">
+        <span class="dot u" id="live-dot" aria-hidden="true"></span>
+        <span id="live-txt">Lade Live-Status …</span>
+      </div>
+    </header>
 
-  <div class="grid">
-    <section class="card">
+    <div class="top-row" role="toolbar" aria-label="Ansicht">
+      <div class="seg" id="range">
+        <input type="radio" name="r" id="r24" value="288" checked><label for="r24">24 h</label>
+        <input type="radio" name="r" id="r7" value="2016"><label for="r7">7 d</label>
+        <input type="radio" name="r" id="r30" value="8640"><label for="r30">30 d</label>
+      </div>
+      <label class="toggle"><input type="checkbox" id="auto" checked /> Live-Refresh (60 s)</label>
+      <label class="toggle"><input type="checkbox" id="unkAsOff" /> Unknown als offline werten (nur Anzeige)</label>
+    </div>
+
+    <section class="card" aria-label="Service Status">
       <div class="row-head">
-        <div>
-          <div class="svc-title" id="svc-name">Minecraft Bedrock</div>
-          <div class="sub" id="svc-host">–</div>
+        <div class="svc">
+          <div class="svc-name" id="svc-name">Minecraft Bedrock</div>
+          <div class="svc-host" id="svc-host">–</div>
         </div>
-        <div class="controls">
-          <div class="seg" id="range">
-            <input type="radio" name="r" id="r1" value="12"  checked><label for="r1">1 h</label>
-            <input type="radio" name="r" id="r24" value="288"><label for="r24">24 h</label>
-            <input type="radio" name="r" id="r7" value="2016"><label for="r7">7 d</label>
+        <div class="badges">
+          <div class="badge" title="Uptime der gewählten Zeitspanne">
+            <span>Uptime</span><strong id="uptime">–</strong>
+          </div>
+          <div class="badge" title="Gesamt-Downtime in der Zeitspanne">
+            <span>Downtime</span><strong id="downtime">–</strong>
           </div>
         </div>
       </div>
 
-      <div id="bars" class="bars" aria-label="Status-Zeitachse">
-        <div class="skeleton" style="width:100%"></div>
+      <div class="kpi" id="kpi">
+        <div><strong id="kpi-online">–</strong> online</div>
+        <div><strong id="kpi-offline">–</strong> offline</div>
+        <div><strong id="kpi-unknown">–</strong> unknown</div>
+        <div><strong id="kpi-points">–</strong> Punkte</div>
       </div>
 
-      <div class="legend">
-        <span class="lg"><span class="sq" style="background:var(--g)"></span> online</span>
-        <span class="lg"><span class="sq" style="background:var(--r)"></span> offline</span>
-        <span class="lg"><span class="sq" style="background:var(--o)"></span> unbekannt</span>
-        <span class="lg">• Balken = 5-Min-Intervall</span>
+      <div class="bars-wrap">
+        <div id="bars" class="bars" role="group" aria-label="Status-Zeitachse">
+          <div class="skeleton" style="width:100%"></div>
+        </div>
       </div>
-      <div class="meta" id="meta">–</div>
+
+      <div class="legend" aria-hidden="true">
+        <span class="lg"><span class="sq g"></span> online</span>
+        <span class="lg"><span class="sq r"></span> offline</span>
+        <span class="lg"><span class="sq u"></span> unbekannt</span>
+        <span class="lg">• 1 Balken = 5 Minuten</span>
+        <span class="lg" id="meta-src"></span>
+      </div>
+
+      <div class="incidents" id="inc"></div>
+      <div class="stale" id="stale" hidden>Hinweis: History ist älter als 30 Min. Live-Pille zeigt aktuellen Zustand.</div>
     </section>
   </div>
-</div>
 
-<!-- Tooltip -->
-<div class="tip" id="tip">
-  <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
-</div>
+  <!-- Tooltip -->
+  <div class="tip" id="tip">
+    <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
+    <div class="t-line"><span id="tip-src">–</span><span id="tip-range">5 min Slot</span></div>
+  </div>
 
-<script>
-const API_HISTORY = '/api/history';
-const API_LIVE    = '/api/bedrock';
-const TIP = document.getElementById('tip');
-const TIP_TS = document.getElementById('tip-ts');
-const TIP_ST = document.getElementById('tip-status');
-const NOW_DOT = document.getElementById('now-dot');
-const NOW_TXT = document.getElementById('now-text');
+  <script>
+    // ---- Config ----
+    const API_HISTORY = '/api/history';
+    const API_LIVE    = '/api/bedrock';
+    const SLOT_MIN = 5;
+    const DAY_SLOTS = (24*60)/SLOT_MIN; // 288
+    const STALE_MIN = 30;               // >30 min => stale Hinweis
+    const INCIDENT_MIN = 15;            // ab 15 Minuten Offline als Incident
+    const MAX_RENDER = 9000;            // Schutz
 
-const svcName = document.getElementById('svc-name');
-const svcHost = document.getElementById('svc-host');
-const barsEl  = document.getElementById('bars');
-const metaEl  = document.getElementById('meta');
-const rangeEl = document.getElementById('range');
+    // ---- Elements ----
+    const liveDot = document.getElementById('live-dot');
+    const liveTxt = document.getElementById('live-txt');
+    const svcName = document.getElementById('svc-name');
+    const svcHost = document.getElementById('svc-host');
+    const barsEl  = document.getElementById('bars');
+    const metaSrc = document.getElementById('meta-src');
+    const uptimeEl = document.getElementById('uptime');
+    const dtimeEl  = document.getElementById('downtime');
+    const kOnline  = document.getElementById('kpi-online');
+    const kOffline = document.getElementById('kpi-offline');
+    const kUnknown = document.getElementById('kpi-unknown');
+    const kPoints  = document.getElementById('kpi-points');
+    const incWrap  = document.getElementById('inc');
+    const staleEl  = document.getElementById('stale');
+    const rangeCtl = document.getElementById('range');
+    const autoCtl  = document.getElementById('auto');
+    const unkCtl   = document.getElementById('unkAsOff');
 
-const STATUS = (ok)=> ok===true?'online': ok===false?'offline':'unbekannt';
-const CLS    = (ok)=> ok===true?'g': ok===false?'r':'o';
-const COLOR  = (ok)=> ok===true?'var(--g)': ok===false?'var(--r)':'var(--o)';
+    const TIP = document.getElementById('tip');
+    const TIP_TS = document.getElementById('tip-ts');
+    const TIP_ST = document.getElementById('tip-status');
+    const TIP_SRC = document.getElementById('tip-src');
 
-function setNow(ok, ts) {
-  NOW_DOT.style.background = ok===null ? 'var(--o)' : ok ? 'var(--g)' : 'var(--r)';
-  NOW_TXT.textContent = `${STATUS(ok)} • ${ts ? new Date(ts).toLocaleString() : '–'}`;
-}
+    // ---- Helpers ----
+    const STATUS = (ok, unknownAsOffline=false)=> ok===true?'online': ok===false?'offline': (unknownAsOffline?'offline':'unknown');
+    const CLS    = (ok, unknownAsOffline=false)=> ok===true?'g': ok===false?'r': (unknownAsOffline?'r':'u');
+    const fmtPct = (v)=> (isNaN(v)?'–': (v*100).toFixed(2)+'%');
+    const fmtDur = (mins)=> {
+      if(mins<60) return `${mins} min`;
+      const h = Math.floor(mins/60), m = mins%60;
+      return `${h} h ${m} min`;
+    };
+    const localTime = (iso)=> new Date(iso).toLocaleString();
+    const utcNowISO = ()=> new Date().toISOString();
 
-function tipShow(e, ts, ok){
-  TIP_TS.textContent = new Date(ts).toLocaleString();
-  TIP_ST.textContent = STATUS(ok);
-  TIP.style.display='block';
-  TIP.style.left = e.clientX+'px';
-  TIP.style.top  = e.clientY+'px';
-  TIP.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--line');
-}
-function tipHide(){ TIP.style.display='none' }
-
-async function fetchJSON(url){
-  const r = await fetch(url+'?t='+Date.now(), {cache:'no-store'});
-  if(!r.ok) throw new Error('HTTP '+r.status);
-  return r.json();
-}
-
-function heightFor(i, ok){
-  // leichte Variation wie beim Vorbild, gleichmäßige Wave
-  if(ok===false) return 16 + (i%3)*2;
-  if(ok===true)  return 26 + (i%5)*2;
-  return 20 + (i%4);
-}
-
-function renderHistory(data, showLast=288){
-  barsEl.innerHTML='';
-  const hist = (data.history||[]).slice(-showLast);
-  const host = `${data.service?.host||''}:${data.service?.port||''}`;
-  svcHost.textContent = host;
-  svcName.textContent = data.service?.name || 'Minecraft Bedrock';
-
-  hist.forEach((p,i)=>{
-    const d = document.createElement('div');
-    d.className = 'bar '+CLS(p.ok);
-    d.style.height = heightFor(i,p.ok)+'px';
-    d.title = `${p.ts} – ${STATUS(p.ok)}`;
-    d.addEventListener('mouseenter', (ev)=>tipShow(ev, p.ts, p.ok));
-    d.addEventListener('mousemove', (ev)=>tipShow(ev, p.ts, p.ok));
-    d.addEventListener('mouseleave', tipHide);
-    barsEl.appendChild(d);
-  });
-
-  const last = hist[hist.length-1];
-  setNow(last?.ok ?? null, last?.ts);
-  metaEl.textContent = `Letztes serverseitiges Update: ${data.generated || '–'} • Punkte: ${hist.length}`;
-}
-
-function renderLiveOnly(j){
-  barsEl.innerHTML='';
-  const single = document.createElement('div');
-  single.className = 'bar '+CLS(j.ok);
-  single.style.height = heightFor(0,j.ok)+'px';
-  single.title = `${j.generated} – ${STATUS(j.ok)}`;
-  single.addEventListener('mouseenter', (ev)=>tipShow(ev, j.generated, j.ok));
-  single.addEventListener('mousemove', (ev)=>tipShow(ev, j.generated, j.ok));
-  single.addEventListener('mouseleave', tipHide);
-  barsEl.appendChild(single);
-
-  svcName.textContent = j.service?.name || 'Minecraft Bedrock';
-  svcHost.textContent = `${j.service?.host||''}:${j.service?.port||''}`;
-  setNow(j.ok, j.generated);
-  metaEl.textContent = `Live (Fallback) – letzter Check: ${j.generated || '–'}`;
-}
-
-async function loadAndRender(){
-  try{
-    const hist = await fetchJSON(API_HISTORY);
-    if(Array.isArray(hist.history) && hist.history.length){
-      renderHistory(hist, getRange());
-      dbg(`Quelle: /api/history ✓`);
-    }else{
-      const live = await fetchJSON(API_LIVE);
-      renderLiveOnly(live);
-      dbg(`Quelle: /api/history leer → Fallback /api/bedrock`);
+    async function fetchJSON(url){
+      const r = await fetch(url+'?t='+Date.now(), {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status+' @ '+url);
+      return r.json();
     }
-  }catch(e){
-    try{
-      const live = await fetchJSON(API_LIVE);
-      renderLiveOnly(live);
-      dbg(`History-Fehler → Fallback /api/bedrock (${e.message})`);
-    }catch(e2){
-      barsEl.innerHTML='<div class="sub">Fehler: '+e2.message+'</div>';
-      setNow(null); dbg('Fehler in beiden Quellen');
-    }
-  }
-}
-function getRange(){
-  const sel = rangeEl.querySelector('input:checked');
-  return sel ? parseInt(sel.value,10) : 288;
-}
-function dbg(t){ document.getElementById('meta').dataset.src = t; }
 
-rangeEl.addEventListener('change', loadAndRender);
-loadAndRender();
-setInterval(loadAndRender, 60*1000); // minütlich neu
-</script>
+    function setLive(ok, ts){
+      liveDot.className = 'dot ' + (ok===true?'g': ok===false?'r':'u');
+      liveTxt.textContent = `${STATUS(ok)} • ${ts ? localTime(ts) : '–'}`;
+    }
+
+    function makeDayLines(container, totalCount){
+      // Entferne alte
+      Array.from(container.querySelectorAll('.dayline,.daylbl')).forEach(n=>n.remove());
+      const gaps = getComputedStyle(document.documentElement).getPropertyValue('--bar-gap').trim().replace('px','') || 3;
+      const bw   = getComputedStyle(document.documentElement).getPropertyValue('--bar-w').trim().replace('px','') || 10;
+      const step = Number(bw)+Number(gaps);
+      const todayX = step*(totalCount % DAY_SLOTS) + 4; // kleine Korrektur
+
+      // Zeichne Tagesgrenzen (alle 288 Balken)
+      for(let i=0; i<=totalCount; i+=DAY_SLOTS){
+        const x = i*step;
+        const ln = document.createElement('div');
+        ln.className = 'dayline';
+        ln.style.left = x+'px';
+        container.appendChild(ln);
+
+        const lbl = document.createElement('div');
+        lbl.className = 'daylbl';
+        const d = (i===totalCount)? 'Today' : (i>totalCount ? '' : '');
+        // Beschriftung rückwärts: Today ganz rechts, -1d, -2d …
+        const daysBack = Math.floor((totalCount - i)/DAY_SLOTS);
+        lbl.textContent = daysBack===0 ? 'Today' : `-${daysBack}d`;
+        lbl.style.left = x+'px';
+        container.appendChild(lbl);
+      }
+    }
+
+    function computeStats(arr, unknownAsOffline){
+      const total = arr.length;
+      let on=0, off=0, unk=0;
+      for(const p of arr){
+        if(p.ok===true) on++;
+        else if(p.ok===false) off++;
+        else unk++;
+      }
+      const effOff = off + (unknownAsOffline? unk : 0);
+      const uptime = total ? (on/(on+effOff)) : NaN;
+      const downtimeMin = (effOff * SLOT_MIN);
+      return {total, on, off, unk, uptime, downtimeMin};
+    }
+
+    function findIncidents(arr){
+      const minSlots = Math.ceil(INCIDENT_MIN / SLOT_MIN);
+      const out = [];
+      let i=0;
+      while(i<arr.length){
+        if(arr[i].ok===false){
+          const start=i;
+          while(i<arr.length && arr[i].ok===false) i++;
+          const len = i-start;
+          if(len>=minSlots){
+            out.push({from: arr[start].ts, to: arr[i-1].ts, slots: len});
+          }
+        } else i++;
+      }
+      return out;
+    }
+
+    function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
+
+    function renderBars(history, unknownAsOffline){
+      clear(barsEl);
+      if(history.length===0){
+        const d=document.createElement('div');
+        d.className='skeleton'; d.style.width='100%'; barsEl.appendChild(d); return;
+      }
+      const count = Math.min(history.length, MAX_RENDER);
+      const frag = document.createDocumentFragment();
+      // Tagestrennlinien
+      setTimeout(()=>makeDayLines(barsEl, count),0);
+
+      for(let i = history.length - count; i < history.length; i++){
+        const p = history[i];
+        const idx = i - (history.length - count);
+        const b = document.createElement('div');
+        b.className = 'bar ' + CLS(p.ok, unknownAsOffline);
+        // kleine Wellenhöhe für lebendiges Bild
+        const h = p.ok===true ? 26 + (idx%5)*2 : p.ok===false ? 16 + (idx%3)*2 : 20 + (idx%4);
+        b.style.height = h+'px';
+        b.tabIndex = 0;
+        b.dataset.ts = p.ts;
+        b.dataset.ok = p.ok===true?'true': p.ok===false?'false':'null';
+        b.addEventListener('mouseenter', (ev)=> tipShow(ev, p.ts, p.ok, 'history'));
+        b.addEventListener('mousemove', (ev)=> tipShow(ev, p.ts, p.ok, 'history'));
+        b.addEventListener('mouseleave', tipHide);
+        b.addEventListener('focus', (ev)=> tipShow(ev, p.ts, p.ok, 'history'));
+        b.addEventListener('blur', tipHide);
+        frag.appendChild(b);
+      }
+      barsEl.appendChild(frag);
+    }
+
+    function tipShow(e, ts, ok, src){
+      TIP_TS.textContent = localTime(ts);
+      TIP_ST.textContent = STATUS(ok, unkCtl.checked);
+      TIP_SRC.textContent = 'Quelle: ' + (src==='history'?'History':'Live');
+      TIP.style.display='block';
+      TIP.style.left = (e.clientX)+'px';
+      TIP.style.top  = (e.clientY)+'px';
+    }
+    function tipHide(){ TIP.style.display='none'; }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e)=>{
+      const bars = Array.from(barsEl.querySelectorAll('.bar'));
+      if(!bars.length) return;
+      const focused = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('bar')
+        ? document.activeElement : bars[bars.length-1];
+      const cur = bars.indexOf(focused);
+      const step = e.shiftKey ? (60/SLOT_MIN) : 1; // 1h bei Shift
+      if(e.key==='ArrowLeft'){
+        const nx = Math.max(0, cur - step); bars[nx].focus(); bars[nx].scrollIntoView({block:'nearest', inline:'nearest'}); e.preventDefault();
+      } else if(e.key==='ArrowRight'){
+        const nx = Math.min(bars.length-1, cur + step); bars[nx].focus(); bars[nx].scrollIntoView({block:'nearest', inline:'nearest'}); e.preventDefault();
+      }
+    });
+
+    // ---- Main flow ----
+    let timer = null;
+
+    async function load(){
+      try{
+        // 1) Immer Live-Pille aktualisieren
+        try{
+          const live = await fetchJSON(API_LIVE);
+          setLive(live.ok, live.generated);
+        } catch{ setLive(null, null); }
+
+        // 2) History laden
+        const hist = await fetchJSON(API_HISTORY);
+        const history = Array.isArray(hist.history) ? hist.history : [];
+        const svc = hist.service || {};
+        svcName.textContent = svc.name || 'Minecraft Bedrock';
+        svcHost.textContent = [svc.host, svc.port].filter(Boolean).join(':');
+
+        // Stale?
+        const gen = hist.generated ? new Date(hist.generated) : null;
+        const stale = gen ? ((Date.now() - gen.getTime())/60000 > STALE_MIN) : true;
+        staleEl.hidden = !stale;
+
+        // Range
+        const sel = rangeCtl.querySelector('input:checked');
+        const span = sel ? parseInt(sel.value,10) : 288;
+        const sliced = history.slice(-span);
+
+        // Render
+        renderBars(sliced, unkCtl.checked);
+
+        // KPIs
+        const s = computeStats(sliced, unkCtl.checked);
+        uptimeEl.textContent = fmtPct(s.uptime);
+        dtimeEl.textContent  = fmtDur(Math.round(s.downtimeMin));
+        kOnline.textContent  = s.on;
+        kOffline.textContent = s.off + (unkCtl.checked ? s.unk : 0);
+        kUnknown.textContent = (unkCtl.checked ? 0 : s.unk);
+        kPoints.textContent  = s.total;
+
+        // Incidents
+        const inc = findIncidents(sliced);
+        if(inc.length){
+          const ul = document.createElement('ul');
+          inc.forEach(ev=>{
+            const li = document.createElement('li');
+            const mins = ev.slots * SLOT_MIN;
+            li.textContent = `Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(mins)})`;
+            ul.appendChild(li);
+          });
+          incWrap.innerHTML = '<h3>Incidents</h3>';
+          incWrap.appendChild(ul);
+        } else {
+          incWrap.innerHTML = '';
+        }
+
+        metaSrc.textContent = 'Quelle: History ✓';
+      } catch(e){
+        // Wenn History fehlschlägt: Live nur als Einzelpunkt andeuten
+        clear(barsEl);
+        const live = await fetchJSON(API_LIVE).catch(()=>({ok:null, generated:null, service:{}}));
+        const b = document.createElement('div');
+        b.className = 'bar ' + CLS(live.ok, unkCtl.checked);
+        b.style.height = '28px';
+        b.addEventListener('mouseenter', (ev)=> tipShow(ev, live.generated||utcNowISO(), live.ok, 'live'));
+        b.addEventListener('mousemove', (ev)=> tipShow(ev, live.generated||utcNowISO(), live.ok, 'live'));
+        b.addEventListener('mouseleave', tipHide);
+        barsEl.appendChild(b);
+
+        uptimeEl.textContent = '–';
+        dtimeEl.textContent  = '–';
+        kOnline.textContent  = '0';
+        kOffline.textContent = '0';
+        kUnknown.textContent = '1';
+        kPoints.textContent  = '1';
+        incWrap.innerHTML = '';
+        metaSrc.textContent = 'Quelle: Live (Fallback)';
+      }
+    }
+
+    function startTimer(){ stopTimer(); timer = setInterval(load, 60_000); }
+    function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+
+    rangeCtl.addEventListener('change', load);
+    unkCtl.addEventListener('change', load);
+    autoCtl.addEventListener('change', ()=> autoCtl.checked ? startTimer() : stopTimer());
+
+    // Initial
+    load(); startTimer();
+  </script>
 </body>
 </html>
