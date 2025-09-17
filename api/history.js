@@ -7,6 +7,10 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json(await r.json());
   } catch {
-    res.status(200).json({ generated:"", service:{name:"Minecraft Bedrock",host:"",port:0}, history:[] });
+    res.status(200).json({
+      generated: "",
+      service: { name: "Minecraft Bedrock", host: "", port: 0 },
+      history: []
+    });
   }
 }
