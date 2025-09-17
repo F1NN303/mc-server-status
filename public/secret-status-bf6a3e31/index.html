@@ -10,35 +10,30 @@
     :root{
       --bg:#0b0d11; --panel:#0f1320; --line:#1b2231; --line2:#111623;
       --fg:#e6e7eb; --muted:#9aa0a6;
-      --g:#22c55e; --r:#ef4444; --u:#9aa6b2; /* unknown = grau/dezent */
-      --accent:#7dd3fc; --accent-2:#60a5fa;
-      --bar-w:10px; --bar-gap:3px; --radius:12px;
+      --g:#19c37d; --r:#ef4444; --u:#95a3b6;
+      --bar-w:12px; --bar-gap:6px; --radius:12px;
     }
     *{box-sizing:border-box}
     html,body{margin:0;background:var(--bg);color:var(--fg);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    a{color:inherit}
-    .wrap{max-width:1200px;margin:28px auto;padding:0 16px}
+    .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
 
-    /* Header */
-    header{display:flex;align-items:center;gap:12px;justify-content:space-between;margin-bottom:16px}
-    h1{margin:0;font-size:22px;letter-spacing:.2px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    h1{margin:0;font-size:22px}
     .pill{display:inline-flex;align-items:center;gap:8px;
       background:linear-gradient(180deg,var(--panel),#0b0f1a);
       border:1px solid var(--line); padding:8px 12px;border-radius:999px;font-size:13px}
     .dot{width:10px;height:10px;border-radius:50%}
     .dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
 
-    /* Controls row */
     .top-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
     .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
     .seg input{display:none}
-    .seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+    .seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer}
     .seg input:checked + label{background:var(--line);color:var(--fg)}
-    .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);user-select:none}
-    .toggle input{accent-color:var(--accent)}
+    .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+    .toggle input{accent-color:#60a5fa}
 
-    /* Card / service row */
     .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
       border-radius:var(--radius);padding:16px}
     .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -51,47 +46,33 @@
     .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
     .kpi strong{color:var(--fg);font-weight:600}
 
-    /* Bars */
     .bars-wrap{margin-top:12px}
     .bars{position:relative;display:flex;gap:var(--bar-gap);align-items:flex-end;
-      min-height:70px;overflow-x:auto;padding:8px;border-radius:10px;background:linear-gradient(180deg,#0a0e19,#0a0d14)}
-    .bar{width:var(--bar-w);flex:0 0 var(--bar-w);border-radius:4px;background:#273040}
+      min-height:90px;overflow-x:auto;padding:10px;border-radius:12px;background:linear-gradient(180deg,#0a0e19,#0a0d14)}
+    .bar{width:var(--bar-w);flex:0 0 var(--bar-w);border-radius:8px;background:#2a3242;
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
     .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.u{background:var(--u)}
-    .bar:focus{outline:2px solid var(--accent-2)}
-    .dayline{position:absolute;top:0;bottom:0;width:1px;background:var(--line2);opacity:.9}
-    .daylbl{position:absolute;top:-18px;transform:translateX(-50%);font-size:11px;color:var(--muted)}
-    .hr{height:1px;background:var(--line);margin:10px 0}
+    .bar:focus{outline:2px solid #60a5fa}
+    .footline{display:flex;justify-content:space-between;color:var(--muted);
+      font-size:12px;margin:6px 4px 0}
 
-    .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+    .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap;margin-top:8px}
     .lg{display:inline-flex;align-items:center;gap:6px}
     .sq{width:10px;height:10px;border-radius:2px}
     .sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.u{background:var(--u)}
 
-    /* Tooltip */
     .tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
       background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
-      font-size:12px;color:var(--fg);box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px}
+      font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px}
     .t-line{display:flex;justify-content:space-between;gap:10px}
-    .skeleton{height:18px;border-radius:6px;
-      background:linear-gradient(90deg,#0c1016 0%,#141a27 50%,#0c1016 100%);background-size:200% 100%;
-      animation:s 1.2s infinite}
 
-    @keyframes s{0%{background-position:0}100%{background-position:200% 0}}
-
-    /* Incidents */
     .incidents{margin-top:10px}
     .incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
     .incidents ul{margin:0;padding-left:16px;font-size:12px;color:var(--muted)}
     .incidents li{margin:4px 0}
 
-    /* Stale banner */
     .stale{margin-top:8px;font-size:12px;color:#fbbf24}
-
-    @media (max-width:720px){
-      .bars{min-height:60px}
-      .svc-host{font-size:11px}
-      .badge{font-size:11px}
-    }
+    .disclaimer{margin-top:8px;font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -106,9 +87,9 @@
 
     <div class="top-row" role="toolbar" aria-label="Ansicht">
       <div class="seg" id="range">
-        <input type="radio" name="r" id="r24" value="288" checked><label for="r24">24 h</label>
-        <input type="radio" name="r" id="r7" value="2016"><label for="r7">7 d</label>
-        <input type="radio" name="r" id="r30" value="8640"><label for="r30">30 d</label>
+        <input type="radio" name="r" id="r24" value="24h" checked><label for="r24">24 h</label>
+        <input type="radio" name="r" id="r7" value="7d"><label for="r7">7 d</label>
+        <input type="radio" name="r" id="r30" value="30d"><label for="r30">30 d</label>
       </div>
       <label class="toggle"><input type="checkbox" id="auto" checked /> Live-Refresh (60 s)</label>
       <label class="toggle"><input type="checkbox" id="unkAsOff" /> Unknown als offline werten (nur Anzeige)</label>
@@ -138,8 +119,10 @@
       </div>
 
       <div class="bars-wrap">
-        <div id="bars" class="bars" role="group" aria-label="Status-Zeitachse">
-          <div class="skeleton" style="width:100%"></div>
+        <div id="bars" class="bars" role="group" aria-label="Status-Zeitachse"></div>
+        <div class="footline">
+          <span id="foot-left">30 days</span>
+          <span id="foot-right">Today</span>
         </div>
       </div>
 
@@ -147,284 +130,143 @@
         <span class="lg"><span class="sq g"></span> online</span>
         <span class="lg"><span class="sq r"></span> offline</span>
         <span class="lg"><span class="sq u"></span> unbekannt</span>
-        <span class="lg">• 1 Balken = 5 Minuten</span>
-        <span class="lg" id="meta-src"></span>
+        <span class="lg">• 1 Balken = 5 Min (24 h) • 1 Balken = 1 Tag (7 d/30 d) • <span id="meta-src">Quelle: History</span></span>
       </div>
+
+      <!-- NEU: Hinweis -->
+      <p class="disclaimer">Diese Daten sind Schätzungen bzw. Pings an den Server und können nicht zu 100&nbsp;% stimmen.</p>
 
       <div class="incidents" id="inc"></div>
       <div class="stale" id="stale" hidden>Hinweis: History ist älter als 30 Min. Live-Pille zeigt aktuellen Zustand.</div>
     </section>
   </div>
 
-  <!-- Tooltip -->
   <div class="tip" id="tip">
     <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
-    <div class="t-line"><span id="tip-src">–</span><span id="tip-range">5 min Slot</span></div>
+    <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
   </div>
 
   <script>
-    // ---- Config ----
-    const API_HISTORY = '/api/history';
-    const API_LIVE    = '/api/bedrock';
-    const SLOT_MIN = 5;
-    const DAY_SLOTS = (24*60)/SLOT_MIN; // 288
-    const STALE_MIN = 30;               // >30 min => stale Hinweis
-    const INCIDENT_MIN = 15;            // ab 15 Minuten Offline als Incident
-    const MAX_RENDER = 9000;            // Schutz
+    const API_HISTORY='/api/history', API_LIVE='/api/bedrock';
+    const SLOT_MIN=5, DAY_SLOTS=(24*60)/SLOT_MIN, STALE_MIN=30, INCIDENT_MIN=15;
 
-    // ---- Elements ----
-    const liveDot = document.getElementById('live-dot');
-    const liveTxt = document.getElementById('live-txt');
-    const svcName = document.getElementById('svc-name');
-    const svcHost = document.getElementById('svc-host');
-    const barsEl  = document.getElementById('bars');
-    const metaSrc = document.getElementById('meta-src');
-    const uptimeEl = document.getElementById('uptime');
-    const dtimeEl  = document.getElementById('downtime');
-    const kOnline  = document.getElementById('kpi-online');
-    const kOffline = document.getElementById('kpi-offline');
-    const kUnknown = document.getElementById('kpi-unknown');
-    const kPoints  = document.getElementById('kpi-points');
-    const incWrap  = document.getElementById('inc');
-    const staleEl  = document.getElementById('stale');
-    const rangeCtl = document.getElementById('range');
-    const autoCtl  = document.getElementById('auto');
-    const unkCtl   = document.getElementById('unkAsOff');
+    const liveDot=byId('live-dot'), liveTxt=byId('live-txt'), svcName=byId('svc-name'), svcHost=byId('svc-host');
+    const barsEl=byId('bars'), footL=byId('foot-left'), footR=byId('foot-right'), metaSrc=byId('meta-src');
+    const uptimeEl=byId('uptime'), dtimeEl=byId('downtime'), kOnline=byId('kpi-online'), kOffline=byId('kpi-offline'), kUnknown=byId('kpi-unknown'), kPoints=byId('kpi-points');
+    const incWrap=byId('inc'), staleEl=byId('stale'), rangeCtl=byId('range'), autoCtl=byId('auto'), unkCtl=byId('unkAsOff');
+    const TIP=byId('tip'), TIP_TS=byId('tip-ts'), TIP_ST=byId('tip-status'), TIP_SRC=byId('tip-src'), TIP_RANGE=byId('tip-range');
+    function byId(id){return document.getElementById(id)}
 
-    const TIP = document.getElementById('tip');
-    const TIP_TS = document.getElementById('tip-ts');
-    const TIP_ST = document.getElementById('tip-status');
-    const TIP_SRC = document.getElementById('tip-src');
+    const STATUS=(ok,uAsOff=false)=> ok===true?'online': ok===false?'offline': (uAsOff?'offline':'unknown');
+    const CLS=(ok,uAsOff=false)=> ok===true?'g': ok===false?'r': (uAsOff?'r':'u');
+    const fmtPct=(v)=> (isNaN(v)?'–':(v*100).toFixed(2)+'%');
+    const fmtDur=(m)=> m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
+    const localTime=(iso)=> new Date(iso).toLocaleString();
+    const localDate=(iso)=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+    async function fetchJSON(u){const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'}); if(!r.ok) throw new Error(r.status); return r.json();}
+    function setLive(ok,ts){liveDot.className='dot '+(ok===true?'g':ok===false?'r':'u'); liveTxt.textContent=`${STATUS(ok)} • ${ts?localTime(ts):'–'}`;}
+    function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
 
-    // ---- Helpers ----
-    const STATUS = (ok, unknownAsOffline=false)=> ok===true?'online': ok===false?'offline': (unknownAsOffline?'offline':'unknown');
-    const CLS    = (ok, unknownAsOffline=false)=> ok===true?'g': ok===false?'r': (unknownAsOffline?'r':'u');
-    const fmtPct = (v)=> (isNaN(v)?'–': (v*100).toFixed(2)+'%');
-    const fmtDur = (mins)=> {
-      if(mins<60) return `${mins} min`;
-      const h = Math.floor(mins/60), m = mins%60;
-      return `${h} h ${m} min`;
-    };
-    const localTime = (iso)=> new Date(iso).toLocaleString();
-    const utcNowISO = ()=> new Date().toISOString();
-
-    async function fetchJSON(url){
-      const r = await fetch(url+'?t='+Date.now(), {cache:'no-store'});
-      if(!r.ok) throw new Error('HTTP '+r.status+' @ '+url);
-      return r.json();
+    function aggregateHourly(history){
+      const map=new Map();
+      for(const p of history){const d=new Date(p.ts); const key=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}T${String(d.getHours()).padStart(2,'0')}`;
+        const m=map.get(key)||{from:p.ts,on:0,off:0,unk:0}; if(p.ok===true)m.on++; else if(p.ok===false)m.off++; else m.unk++; map.set(key,m);}
+      return [...map.values()].map(m=>({ts:m.from, ok:m.off>0?false:(m.unk>0?null:true), bucket:'hour'}));
     }
-
-    function setLive(ok, ts){
-      liveDot.className = 'dot ' + (ok===true?'g': ok===false?'r':'u');
-      liveTxt.textContent = `${STATUS(ok)} • ${ts ? localTime(ts) : '–'}`;
+    function aggregateDaily(history){
+      const map=new Map();
+      for(const p of history){const d=new Date(p.ts); const key=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+        const m=map.get(key)||{from:p.ts,on:0,off:0,unk:0}; if(p.ok===true)m.on++; else if(p.ok===false)m.off++; else m.unk++; map.set(key,m);}
+      return [...map.values()].map(m=>({ts:m.from, ok:m.off>0?false:(m.unk>0?null:true), bucket:'day'}));
     }
-
-    function makeDayLines(container, totalCount){
-      // Entferne alte
-      Array.from(container.querySelectorAll('.dayline,.daylbl')).forEach(n=>n.remove());
-      const gaps = getComputedStyle(document.documentElement).getPropertyValue('--bar-gap').trim().replace('px','') || 3;
-      const bw   = getComputedStyle(document.documentElement).getPropertyValue('--bar-w').trim().replace('px','') || 10;
-      const step = Number(bw)+Number(gaps);
-      const todayX = step*(totalCount % DAY_SLOTS) + 4; // kleine Korrektur
-
-      // Zeichne Tagesgrenzen (alle 288 Balken)
-      for(let i=0; i<=totalCount; i+=DAY_SLOTS){
-        const x = i*step;
-        const ln = document.createElement('div');
-        ln.className = 'dayline';
-        ln.style.left = x+'px';
-        container.appendChild(ln);
-
-        const lbl = document.createElement('div');
-        lbl.className = 'daylbl';
-        const d = (i===totalCount)? 'Today' : (i>totalCount ? '' : '');
-        // Beschriftung rückwärts: Today ganz rechts, -1d, -2d …
-        const daysBack = Math.floor((totalCount - i)/DAY_SLOTS);
-        lbl.textContent = daysBack===0 ? 'Today' : `-${daysBack}d`;
-        lbl.style.left = x+'px';
-        container.appendChild(lbl);
-      }
+    function computeStats(points,uAsOff){
+      const total=points.length; let on=0,off=0,unk=0;
+      for(const p of points){if(p.ok===true)on++; else if(p.ok===false)off++; else unk++;}
+      const effOff=off+(uAsOff?unk:0);
+      const minutesPer=(total && points[0].bucket==='day')?24*60:60;
+      return {total,on,off,unk,uptime: total?(on/(on+effOff)):NaN, downtimeMin: effOff*minutesPer};
     }
-
-    function computeStats(arr, unknownAsOffline){
-      const total = arr.length;
-      let on=0, off=0, unk=0;
-      for(const p of arr){
-        if(p.ok===true) on++;
-        else if(p.ok===false) off++;
-        else unk++;
-      }
-      const effOff = off + (unknownAsOffline? unk : 0);
-      const uptime = total ? (on/(on+effOff)) : NaN;
-      const downtimeMin = (effOff * SLOT_MIN);
-      return {total, on, off, unk, uptime, downtimeMin};
-    }
-
-    function findIncidents(arr){
-      const minSlots = Math.ceil(INCIDENT_MIN / SLOT_MIN);
-      const out = [];
-      let i=0;
-      while(i<arr.length){
-        if(arr[i].ok===false){
-          const start=i;
-          while(i<arr.length && arr[i].ok===false) i++;
-          const len = i-start;
-          if(len>=minSlots){
-            out.push({from: arr[start].ts, to: arr[i-1].ts, slots: len});
-          }
-        } else i++;
-      }
+    function findIncidents5min(slots){
+      const minSlots=Math.ceil(INCIDENT_MIN/SLOT_MIN), out=[]; let i=0;
+      while(i<slots.length){ if(slots[i].ok===false){ const s=i; while(i<slots.length&&slots[i].ok===false)i++; const len=i-s; if(len>=minSlots) out.push({from:slots[s].ts,to:slots[i-1].ts,slots:len}); } else i++; }
       return out;
     }
-
-    function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
-
-    function renderBars(history, unknownAsOffline){
-      clear(barsEl);
-      if(history.length===0){
-        const d=document.createElement('div');
-        d.className='skeleton'; d.style.width='100%'; barsEl.appendChild(d); return;
-      }
-      const count = Math.min(history.length, MAX_RENDER);
-      const frag = document.createDocumentFragment();
-      // Tagestrennlinien
-      setTimeout(()=>makeDayLines(barsEl, count),0);
-
-      for(let i = history.length - count; i < history.length; i++){
-        const p = history[i];
-        const idx = i - (history.length - count);
-        const b = document.createElement('div');
-        b.className = 'bar ' + CLS(p.ok, unknownAsOffline);
-        // kleine Wellenhöhe für lebendiges Bild
-        const h = p.ok===true ? 26 + (idx%5)*2 : p.ok===false ? 16 + (idx%3)*2 : 20 + (idx%4);
-        b.style.height = h+'px';
-        b.tabIndex = 0;
-        b.dataset.ts = p.ts;
-        b.dataset.ok = p.ok===true?'true': p.ok===false?'false':'null';
-        b.addEventListener('mouseenter', (ev)=> tipShow(ev, p.ts, p.ok, 'history'));
-        b.addEventListener('mousemove', (ev)=> tipShow(ev, p.ts, p.ok, 'history'));
-        b.addEventListener('mouseleave', tipHide);
-        b.addEventListener('focus', (ev)=> tipShow(ev, p.ts, p.ok, 'history'));
-        b.addEventListener('blur', tipHide);
-        frag.appendChild(b);
-      }
+    function renderCompactBars(buckets,uAsOff){
+      clear(barsEl); const frag=document.createDocumentFragment(); const H=70;
+      buckets.forEach(b=>{const el=document.createElement('div'); el.className='bar '+CLS(b.ok,uAsOff); el.style.height=H+'px';
+        el.tabIndex=0; el.addEventListener('mouseenter',ev=>tipShow(ev,b)); el.addEventListener('mousemove',ev=>tipShow(ev,b));
+        el.addEventListener('mouseleave',tipHide); el.addEventListener('focus',ev=>tipShow(ev,b)); el.addEventListener('blur',tipHide);
+        frag.appendChild(el);
+      });
       barsEl.appendChild(frag);
     }
-
-    function tipShow(e, ts, ok, src){
-      TIP_TS.textContent = localTime(ts);
-      TIP_ST.textContent = STATUS(ok, unkCtl.checked);
-      TIP_SRC.textContent = 'Quelle: ' + (src==='history'?'History':'Live');
-      TIP.style.display='block';
-      TIP.style.left = (e.clientX)+'px';
-      TIP.style.top  = (e.clientY)+'px';
+    function tipShow(e,b){
+      const isDay=b.bucket==='day';
+      TIP_ST.textContent=STATUS(b.ok,unkCtl.checked);
+      TIP_TS.textContent=isDay?localDate(b.ts):(localDate(b.ts)+' '+new Date(b.ts).toLocaleTimeString());
+      TIP_SRC.textContent='Quelle: History (kompakt)';
+      TIP_RANGE.textContent=isDay?'1 Tag':'1 Stunde';
+      TIP.style.display='block'; TIP.style.left=(e.clientX)+'px'; TIP.style.top=(e.clientY)+'px';
     }
-    function tipHide(){ TIP.style.display='none'; }
+    function tipHide(){TIP.style.display='none'}
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e)=>{
-      const bars = Array.from(barsEl.querySelectorAll('.bar'));
-      if(!bars.length) return;
-      const focused = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('bar')
-        ? document.activeElement : bars[bars.length-1];
-      const cur = bars.indexOf(focused);
-      const step = e.shiftKey ? (60/SLOT_MIN) : 1; // 1h bei Shift
-      if(e.key==='ArrowLeft'){
-        const nx = Math.max(0, cur - step); bars[nx].focus(); bars[nx].scrollIntoView({block:'nearest', inline:'nearest'}); e.preventDefault();
-      } else if(e.key==='ArrowRight'){
-        const nx = Math.min(bars.length-1, cur + step); bars[nx].focus(); bars[nx].scrollIntoView({block:'nearest', inline:'nearest'}); e.preventDefault();
-      }
-    });
-
-    // ---- Main flow ----
-    let timer = null;
-
+    let timer=null;
     async function load(){
-      try{
-        // 1) Immer Live-Pille aktualisieren
-        try{
-          const live = await fetchJSON(API_LIVE);
-          setLive(live.ok, live.generated);
-        } catch{ setLive(null, null); }
+      try{ const live=await fetchJSON(API_LIVE); setLive(live.ok, live.generated); }catch{ setLive(null,null); }
+      let hist; try{ hist=await fetchJSON(API_HISTORY); }catch{ fallback(); return; }
 
-        // 2) History laden
-        const hist = await fetchJSON(API_HISTORY);
-        const history = Array.isArray(hist.history) ? hist.history : [];
-        const svc = hist.service || {};
-        svcName.textContent = svc.name || 'Minecraft Bedrock';
-        svcHost.textContent = [svc.host, svc.port].filter(Boolean).join(':');
+      const history=Array.isArray(hist.history)?hist.history:[];
+      const svc=hist.service||{};
+      svcName.textContent=svc.name||'Minecraft Bedrock';
+      svcHost.textContent=[svc.host,svc.port].filter(Boolean).join(':');
 
-        // Stale?
-        const gen = hist.generated ? new Date(hist.generated) : null;
-        const stale = gen ? ((Date.now() - gen.getTime())/60000 > STALE_MIN) : true;
-        staleEl.hidden = !stale;
+      const gen=hist.generated?new Date(hist.generated):null;
+      const stale=gen?((Date.now()-gen.getTime())/60000>STALE_MIN):true;
+      byId('stale').hidden=!stale;
 
-        // Range
-        const sel = rangeCtl.querySelector('input:checked');
-        const span = sel ? parseInt(sel.value,10) : 288;
-        const sliced = history.slice(-span);
-
-        // Render
-        renderBars(sliced, unkCtl.checked);
-
-        // KPIs
-        const s = computeStats(sliced, unkCtl.checked);
-        uptimeEl.textContent = fmtPct(s.uptime);
-        dtimeEl.textContent  = fmtDur(Math.round(s.downtimeMin));
-        kOnline.textContent  = s.on;
-        kOffline.textContent = s.off + (unkCtl.checked ? s.unk : 0);
-        kUnknown.textContent = (unkCtl.checked ? 0 : s.unk);
-        kPoints.textContent  = s.total;
-
-        // Incidents
-        const inc = findIncidents(sliced);
-        if(inc.length){
-          const ul = document.createElement('ul');
-          inc.forEach(ev=>{
-            const li = document.createElement('li');
-            const mins = ev.slots * SLOT_MIN;
-            li.textContent = `Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(mins)})`;
-            ul.appendChild(li);
-          });
-          incWrap.innerHTML = '<h3>Incidents</h3>';
-          incWrap.appendChild(ul);
-        } else {
-          incWrap.innerHTML = '';
-        }
-
-        metaSrc.textContent = 'Quelle: History ✓';
-      } catch(e){
-        // Wenn History fehlschlägt: Live nur als Einzelpunkt andeuten
-        clear(barsEl);
-        const live = await fetchJSON(API_LIVE).catch(()=>({ok:null, generated:null, service:{}}));
-        const b = document.createElement('div');
-        b.className = 'bar ' + CLS(live.ok, unkCtl.checked);
-        b.style.height = '28px';
-        b.addEventListener('mouseenter', (ev)=> tipShow(ev, live.generated||utcNowISO(), live.ok, 'live'));
-        b.addEventListener('mousemove', (ev)=> tipShow(ev, live.generated||utcNowISO(), live.ok, 'live'));
-        b.addEventListener('mouseleave', tipHide);
-        barsEl.appendChild(b);
-
-        uptimeEl.textContent = '–';
-        dtimeEl.textContent  = '–';
-        kOnline.textContent  = '0';
-        kOffline.textContent = '0';
-        kUnknown.textContent = '1';
-        kPoints.textContent  = '1';
-        incWrap.innerHTML = '';
-        metaSrc.textContent = 'Quelle: Live (Fallback)';
+      const sel=rangeCtl.querySelector('input:checked')?.value||'24h';
+      if(sel==='24h'){
+        const day=history.slice(-DAY_SLOTS);
+        const hours=aggregateHourly(day); renderCompactBars(hours, unkCtl.checked);
+        const s=(()=>{let on=0,off=0,unk=0; for(const p of day){if(p.ok===true)on++; else if(p.ok===false)off++; else unk++;}
+          const effOff=off+(unkCtl.checked?unk:0); return {on,off,unk,total:day.length,uptime:(on/(on+effOff))||0,down:effOff*SLOT_MIN};})();
+        uptimeEl.textContent=fmtPct(s.uptime); dtimeEl.textContent=fmtDur(Math.round(s.down));
+        kOnline.textContent=s.on; kOffline.textContent=s.off+(unkCtl.checked?s.unk:0); kUnknown.textContent=(unkCtl.checked?0:s.unk); kPoints.textContent=s.total;
+        const inc=findIncidents5min(day);
+        if(inc.length){ const ul=document.createElement('ul'); inc.forEach(ev=>{ const li=document.createElement('li'); li.textContent=`Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(ev.slots*SLOT_MIN)})`; ul.appendChild(li); });
+          incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);} else incWrap.innerHTML='';
+        metaSrc.textContent='Quelle: History ✓'; footL.textContent='24 hours'; footR.textContent='Today';
+      } else {
+        const days = sel==='7d' ? aggregateDaily(history.slice(-7*DAY_SLOTS))
+                                : aggregateDaily(history.slice(-30*DAY_SLOTS));
+        renderCompactBars(days, unkCtl.checked);
+        const st = computeStats(days, unkCtl.checked);
+        uptimeEl.textContent=fmtPct(st.uptime); dtimeEl.textContent=fmtDur(Math.round(st.downtimeMin));
+        kOnline.textContent=st.on; kOffline.textContent=st.off+(unkCtl.checked?st.unk:0); kUnknown.textContent=(unkCtl.checked?0:st.unk); kPoints.textContent=st.total;
+        incWrap.innerHTML=''; metaSrc.textContent='Quelle: History ✓';
+        footL.textContent = sel==='7d'?'7 days':'30 days'; footR.textContent='Today';
       }
     }
-
-    function startTimer(){ stopTimer(); timer = setInterval(load, 60_000); }
-    function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
-
+    function computeStats(points,uAsOff){ // für 7d/30d
+      let on=0,off=0,unk=0; for(const p of points){if(p.ok===true)on++; else if(p.ok===false)off++; else unk++;}
+      const effOff=off+(uAsOff?unk:0); const total=points.length;
+      const minutesPer=(total && points[0].bucket==='day')?24*60:60;
+      return {on,off,unk,total, uptime: total?(on/(on+effOff)):NaN, downtimeMin: effOff*minutesPer};
+    }
+    function fallback(){
+      clear(barsEl); footL.textContent='–'; footR.textContent='–';
+      uptimeEl.textContent='–'; dtimeEl.textContent='–';
+      kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='1'; kPoints.textContent='1';
+      incWrap.innerHTML=''; metaSrc.textContent='Quelle: Live (Fallback)';
+    }
+    function startTimer(){ stopTimer(); timer=setInterval(load,60_000); }
+    function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
     rangeCtl.addEventListener('change', load);
-    unkCtl.addEventListener('change', load);
-    autoCtl.addEventListener('change', ()=> autoCtl.checked ? startTimer() : stopTimer());
+    byId('unkAsOff').addEventListener('change', load);
+    byId('auto').addEventListener('change', e=> e.target.checked?startTimer():stopTimer());
 
-    // Initial
     load(); startTimer();
+    document.addEventListener('scroll', ()=> TIP.style.display='none', true);
   </script>
 </body>
 </html>
