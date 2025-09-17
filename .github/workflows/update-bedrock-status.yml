@@ -1,51 +1,106 @@
-name: Store Bedrock History
+name: Update Bedrock Status
+
 on:
-  schedule: [{ cron: "*/5 * * * *" }]
+  schedule: [{ cron: "*/5 * * * *" }]   # alle 5 Minuten
   workflow_dispatch: {}
-permissions: { contents: write }
+
+permissions:
+  contents: write
+
 env:
-  FILEPATH: "data/status.json"
-  KEEP: "2016"  # 7 Tage
-  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
+  FILEPATH: "data/status.json"                          # Verlaufsdatei im Repo
+  KEEP: "2016"                                          # 7 Tage (12 * 24 * 7)
+  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"  # <-- DEINE VERCEL-DOMAIN
+
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with: { ref: main, persist-credentials: true }
-      - run: sudo apt-get update && sudo apt-get install -y jq curl
-      - name: ensure file
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Ensure status file exists
         run: |
+          set -euo pipefail
           mkdir -p "$(dirname "$FILEPATH")"
-          [ -s "$FILEPATH" ] || echo '{"generated":"","service":{"name":"Minecraft Bedrock","host":"important-instrumentation.gl.at.ply.gg","port":18232},"history":[]}' > "$FILEPATH"
-      - name: pull from vercel api
+          if [ ! -s "$FILEPATH" ]; then
+            cat > "$FILEPATH" <<'JSON'
+            {
+              "generated": "",
+              "service": {
+                "name": "Minecraft Bedrock",
+                "host": "important-instrumentation.gl.at.ply.gg",
+                "port": 18232
+              },
+              "history": []
+            }
+            JSON
+          fi
+
+      - name: Pull latest status from Vercel API (robust)
         id: ping
         run: |
-          set -e
-          curl -fsSL "$API_URL" -o resp.json
-          echo "ok=$(jq -r '.ok // \"null\"' resp.json)" >> $GITHUB_OUTPUT
-          echo "ts=$(jq -r '.generated' resp.json)" >> $GITHUB_OUTPUT
-          echo "host=$(jq -r '.service.host' resp.json)" >> $GITHUB_OUTPUT
-          echo "port=$(jq -r '.service.port' resp.json)" >> $GITHUB_OUTPUT
-      - name: append + trim
+          set -euo pipefail
+
+          : "${API_URL:?API_URL not set}"
+          echo "GET $API_URL"
+
+          # 1) abrufen – bei Fehler direkt offline erzwingen
+          if ! curl --fail --show-error --silent --max-time 12 "$API_URL" -o resp.json; then
+            echo "curl failed → treat as offline"
+            echo '{"ok":false,"generated":null,"service":{}}' > resp.json
+          fi
+
+          # 2) JSON prüfen – ok MUSS boolean sein, sonst offline erzwingen
+          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json > /dev/null; then
+            echo "response has no boolean .ok → treat as offline"
+            jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
+          fi
+
+          echo "----- resp.json -----"
+          cat resp.json
+          echo "---------------------"
+
+          # 3) Outputs setzen (ohne Quotes)
+          echo "ok=$(jq -r '.ok' resp.json)"                    >> "$GITHUB_OUTPUT"
+          echo "ts=$(jq -r '.generated // now|todate' resp.json)" >> "$GITHUB_OUTPUT"
+          echo "host=$(jq -r '.service.host // empty' resp.json)" >> "$GITHUB_OUTPUT"
+          echo "port=$(jq -r '.service.port // empty' resp.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Append + trim history
         run: |
+          set -euo pipefail
           ts='${{ steps.ping.outputs.ts }}'
           ok='${{ steps.ping.outputs.ok }}'
           host='${{ steps.ping.outputs.host }}'
           port='${{ steps.ping.outputs.port }}'
-          jq --arg ts "$ts" --argjson ok ${ok:-null} --arg host "$host" --argjson port $port --argjson keep $KEEP '
-            .service.host=$host | .service.port=$port |
+          : "${ts:=$(date -u +%FT%TZ)}"
+          : "${ok:=false}"
+
+          jq --arg ts "$ts" --argjson ok ${ok} --arg host "$host" --argjson port ${port:-0} --argjson keep ${KEEP:-2016} '
+            if .service == null then .service = {} else . end |
+            .service.host = (if $host != "" then $host else .service.host end) |
+            .service.port = (if $port != 0  then $port else .service.port end) |
             .history += [{"ts":$ts,"ok":$ok}] |
             .history |= (.[-($keep|tonumber):] // .) |
-            .generated=$ts
-          ' "$FILEPATH" > "$FILEPATH.tmp" && mv "$FILEPATH.tmp" "$FILEPATH"
-      - name: commit (skip vercel)
+            .generated = $ts
+          ' "$FILEPATH" > "$FILEPATH.tmp"
+          mv "$FILEPATH.tmp" "$FILEPATH"
+
+      - name: Commit & push (only the data file)
         run: |
+          set -euo pipefail
           git config user.name  "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
           if ! git diff --quiet -- "$FILEPATH"; then
             git add "$FILEPATH"
-            git commit -m "history: $(date -u +"%Y-%m-%dT%H:%M:%SZ") [skip vercel]"
+            git commit -m "history: $(date -u +%FT%TZ) [skip vercel]"
             git push origin main
           else
             echo "no changes"
