@@ -8,13 +8,14 @@ permissions:
   contents: write
 
 env:
-  FILEPATH: "data/status.json"                          # Verlaufsdatei im Repo
-  KEEP: "2016"                                          # 7 Tage (12 * 24 * 7)
-  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"  # <-- DEINE VERCEL-DOMAIN
+  FILEPATH: "data/status.json"
+  KEEP: "2016"   # 7 Tage à 5-Minuten
+  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -25,39 +26,39 @@ jobs:
       - name: Install jq & curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
+      # --- FIX: kein Heredoc, Datei sauber mit jq anlegen ---
       - name: Ensure status file exists
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$FILEPATH")"
           if [ ! -s "$FILEPATH" ]; then
-            cat > "$FILEPATH" <<'JSON'
-            {
-              "generated": "",
-              "service": {
-                "name": "Minecraft Bedrock",
-                "host": "important-instrumentation.gl.at.ply.gg",
-                "port": 18232
-              },
-              "history": []
-            }
-            JSON
+            jq -n \
+              --arg name "Minecraft Bedrock" \
+              --arg host "important-instrumentation.gl.at.ply.gg" \
+              --argjson port 18232 \
+              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' \
+              > "$FILEPATH"
+            echo "Created $FILEPATH"
+          else
+            echo "Found $FILEPATH"
           fi
 
+      # --- robuster Fetch: Fehler => offline statt null ---
       - name: Pull latest status from Vercel API (robust)
         id: ping
+        shell: bash
         run: |
           set -euo pipefail
 
           : "${API_URL:?API_URL not set}"
           echo "GET $API_URL"
 
-          # 1) abrufen – bei Fehler direkt offline erzwingen
           if ! curl --fail --show-error --silent --max-time 12 "$API_URL" -o resp.json; then
             echo "curl failed → treat as offline"
             echo '{"ok":false,"generated":null,"service":{}}' > resp.json
           fi
 
-          # 2) JSON prüfen – ok MUSS boolean sein, sonst offline erzwingen
           if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json > /dev/null; then
             echo "response has no boolean .ok → treat as offline"
             jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
@@ -67,41 +68,50 @@ jobs:
           cat resp.json
           echo "---------------------"
 
-          # 3) Outputs setzen (ohne Quotes)
-          echo "ok=$(jq -r '.ok' resp.json)"                    >> "$GITHUB_OUTPUT"
-          echo "ts=$(jq -r '.generated // now|todate' resp.json)" >> "$GITHUB_OUTPUT"
-          echo "host=$(jq -r '.service.host // empty' resp.json)" >> "$GITHUB_OUTPUT"
-          echo "port=$(jq -r '.service.port // empty' resp.json)" >> "$GITHUB_OUTPUT"
+          echo "ok=$(jq -r '.ok' resp.json)"                         >> "$GITHUB_OUTPUT"
+          echo "ts=$(jq -r '.generated // now|todate' resp.json)"    >> "$GITHUB_OUTPUT"
+          echo "host=$(jq -r '.service.host // empty' resp.json)"    >> "$GITHUB_OUTPUT"
+          echo "port=$(jq -r '.service.port // empty' resp.json)"    >> "$GITHUB_OUTPUT"
 
       - name: Append + trim history
+        shell: bash
         run: |
           set -euo pipefail
           ts='${{ steps.ping.outputs.ts }}'
           ok='${{ steps.ping.outputs.ok }}'
           host='${{ steps.ping.outputs.host }}'
           port='${{ steps.ping.outputs.port }}'
+
           : "${ts:=$(date -u +%FT%TZ)}"
           : "${ok:=false}"
 
-          jq --arg ts "$ts" --argjson ok ${ok} --arg host "$host" --argjson port ${port:-0} --argjson keep ${KEEP:-2016} '
-            if .service == null then .service = {} else . end |
-            .service.host = (if $host != "" then $host else .service.host end) |
-            .service.port = (if $port != 0  then $port else .service.port end) |
-            .history += [{"ts":$ts,"ok":$ok}] |
-            .history |= (.[-($keep|tonumber):] // .) |
-            .generated = $ts
-          ' "$FILEPATH" > "$FILEPATH.tmp"
+          jq --arg ts "$ts" \
+             --argjson ok ${ok} \
+             --arg host "$host" \
+             --argjson port ${port:-0} \
+             --argjson keep ${KEEP:-2016} '
+              if .service == null then .service = {} else . end |
+              .service.host = (if $host != "" then $host else .service.host end) |
+              .service.port = (if $port != 0  then $port else .service.port end) |
+              .history += [{"ts":$ts,"ok":$ok}] |
+              .history |= (.[-($keep|tonumber):] // .) |
+              .generated = $ts
+            ' "$FILEPATH" > "$FILEPATH.tmp"
+
           mv "$FILEPATH.tmp" "$FILEPATH"
+          echo "Updated $FILEPATH"
 
       - name: Commit & push (only the data file)
+        shell: bash
         run: |
           set -euo pipefail
-          git config user.name  "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
           if ! git diff --quiet -- "$FILEPATH"; then
+            git config user.name  "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
             git add "$FILEPATH"
             git commit -m "history: $(date -u +%FT%TZ) [skip vercel]"
             git push origin main
+            echo "Pushed update"
           else
-            echo "no changes"
+            echo "No changes"
           fi
