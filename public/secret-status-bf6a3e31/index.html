@@ -1,392 +1,503 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="robots" content="noindex, nofollow" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
 <title>Minecraft Bedrock – Status</title>
-<meta name="color-scheme" content="dark light" />
+<meta name="color-scheme" content="dark light"/>
 <style>
-  :root{
-    --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
-    --fg:#e6e7eb; --muted:#9aa0a6;
-    --g:#19c37d; --r:#ef4444; --o:#f59e0b; --u:#95a3b6;
-    --bar-w:12px; --bar-gap:6px; --radius:12px;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--fg);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+:root{
+  --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
+  --fg:#e6e7eb; --muted:#9aa0a6;
+  --g:#19c37d; --r:#ef4444; --o:#f59e0b; --u:#95a3b6;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:1100px;margin:28px auto;padding:0 16px}
 
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-  h1{margin:0;font-size:22px}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--panel),#0b0f1a);
-    border:1px solid var(--line);padding:8px 12px;border-radius:999px;font-size:13px}
-  .dot{width:10px;height:10px;border-radius:50%}
-  .dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{margin:0;font-size:22px}
+.pill{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--panel),#0b0f1a);
+  border:1px solid var(--line);padding:8px 12px;border-radius:999px;font-size:13px}
+.dot{width:10px;height:10px;border-radius:50%}
+.dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
 
-  .top-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .seg input{display:none}
-  .seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer}
-  .seg input:checked + label{background:var(--line);color:var(--fg)}
-  .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
-  .toggle input{accent-color:#60a5fa}
+/* Toolbar */
+.top-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg input{display:none}
+.seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.seg input:checked + label{background:var(--line);color:var(--fg)}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.toggle input{accent-color:#60a5fa}
 
-  .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
-    border-radius:var(--radius);padding:16px}
-  .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  .svc{display:flex;flex-direction:column;gap:4px;min-width:240px}
-  .svc-name{font-weight:700}
-  .svc-host{font-size:12px;color:var(--muted)}
-  .badges{display:flex;gap:8px;flex-wrap:wrap}
-  .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-    border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
-  .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
-  .kpi strong{color:var(--fg);font-weight:600}
+/* Card */
+.card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px}
+.row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.svc{display:flex;flex-direction:column;gap:4px;min-width:240px}
+.svc-name{font-weight:700}
+.svc-host{font-size:12px;color:var(--muted)}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+.kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
+.kpi strong{color:var(--fg);font-weight:600}
 
-  .bars-wrap{margin-top:12px}
-  .bars{position:relative;display:flex;gap:var(--bar-gap);align-items:flex-end;
-    min-height:90px;overflow-x:auto;padding:10px;border-radius:12px;background:linear-gradient(180deg,#0a0e19,#0a0d14)}
-  .bar{width:var(--bar-w);flex:0 0 var(--bar-w);border-radius:8px;background:#2a3242;
-    box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
-  .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.o{background:var(--o)} .bar.u{background:var(--u)}
-  .bar:focus{outline:2px solid #60a5fa}
-  .footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
+/* Bars + Hoverline (responsive grid) */
+.bars-wrap{margin-top:12px}
+.bars{position:relative;display:flex;gap:6px;align-items:flex-end;min-height:90px;overflow-x:auto;
+  padding:10px;border-radius:12px;background:linear-gradient(180deg,#0a0e19,#0a0d14)}
+.bar{width:12px;flex:0 0 12px;border-radius:8px;background:#2a3242;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.o{background:var(--o)} .bar.u{background:var(--u)}
+.bars.mode-24h .bar{width:4px;flex-basis:4px}      /* fein auf 24h */
+.bars.mode-24h{min-height:70px}
+.hoverline{position:absolute;top:0;bottom:0;width:1px;background:#ffffff44;pointer-events:none;display:none}
 
-  .bars.mode-24h{min-height:70px}
-  .bars.mode-24h .bar{width:4px;flex-basis:4px}   /* 5-Min Punkte */
-  .bars.mode-7d .bar, .bars.mode-30d .bar{width:12px;flex-basis:12px}
+.footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
 
-  .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap;margin-top:8px}
-  .lg{display:inline-flex;align-items:center;gap:6px}
-  .sq{width:10px;height:10px;border-radius:2px}
-  .sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.o{background:var(--o)} .sq.u{background:var(--u)}
+/* Legend */
+.legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap;margin-top:8px}
+.lg{display:inline-flex;align-items:center;gap:6px}
+.sq{width:10px;height:10px;border-radius:2px}
+.sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.o{background:var(--o)} .sq.u{background:var(--u)}
 
-  .disclaimer{margin-top:8px;font-size:12px;color:var(--muted)}
-  .incidents{margin-top:10px}
-  .incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
-  .incidents ul{margin:0;padding-left:16px;font-size:12px;color:var(--muted)}
-  .incidents li{margin:4px 0}
-  .stale{margin-top:8px;font-size:12px;color:#fbbf24}
+.disclaimer{margin-top:8px;font-size:12px;color:var(--muted)}
+.incidents{margin-top:10px}
+.incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
+.incidents ul{margin:0;padding-left:16px;font-size:12px;color:var(--muted)}
+.incidents li{margin:4px 0}
+.stale{margin-top:8px;font-size:12px;color:#fbbf24}
 
-  .tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
-    background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
-    font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px;max-width:90vw}
-  .t-line{display:flex;justify-content:space-between;gap:10px}
+/* Tip */
+.tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
+  background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
+  font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px;max-width:90vw}
+.t-line{display:flex;justify-content:space-between;gap:10px}
 
-  @media (max-width:520px){
-    h1{font-size:18px}
-    .svc-host{font-size:11px}
-    .badge{font-size:11px}
-    .seg label{padding:6px 8px}
-  }
+/* Heatmap */
+.heat{margin-top:18px}
+.heat h3{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
+.hm{display:grid;grid-template-columns:repeat(13,1fr);gap:4px}
+.hm .cell{height:12px;border-radius:3px;background:#2a3242}
+.hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
+.hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
+
+/* Mobile */
+@media (max-width:520px){
+  h1{font-size:18px}
+  .svc-host,.badge{font-size:11px}
+  .seg label{padding:6px 8px}
+}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Minecraft Bedrock – Status</h1>
-      <div class="pill" id="live-pill" aria-live="polite" title="Aktueller Live-Status">
-        <span class="dot u" id="live-dot" aria-hidden="true"></span>
-        <span id="live-txt">Lade Live-Status …</span>
-      </div>
-    </header>
+<div class="wrap">
+  <header>
+    <h1>Minecraft Bedrock – Status</h1>
+    <div class="pill" id="live-pill" aria-live="polite">
+      <span class="dot u" id="live-dot"></span>
+      <span id="live-txt">Lade Live-Status …</span>
+    </div>
+  </header>
 
-    <div class="top-row" role="toolbar">
-      <div class="seg" id="range">
-        <input type="radio" name="r" id="r24" value="24h" checked><label for="r24">24 h</label>
-        <input type="radio" name="r" id="r7" value="7d"><label for="r7">7 d</label>
-        <input type="radio" name="r" id="r30" value="30d"><label for="r30">30 d</label>
+  <div class="top-row" role="toolbar">
+    <div class="seg" id="range">
+      <input type="radio" name="r" id="r24" value="24h" checked><label for="r24">24 h</label>
+      <input type="radio" name="r" id="r7" value="7d"><label for="r7">7 d</label>
+      <input type="radio" name="r" id="r30" value="30d"><label for="r30">30 d</label>
+    </div>
+    <label class="toggle"><input type="checkbox" id="auto" checked/> Live-Refresh (60 s)</label>
+  </div>
+
+  <section class="card">
+    <div class="row-head">
+      <div class="svc">
+        <div class="svc-name" id="svc-name">Minecraft Bedrock</div>
+        <div class="svc-host" id="svc-host">–</div>
       </div>
-      <label class="toggle"><input type="checkbox" id="auto" checked /> Live-Refresh (60 s)</label>
+      <div class="badges">
+        <div class="badge"><span>Uptime</span><strong id="uptime">–</strong></div>
+        <div class="badge"><span>Downtime</span><strong id="downtime">–</strong></div>
+      </div>
     </div>
 
-    <section class="card" aria-label="Service Status">
-      <div class="row-head">
-        <div class="svc">
-          <div class="svc-name" id="svc-name">Minecraft Bedrock</div>
-          <div class="svc-host" id="svc-host">–</div>
-        </div>
-        <div class="badges">
-          <div class="badge" title="Uptime der gewählten Zeitspanne"><span>Uptime</span><strong id="uptime">–</strong></div>
-          <div class="badge" title="Gesamt-Downtime in der Zeitspanne"><span>Downtime</span><strong id="downtime">–</strong></div>
-        </div>
-      </div>
+    <div class="kpi">
+      <div><strong id="kpi-online">–</strong> online</div>
+      <div><strong id="kpi-offline">–</strong> offline</div>
+      <div><strong id="kpi-unknown">–</strong> unknown</div>
+      <div><strong id="kpi-points">–</strong> Punkte</div>
+    </div>
 
-      <div class="kpi" id="kpi">
-        <div><strong id="kpi-online">–</strong> online</div>
-        <div><strong id="kpi-offline">–</strong> offline</div>
-        <div><strong id="kpi-unknown">–</strong> unknown</div>
-        <div><strong id="kpi-points">–</strong> Punkte</div>
-      </div>
+    <div class="bars-wrap">
+      <div id="bars" class="bars mode-24h" role="group" aria-label="Zeitachse"></div>
+      <div id="hoverline" class="hoverline"></div>
+      <div class="footline"><span id="foot-left">24 hours</span><span id="foot-right">Today</span></div>
+    </div>
 
-      <div class="bars-wrap">
-        <div id="bars" class="bars mode-24h" role="group" aria-label="Status-Zeitachse"></div>
-        <div class="footline"><span id="foot-left">24 hours</span><span id="foot-right">Today</span></div>
-      </div>
+    <div class="legend">
+      <span class="lg"><span class="sq g"></span> online</span>
+      <span class="lg"><span class="sq r"></span> offline</span>
+      <span class="lg"><span class="sq o"></span> eingeschränkt</span>
+      <span class="lg"><span class="sq u"></span> unbekannt</span>
+      <span class="lg">• 1 Balken = 5 Min (24 h); 1 Balken = 1 Tag (7 d/30 d) • <span id="meta-src">Quelle: History</span></span>
+    </div>
 
-      <div class="legend" aria-hidden="true">
-        <span class="lg"><span class="sq g"></span> online</span>
-        <span class="lg"><span class="sq r"></span> offline</span>
-        <span class="lg"><span class="sq o"></span> eingeschränkt</span>
-        <span class="lg"><span class="sq u"></span> unbekannt</span>
-        <span class="lg">• 1 Balken = 5 Min (24 h) • 1 Balken = 1 Tag (7 d/30 d) • <span id="meta-src">Quelle: History</span></span>
-      </div>
+    <p class="disclaimer">Diese Daten sind Schätzungen bzw. Pings an den Server und können nicht zu 100&nbsp;% stimmen.</p>
 
-      <p class="disclaimer">Diese Daten sind Schätzungen bzw. Pings an den Server und können nicht zu 100&nbsp;% stimmen.</p>
+    <div class="incidents" id="inc"></div>
+    <div class="stale" id="stale" hidden>Hinweis: History ist älter als 30 Min. Live zeigt den aktuellen Zustand.</div>
 
-      <div class="incidents" id="inc"></div>
-      <div class="stale" id="stale" hidden>Hinweis: History ist älter als 30 Min. Live-Pille zeigt aktuellen Zustand.</div>
-    </section>
-  </div>
+    <div class="heat">
+      <h3>Kalender-Heatmap (letzte 90 Tage)</h3>
+      <div class="hm" id="heatmap"></div>
+    </div>
+  </section>
+</div>
 
-  <div class="tip" id="tip">
-    <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
-    <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
-  </div>
+<!-- Tooltip -->
+<div class="tip" id="tip">
+  <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
+  <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
+</div>
 
 <script>
-  // Endpunkte
-  const API_HISTORY='/api/history';
-  const API_LIVE   ='/api/bedrock';
+/* =========================
+   Konfiguration (Frontend)
+   =========================
+   Optional: Discord-Webhook URL in localStorage ablegen:
+   localStorage.setItem('status_webhook','https://discord.com/api/webhooks/....');
+   Optional: incidents.json bereitstellen unter /api/incidents.json
+   Format:
+   [
+     {"from":"2025-09-18T10:20:00Z","to":"2025-09-18T15:33:00Z","reason":"Wartung: Proxmox"},
+     {"from":"2025-09-12T21:05:00Z","to":"2025-09-12T21:22:00Z","reason":"Crash: Plugin XYZ"}
+   ]
+*/
+const API_HISTORY='/api/history';
+const API_LIVE='/api/bedrock';
+const API_INCIDENTS='/api/incidents.json'; // optional
 
-  // Konstanten
-  const SLOT_MIN = 5;                       // Messintervall Ziel
-  const DAY_MS   = 24*60*60*1000;
-  const INCIDENT_MIN = 15;                  // ab 15 Min als Incident zählen
-  const STALE_MIN = 30;                     // Warnung wenn History >30 Min alt
+const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
 
-  // DOM
-  const $ = id=>document.getElementById(id);
-  const barsEl=$('bars'), rangeCtl=$('range'), autoCtl=$('auto');
-  const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHost=$('svc-host');
-  const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
-  const footL=$('foot-left'), footR=$('foot-right'), metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale');
-  const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
+/* DOM Helpers */
+const $=id=>document.getElementById(id);
+const barsEl=$('bars'), hoverLine=$('hoverline'), rangeCtl=$('range'), autoCtl=$('auto');
+const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHost=$('svc-host');
+const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
+const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('heatmap');
+const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
 
-  // Utils
-  const fmtPct=v=> (isNaN(v)?'–':(v*100).toFixed(2)+'%');
-  const fmtDur=m=> m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
-  const localTime=iso=> new Date(iso).toLocaleString();
-  const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-  const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
-  const statusClass = ok => ok===true?'g': ok===false?'r':'u';
-  const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
+/* Utils */
+const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
+const fmtPct=v=> (isNaN(v)?'–':(v*100).toFixed(2)+'%');
+const fmtDur=m=> m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
+const localTime=iso=> new Date(iso).toLocaleString();
+const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+const statusClass = ok => ok===true?'g': ok===false?'r':'u';
+const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
 
-  async function fetchJSON(u){
-    const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return r.json();
-  }
-  function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
-  function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'–'}`;}
+async function fetchJSON(u, opts={}){
+  const r=await fetch(u, {cache:'no-store',...opts});
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
+function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'–'}`;}
 
-  // History → Intervall-Liste mit realer Dauer
-  function toIntervals(points, nowIso){
-    const arr=[...points].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-    const out=[];
-    for(let i=0;i<arr.length;i++){
-      const from = new Date(arr[i].ts);
-      const to   = new Date(i<arr.length-1? arr[i+1].ts : (nowIso||new Date().toISOString()));
-      let mins = Math.max(1, Math.round((to-from)/60000));          // mindestens 1 Minute zählen
-      // Hard-cap, damit lange Lücken nicht riesig werden (optional):
-      if(mins>30) mins = 30;                                        // 30-Min Höchstwert pro Intervall
-      out.push({from:arr[i].ts, to:to.toISOString(), ok:arr[i].ok, mins});
-    }
-    return out;
-  }
-
-  // 24h: reine 5-Min-Punkte anzeigen, Kennzahlen aus realer Dauer
-  function render24h(points){
-    clear(barsEl); barsEl.className='bars mode-24h';
-    const frag=document.createDocumentFragment();
-    for(const p of points){
-      const el=document.createElement('div');
-      el.className='bar '+statusClass(p.ok);
-      el.style.height='60px';
-      el.tabIndex=0;
-      const show=(e)=> tipShow(e,'5 Minuten',p.ok,p.ts,'History');
-      el.addEventListener('mouseenter',show); el.addEventListener('mousemove',show);
-      el.addEventListener('mouseleave',tipHide); el.addEventListener('focus',show); el.addEventListener('blur',tipHide);
-      frag.appendChild(el);
-    }
-    barsEl.appendChild(frag);
-    footL.textContent='24 hours'; footR.textContent='Today';
-  }
-
-  // Tage aggregieren nach realer Dauer (nicht nach Punktanzahl)
-  function daysFromIntervals(intervals){
-    const map=new Map();
-    for(const it of intervals){
-      const k = new Date(it.from); const key = `${k.getFullYear()}-${k.getMonth()+1}-${k.getDate()}`;
-      const m = map.get(key)||{from:it.from,on:0,off:0,unk:0,total:0};
-      if(it.ok===true) m.on += it.mins; else if(it.ok===false) m.off += it.mins; else m.unk += it.mins;
-      m.total += it.mins; map.set(key,m);
-    }
-    return [...map.values()];
-  }
-  // Farbe je Tag
-  function classifyDay(d){
-    const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
-    if(offPct>=0.5) return 'r';
-    if(d.off>0 || unkPct>=0.2) return 'o';
-    return 'g';
-  }
-  function renderDays(days,labelLeft){
-    clear(barsEl); barsEl.className = 'bars '+(labelLeft==='7 days'?'mode-7d':'mode-30d');
-    const frag=document.createDocumentFragment();
-    for(const d of days){
-      const el=document.createElement('div');
-      el.className='bar '+(classifyDay(d)==='o'?'o':classifyDay(d));
-      el.style.height='70px';
-      el.tabIndex=0;
-      const show=(e)=>{
-        const on=(d.on/d.total)*100, off=(d.off/d.total)*100, unk=(d.unk/d.total)*100;
-        tipShow(e,'1 Tag', classifyDay(d)==='r'?false: (classifyDay(d)==='g'?true:null), d.from,
-                `History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`);
-      };
-      el.addEventListener('mouseenter',show); el.addEventListener('mousemove',show);
-      el.addEventListener('mouseleave',tipHide); el.addEventListener('focus',show); el.addEventListener('blur',tipHide);
-      frag.appendChild(el);
-    }
-    barsEl.appendChild(frag);
-    footL.textContent=labelLeft; footR.textContent='Today';
-  }
-
-  // Incidents aus Intervallen (zusammenhängende Offlines addieren)
-  function computeIncidents(intervals){
-    const out=[]; let i=0;
-    while(i<intervals.length){
-      if(intervals[i].ok===false){
-        let from=intervals[i].from, mins=0, j=i;
-        while(j<intervals.length && intervals[j].ok===false){ mins += intervals[j].mins; j++; }
-        if(mins>=INCIDENT_MIN) out.push({from, to: intervals[j-1].to, mins});
-        i=j;
-      }else i++;
-    }
-    return out;
-  }
-
-  // KPIs aus Intervallen
-  function kpisFromIntervals(intervals){
-    let on=0, off=0, unk=0;
-    for(const it of intervals){
-      if(it.ok===true) on+=it.mins; else if(it.ok===false) off+=it.mins; else unk+=it.mins;
-    }
-    const total=on+off+unk || 1;
-    return {
-      onlineSlots:on, offlineSlots:off, unknownSlots:unk, totalSlots: intervals.length,
-      uptime: on/(on+off),                       // unknown zählt nicht gegen Uptime
-      downtimeMin: off
-    };
-  }
-
-  // Tooltip
-  function tipShow(e,range,ok,ts,src){
-    $('tip-status').textContent = statusText(ok);
-    $('tip-ts').textContent     = range==='1 Tag' ? localDate(ts) : localTime(ts);
-    $('tip-src').textContent    = src||'History';
-    $('tip-range').textContent  = range;
-    TIP.style.display='block';
-    TIP.style.left = clamp(e.clientX, 100, window.innerWidth-100)+'px';
-    TIP.style.top  = clamp(e.clientY, 80, window.innerHeight-40)+'px';
-  }
-  function tipHide(){ TIP.style.display='none' }
-
-  // Main
-  let timer=null;
-
-  async function load(){
-    // Live Pille
-    try{ const live=await fetchJSON(API_LIVE); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
-
-    // History
-    let data;
-    try{ data=await fetchJSON(API_HISTORY); }catch(e){ fallback(); return; }
-    const hist = Array.isArray(data.history)?data.history:[];
-    const generated = data.generated || new Date().toISOString();
-    const svc = data.service || {};
-    $('svc-name').textContent = svc.name || 'Minecraft Bedrock';
-    $('svc-host').textContent = [svc.host,svc.port].filter(Boolean).join(':');
-
-    // Stale Hinweis
-    const stale = (Date.now() - new Date(generated).getTime())/60000 > STALE_MIN;
-    staleEl.hidden = !stale;
-
-    const mode = (rangeCtl.querySelector('input:checked')?.value)||'24h';
-    metaSrc.textContent='Quelle: History ✓';
-
-    // Intervall-Liste (reale Dauer)
-    const intervals = toIntervals(hist, generated);
-
-    if(mode==='24h'){
-      const since = Date.now() - DAY_MS;
-      const last24 = intervals.filter(i => new Date(i.from).getTime() >= since);
-      render24h(hist.filter(p => new Date(p.ts).getTime() >= since)); // Anzeige: Punkte
-      const k = kpisFromIntervals(last24);
-      uptimeEl.textContent = fmtPct(k.uptime);
-      dtimeEl.textContent  = fmtDur(Math.round(k.downtimeMin));
-      kOnline.textContent  = Math.round(k.onlineSlots/SLOT_MIN);   // als „Punkte“ etwa in 5-Min-Einheiten
-      kOffline.textContent = Math.round(k.offlineSlots/SLOT_MIN);
-      kUnknown.textContent = Math.round(k.unknownSlots/SLOT_MIN);
-      kPoints.textContent  = hist.filter(p => new Date(p.ts).getTime() >= since).length;
-
-      const incidents = computeIncidents(last24);
-      if(incidents.length){
-        const ul=document.createElement('ul');
-        incidents.forEach(ev=>{
-          const li=document.createElement('li');
-          li.textContent = `Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})`;
-          ul.appendChild(li);
-        });
-        incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
-      }else incWrap.innerHTML='';
-
-    } else {
-      const span = mode==='7d' ? 7*DAY_MS : 30*DAY_MS;
-      const since = Date.now() - span;
-      const inSpan = intervals.filter(i => new Date(i.from).getTime() >= since);
-      const days = daysFromIntervals(inSpan);
-      renderDays(days, mode==='7d'?'7 days':'30 days');
-
-      const k = kpisFromIntervals(inSpan);   // exakt aus Minuten
-      uptimeEl.textContent = fmtPct(k.uptime);
-      dtimeEl.textContent  = fmtDur(Math.round(k.downtimeMin));
-      kOnline.textContent  = Math.round(k.onlineSlots/SLOT_MIN);
-      kOffline.textContent = Math.round(k.offlineSlots/SLOT_MIN);
-      kUnknown.textContent = Math.round(k.unknownSlots/SLOT_MIN);
-      kPoints.textContent  = inSpan.length;
-      incWrap.innerHTML=''; // Tagesansicht: keine Detail-Incidents
+/* ===== Lazy-Load + Cache (per Range) ===== */
+const cacheKey=(range)=>`hist:${range}`;
+async function loadHistory(range){
+  const qs=`?range=${encodeURIComponent(range)}`;
+  // 1) Versuche range-Endpunkt
+  try{
+    const data=await fetchJSON(API_HISTORY+qs);
+    localStorage.setItem(cacheKey(range), JSON.stringify({t:Date.now(), data}));
+    return data;
+  }catch(e){
+    // 2) Fallback: Full
+    try{
+      const data=await fetchJSON(API_HISTORY);
+      localStorage.setItem(cacheKey(range), JSON.stringify({t:Date.now(), data}));
+      return data;
+    }catch(err){
+      // 3) Offline-Cache
+      const raw=localStorage.getItem(cacheKey(range));
+      if(raw){ return JSON.parse(raw).data; }
+      throw err;
     }
   }
+}
 
-  function fallback(){
-    clear(barsEl); barsEl.className='bars mode-24h';
-    uptimeEl.textContent='–'; dtimeEl.textContent='–';
-    kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='1'; kPoints.textContent='1';
-    incWrap.innerHTML=''; metaSrc.textContent='Quelle: Live (Fallback)'; footL.textContent='–'; footR.textContent='–';
+/* History → Intervall-Liste (reale Dauer) */
+function toIntervals(points, nowIso){
+  const arr=[...points].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  const out=[];
+  for(let i=0;i<arr.length;i++){
+    const from=new Date(arr[i].ts);
+    const to=new Date(i<arr.length-1?arr[i+1].ts:(nowIso||new Date().toISOString()));
+    let mins=Math.max(1, Math.round((to-from)/60000));
+    if(mins>30) mins=30; // cap Einzelintervall
+    out.push({from:arr[i].ts,to:to.toISOString(),ok:arr[i].ok,mins});
   }
+  return out;
+}
 
-  function startTimer(){ stopTimer(); timer=setInterval(load,60_000); }
-  function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
+/* Incidents aus Intervallen (zusammenhängend offline, echte Dauer) */
+function computeIncidents(intervals,minMinutes=INCIDENT_MIN){
+  const out=[]; let i=0;
+  while(i<intervals.length){
+    if(intervals[i].ok===false){
+      let from=intervals[i].from, mins=0, j=i;
+      while(j<intervals.length && intervals[j].ok===false){ mins+=intervals[j].mins; j++; }
+      if(mins>=minMinutes) out.push({from,to:intervals[j-1].to,mins});
+      i=j;
+    } else i++;
+  }
+  return out;
+}
 
-  // Events
-  rangeCtl.addEventListener('change', e=>{
-    const v=e.target.value;
-    barsEl.classList.toggle('mode-24h', v==='24h');
-    barsEl.classList.toggle('mode-7d',  v==='7d');
-    barsEl.classList.toggle('mode-30d', v==='30d');
-    footL.textContent= v==='24h'?'24 hours': (v==='7d'?'7 days':'30 days');
-    footR.textContent='Today';
-    load();
+/* KPIs aus Intervallen */
+function kpisFromIntervals(intervals){
+  let on=0,off=0,unk=0;
+  for(const it of intervals){ if(it.ok===true) on+=it.mins; else if(it.ok===false) off+=it.mins; else unk+=it.mins; }
+  const total=on+off+unk||1;
+  return {
+    uptime: on/(on+off),
+    downtimeMin: off,
+    onlineSlots:Math.round(on/SLOT_MIN),
+    offlineSlots:Math.round(off/SLOT_MIN),
+    unknownSlots:Math.round(unk/SLOT_MIN),
+    points: intervals.length
+  };
+}
+
+/* Tagesaggregation (echte Dauer) + Klassifikation */
+function daysFromIntervals(intervals){
+  const map=new Map();
+  for(const it of intervals){
+    const d=new Date(it.from); const key=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    const m=map.get(key)||{from:it.from,on:0,off:0,unk:0,total:0};
+    if(it.ok===true) m.on+=it.mins; else if(it.ok===false) m.off+=it.mins; else m.unk+=it.mins;
+    m.total+=it.mins; map.set(key,m);
+  }
+  return [...map.values()].sort((a,b)=>new Date(a.from)-new Date(b.from));
+}
+function classifyDay(d){
+  const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
+  if(offPct>=0.5) return 'r';
+  if(d.off>0 || unkPct>=0.2) return 'o';
+  return 'g';
+}
+
+/* Render Bars */
+function render24h(points){
+  clear(barsEl); barsEl.className='bars mode-24h';
+  const frag=document.createDocumentFragment();
+  points.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='bar '+statusClass(p.ok);
+    el.style.height='60px';
+    el.addEventListener('mousemove',ev=>showTip(ev,'5 Minuten',p.ok,p.ts,'History'));
+    el.addEventListener('mouseenter',ev=>showTip(ev,'5 Minuten',p.ok,p.ts,'History'));
+    el.addEventListener('mouseleave',hideTip);
+    el.addEventListener('touchstart',ev=>{showTip(ev.touches[0],'5 Minuten',p.ok,p.ts,'History');}, {passive:true});
+    frag.appendChild(el);
   });
-  autoCtl.addEventListener('change', ()=> autoCtl.checked?startTimer():stopTimer());
+  barsEl.appendChild(frag);
+}
+function renderDays(days,labelLeft){
+  clear(barsEl); barsEl.className='bars '+(labelLeft==='7 days'?'mode-7d':'mode-30d');
+  const frag=document.createDocumentFragment();
+  days.forEach(d=>{
+    const el=document.createElement('div');
+    el.className='bar '+(classifyDay(d)==='o'?'o':classifyDay(d));
+    el.style.height='70px';
+    const on=(d.on/d.total)*100, off=(d.off/d.total)*100, unk=(d.unk/d.total)*100;
+    const state = classifyDay(d)==='r'?false:(classifyDay(d)==='g'?true:null);
+    const txt=`History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`;
+    el.addEventListener('mousemove',ev=>showTip(ev,'1 Tag',state,d.from,txt));
+    el.addEventListener('mouseenter',ev=>showTip(ev,'1 Tag',state,d.from,txt));
+    el.addEventListener('mouseleave',hideTip);
+    el.addEventListener('touchstart',ev=>{showTip(ev.touches[0],'1 Tag',state,d.from,txt);},{passive:true});
+    frag.appendChild(el);
+  });
+  barsEl.appendChild(frag);
+}
 
-  // Init
-  load(); startTimer();
-  document.addEventListener('scroll', ()=> TIP.style.display='none', true);
-  window.addEventListener('resize', ()=> TIP.style.display='none');
+/* Hoverline (Maus / Touch) */
+barsEl.addEventListener('mousemove',e=>{
+  const rect=barsEl.getBoundingClientRect();
+  hoverLine.style.left=(clamp(e.clientX-rect.left,0,rect.width))+'px';
+  hoverLine.style.display='block';
+});
+barsEl.addEventListener('mouseleave',()=>hoverLine.style.display='none');
+barsEl.addEventListener('touchstart',e=>{
+  const rect=barsEl.getBoundingClientRect();
+  hoverLine.style.left=(clamp(e.touches[0].clientX-rect.left,0,rect.width))+'px';
+  hoverLine.style.display='block';
+},{passive:true});
+document.addEventListener('scroll',()=>{hideTip(); hoverLine.style.display='none';}, true);
+
+/* Tooltip */
+function showTip(e,range,ok,ts,src){
+  TIP_ST.textContent=statusText(ok);
+  TIP_TS.textContent=(range==='1 Tag')?localDate(ts):localTime(ts);
+  TIP_SRC.textContent=src||'';
+  TIP_RANGE.textContent=range;
+  TIP.style.display='block';
+  TIP.style.left=clamp(e.clientX,100,window.innerWidth-100)+'px';
+  TIP.style.top =clamp(e.clientY,80,window.innerHeight-40)+'px';
+}
+function hideTip(){ TIP.style.display='none'; }
+
+/* Heatmap (90 Tage) */
+function renderHeatmap(days){
+  clear(heatEl);
+  const last90 = days.slice(-90);
+  // 13 Spalten = ~Quartal; wir packen einfach linear (7x13 ~91)
+  last90.forEach(d=>{
+    const c=document.createElement('div');
+    c.className='cell '+(classifyDay(d));
+    c.title=`${localDate(d.from)} – on ${((d.on/d.total)*100).toFixed(1)}%, off ${((d.off/d.total)*100).toFixed(1)}%`;
+    heatEl.appendChild(c);
+  });
+  const label=document.createElement('div'); label.className='label';
+  label.textContent=`Zeitraum: ${localDate(last90[0]?.from||new Date())} – ${localDate(last90[last90.length-1]?.from||new Date())}`;
+  heatEl.appendChild(label);
+}
+
+/* Incidents: externe Gründe mergen + optional Discord-Webhook */
+async function loadExternalIncidentReasons(){
+  try{ return await fetchJSON(API_INCIDENTS); } catch { return []; }
+}
+function overlap(aFrom,aTo,bFrom,bTo){
+  return (new Date(aFrom) <= new Date(bTo)) && (new Date(bFrom) <= new Date(aTo));
+}
+async function renderIncidents(intervals){
+  const incidents=computeIncidents(intervals);
+  const reasons=await loadExternalIncidentReasons();
+  if(!incidents.length){ incWrap.innerHTML=''; return; }
+  const ul=document.createElement('ul');
+  incidents.forEach(ev=>{
+    const match = reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
+    const li=document.createElement('li');
+    li.textContent=`Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})`+(match?` – Grund: ${match.reason}`:'');
+    ul.appendChild(li);
+  });
+  incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
+  // Discord Webhook (nur neue Incidents melden)
+  try{
+    const wh=localStorage.getItem('status_webhook');
+    if(wh){
+      const lastKey='last_incident_to';
+      const lastTo=localStorage.getItem(lastKey);
+      const newest=incidents[incidents.length-1]?.to;
+      if(newest && newest!==lastTo){
+        fetch(wh,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({content:`🟥 **Downtime**: ${localTime(incidents[incidents.length-1].from)} – ${localTime(newest)} (${fmtDur(Math.round(incidents[incidents.length-1].mins))})`})
+        }).catch(()=>{});
+        localStorage.setItem(lastKey,newest);
+      }
+    }
+  }catch{}
+}
+
+/* Swipe für Range */
+let touchStartX=null;
+barsEl.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
+barsEl.addEventListener('touchend',e=>{
+  if(touchStartX==null) return;
+  const dx=e.changedTouches[0].clientX - touchStartX;
+  touchStartX=null;
+  const order=['24h','7d','30d'];
+  const current=rangeCtl.querySelector('input:checked')?.value||'24h';
+  let idx=order.indexOf(current);
+  if(dx<-50 && idx<order.length-1) idx++;
+  if(dx> 50 && idx>0) idx--;
+  const v=order[idx];
+  document.querySelector(`input[name="r"][value="${v}"]`).checked=true;
+  onRangeChange(v);
+});
+
+/* Main Load */
+let timer=null;
+async function load(range){
+  // Live
+  try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }
+  catch{ setLive(null,null); }
+
+  // History (lazy + cache)
+  let data;
+  try{ data=await loadHistory(range); }
+  catch{ // Fehler robust anzeigen
+    metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
+    kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='0'; kPoints.textContent='0';
+    incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>';
+    return;
+  }
+
+  const hist=Array.isArray(data.history)?data.history:[];
+  const generated=data.generated || new Date().toISOString();
+  const svc=data.service||{};
+  $('svc-name').textContent=svc.name||'Minecraft Bedrock';
+  $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
+
+  const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN;
+  staleEl.hidden=!stale;
+
+  // Intervals (echte Dauer)
+  const intervals=toIntervals(hist,generated);
+
+  if(range==='24h'){
+    const since=Date.now()-DAY_MS;
+    const last24points=hist.filter(p=>new Date(p.ts).getTime()>=since);
+    const last24=intervals.filter(i=>new Date(i.from).getTime()>=since);
+    render24h(last24points);
+    const k=kpisFromIntervals(last24);
+    uptimeEl.textContent=fmtPct(k.uptime);
+    dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
+    kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
+    await renderIncidents(last24);
+  }else{
+    const span=range==='7d'?7*DAY_MS:30*DAY_MS;
+    const since=Date.now()-span;
+    const inSpan=intervals.filter(i=>new Date(i.from).getTime()>=since);
+    const days=daysFromIntervals(inSpan);
+    renderDays(days, range==='7d'?'7 days':'30 days');
+    const k=kpisFromIntervals(inSpan);
+    uptimeEl.textContent=fmtPct(k.uptime);
+    dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
+    kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
+    incWrap.innerHTML=''; // keine Detail-Incidents in Tagesansicht
+  }
+
+  // Heatmap aus letzten 90 Tagen (immer aktualisieren)
+  renderHeatmap(daysFromIntervals(intervals));
+  metaSrc.textContent='Quelle: History ✓';
+}
+
+/* Range wechseln */
+function onRangeChange(v){
+  barsEl.classList.toggle('mode-24h',v==='24h');
+  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
+  $('foot-right').textContent='Today';
+  load(v);
+}
+
+/* Timer */
+function startTimer(){ stopTimer(); timer=setInterval(()=>{ const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v); },60_000); }
+function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
+
+/* Events */
+rangeCtl.addEventListener('change',e=> onRangeChange(e.target.value));
+autoCtl.addEventListener('change', e=> e.target.checked?startTimer():stopTimer());
+
+/* Init */
+onRangeChange('24h'); startTimer();
 </script>
 </body>
 </html>
