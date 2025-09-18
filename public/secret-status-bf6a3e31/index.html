@@ -12,6 +12,7 @@
   --fg:#e6e7eb; --muted:#9aa0a6;
   --g:#19c37d; --r:#ef4444; --o:#f59e0b; --u:#95a3b6;
   --radius:12px;
+  --cols: 288; /* wird per JS gesetzt */
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -47,16 +48,35 @@ h1{margin:0;font-size:22px}
 .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
 .kpi strong{color:var(--fg);font-weight:600}
 
-/* Bars + Hoverline (responsive grid) */
-.bars-wrap{margin-top:12px}
-.bars{position:relative;display:flex;gap:6px;align-items:flex-end;min-height:90px;overflow-x:auto;
-  padding:10px;border-radius:12px;background:linear-gradient(180deg,#0a0e19,#0a0d14)}
-.bar{width:12px;flex:0 0 12px;border-radius:8px;background:#2a3242;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+/* Bars als Grid (keine horizontale Scrollbar) */
+.bars-wrap{margin-top:12px;position:relative}
+.bars{
+  position:relative;
+  display:grid;
+  grid-template-columns: repeat(var(--cols), minmax(2px, 1fr));
+  gap:6px;
+  align-items:end;
+  min-height:90px;
+  padding:10px;
+  border-radius:12px;
+  background:linear-gradient(180deg,#0a0e19,#0a0d14);
+  overflow:hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y; /* Seite scrollt vertikal normal, keine horizontale „Reibung“ */
+}
+.bars.mode-24h{min-height:70px; gap:2px}
+.bar{
+  height:60px; border-radius:8px; background:#2a3242; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)
+}
 .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.o{background:var(--o)} .bar.u{background:var(--u)}
-.bars.mode-24h .bar{width:4px;flex-basis:4px}      /* fein auf 24h */
-.bars.mode-24h{min-height:70px}
-.hoverline{position:absolute;top:0;bottom:0;width:1px;background:#ffffff44;pointer-events:none;display:none}
 
+/* Hoverline nur Desktop (wird via JS ein-/ausgeblendet) */
+.hoverline{
+  position:absolute; top:10px; bottom:10px; width:2px;
+  background:#ffffff40; pointer-events:none; display:none;
+}
+
+/* Footer Text */
 .footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
 
 /* Legend */
@@ -165,25 +185,14 @@ h1{margin:0;font-size:22px}
 </div>
 
 <script>
-/* =========================
-   Konfiguration (Frontend)
-   =========================
-   Optional: Discord-Webhook URL in localStorage ablegen:
-   localStorage.setItem('status_webhook','https://discord.com/api/webhooks/....');
-   Optional: incidents.json bereitstellen unter /api/incidents.json
-   Format:
-   [
-     {"from":"2025-09-18T10:20:00Z","to":"2025-09-18T15:33:00Z","reason":"Wartung: Proxmox"},
-     {"from":"2025-09-12T21:05:00Z","to":"2025-09-12T21:22:00Z","reason":"Crash: Plugin XYZ"}
-   ]
-*/
+/* === Konfiguration / Endpunkte === */
 const API_HISTORY='/api/history';
 const API_LIVE='/api/bedrock';
-const API_INCIDENTS='/api/incidents.json'; // optional
+const API_INCIDENTS='/api/incidents.json'; // oder via Function /api/incidents
 
 const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
 
-/* DOM Helpers */
+/* DOM */
 const $=id=>document.getElementById(id);
 const barsEl=$('bars'), hoverLine=$('hoverline'), rangeCtl=$('range'), autoCtl=$('auto');
 const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHost=$('svc-host');
@@ -199,54 +208,36 @@ const localTime=iso=> new Date(iso).toLocaleString();
 const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
 const statusClass = ok => ok===true?'g': ok===false?'r':'u';
 const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
-async function fetchJSON(u, opts={}){
-  const r=await fetch(u, {cache:'no-store',...opts});
-  if(!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
+async function fetchJSON(u, opts={}){ const r=await fetch(u,{cache:'no-store',...opts}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
 function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
 function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'–'}`;}
 
-/* ===== Lazy-Load + Cache (per Range) ===== */
+/* Lazy + Cache */
 const cacheKey=(range)=>`hist:${range}`;
 async function loadHistory(range){
   const qs=`?range=${encodeURIComponent(range)}`;
-  // 1) Versuche range-Endpunkt
-  try{
-    const data=await fetchJSON(API_HISTORY+qs);
-    localStorage.setItem(cacheKey(range), JSON.stringify({t:Date.now(), data}));
-    return data;
-  }catch(e){
-    // 2) Fallback: Full
-    try{
-      const data=await fetchJSON(API_HISTORY);
-      localStorage.setItem(cacheKey(range), JSON.stringify({t:Date.now(), data}));
-      return data;
-    }catch(err){
-      // 3) Offline-Cache
-      const raw=localStorage.getItem(cacheKey(range));
-      if(raw){ return JSON.parse(raw).data; }
-      throw err;
-    }
+  try{ const d=await fetchJSON(API_HISTORY+qs); localStorage.setItem(cacheKey(range),JSON.stringify({t:Date.now(),d})); return d; }
+  catch(e){
+    try{ const d=await fetchJSON(API_HISTORY); localStorage.setItem(cacheKey(range),JSON.stringify({t:Date.now(),d})); return d; }
+    catch(err){ const raw=localStorage.getItem(cacheKey(range)); if(raw) return JSON.parse(raw).d; throw err; }
   }
 }
 
-/* History → Intervall-Liste (reale Dauer) */
+/* Intervalls / KPIs / Incidents */
 function toIntervals(points, nowIso){
   const arr=[...points].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
   const out=[];
   for(let i=0;i<arr.length;i++){
     const from=new Date(arr[i].ts);
     const to=new Date(i<arr.length-1?arr[i+1].ts:(nowIso||new Date().toISOString()));
-    let mins=Math.max(1, Math.round((to-from)/60000));
-    if(mins>30) mins=30; // cap Einzelintervall
+    let mins=Math.max(1,Math.round((to-from)/60000));
+    if(mins>30) mins=30;
     out.push({from:arr[i].ts,to:to.toISOString(),ok:arr[i].ok,mins});
   }
   return out;
 }
-
-/* Incidents aus Intervallen (zusammenhängend offline, echte Dauer) */
 function computeIncidents(intervals,minMinutes=INCIDENT_MIN){
   const out=[]; let i=0;
   while(i<intervals.length){
@@ -259,23 +250,13 @@ function computeIncidents(intervals,minMinutes=INCIDENT_MIN){
   }
   return out;
 }
-
-/* KPIs aus Intervallen */
 function kpisFromIntervals(intervals){
   let on=0,off=0,unk=0;
   for(const it of intervals){ if(it.ok===true) on+=it.mins; else if(it.ok===false) off+=it.mins; else unk+=it.mins; }
   const total=on+off+unk||1;
-  return {
-    uptime: on/(on+off),
-    downtimeMin: off,
-    onlineSlots:Math.round(on/SLOT_MIN),
-    offlineSlots:Math.round(off/SLOT_MIN),
-    unknownSlots:Math.round(unk/SLOT_MIN),
-    points: intervals.length
-  };
+  return {uptime:on/(on+off), downtimeMin:off, onlineSlots:Math.round(on/SLOT_MIN),
+          offlineSlots:Math.round(off/SLOT_MIN), unknownSlots:Math.round(unk/SLOT_MIN), points:intervals.length};
 }
-
-/* Tagesaggregation (echte Dauer) + Klassifikation */
 function daysFromIntervals(intervals){
   const map=new Map();
   for(const it of intervals){
@@ -286,41 +267,34 @@ function daysFromIntervals(intervals){
   }
   return [...map.values()].sort((a,b)=>new Date(a.from)-new Date(b.from));
 }
-function classifyDay(d){
-  const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
-  if(offPct>=0.5) return 'r';
-  if(d.off>0 || unkPct>=0.2) return 'o';
-  return 'g';
-}
+function classifyDay(d){ const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
+  if(offPct>=0.5) return 'r'; if(d.off>0 || unkPct>=0.2) return 'o'; return 'g'; }
 
-/* Render Bars */
+/* Render: Grid */
+function setCols(n){ barsEl.style.setProperty('--cols', Math.max(1,n)); }
 function render24h(points){
-  clear(barsEl); barsEl.className='bars mode-24h';
+  clear(barsEl); barsEl.className='bars mode-24h'; setCols(points.length);
   const frag=document.createDocumentFragment();
   points.forEach(p=>{
-    const el=document.createElement('div');
-    el.className='bar '+statusClass(p.ok);
-    el.style.height='60px';
-    el.addEventListener('mousemove',ev=>showTip(ev,'5 Minuten',p.ok,p.ts,'History'));
+    const el=document.createElement('div'); el.className='bar '+statusClass(p.ok);
     el.addEventListener('mouseenter',ev=>showTip(ev,'5 Minuten',p.ok,p.ts,'History'));
+    el.addEventListener('mousemove',ev=>showTip(ev,'5 Minuten',p.ok,p.ts,'History'));
     el.addEventListener('mouseleave',hideTip);
-    el.addEventListener('touchstart',ev=>{showTip(ev.touches[0],'5 Minuten',p.ok,p.ts,'History');}, {passive:true});
+    el.addEventListener('touchstart',ev=>{showTip(ev.touches[0],'5 Minuten',p.ok,p.ts,'History');},{passive:true});
     frag.appendChild(el);
   });
   barsEl.appendChild(frag);
 }
 function renderDays(days,labelLeft){
-  clear(barsEl); barsEl.className='bars '+(labelLeft==='7 days'?'mode-7d':'mode-30d');
+  clear(barsEl); barsEl.className='bars '+(labelLeft==='7 days'?'mode-7d':'mode-30d'); setCols(days.length);
   const frag=document.createDocumentFragment();
   days.forEach(d=>{
-    const el=document.createElement('div');
-    el.className='bar '+(classifyDay(d)==='o'?'o':classifyDay(d));
-    el.style.height='70px';
+    const el=document.createElement('div'); el.className='bar '+(classifyDay(d)==='o'?'o':classifyDay(d));
     const on=(d.on/d.total)*100, off=(d.off/d.total)*100, unk=(d.unk/d.total)*100;
     const state = classifyDay(d)==='r'?false:(classifyDay(d)==='g'?true:null);
     const txt=`History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`;
-    el.addEventListener('mousemove',ev=>showTip(ev,'1 Tag',state,d.from,txt));
     el.addEventListener('mouseenter',ev=>showTip(ev,'1 Tag',state,d.from,txt));
+    el.addEventListener('mousemove',ev=>showTip(ev,'1 Tag',state,d.from,txt));
     el.addEventListener('mouseleave',hideTip);
     el.addEventListener('touchstart',ev=>{showTip(ev.touches[0],'1 Tag',state,d.from,txt);},{passive:true});
     frag.appendChild(el);
@@ -328,37 +302,40 @@ function renderDays(days,labelLeft){
   barsEl.appendChild(frag);
 }
 
-/* Hoverline (Maus / Touch) */
-barsEl.addEventListener('mousemove',e=>{
-  const rect=barsEl.getBoundingClientRect();
-  hoverLine.style.left=(clamp(e.clientX-rect.left,0,rect.width))+'px';
-  hoverLine.style.display='block';
-});
-barsEl.addEventListener('mouseleave',()=>hoverLine.style.display='none');
-barsEl.addEventListener('touchstart',e=>{
-  const rect=barsEl.getBoundingClientRect();
-  hoverLine.style.left=(clamp(e.touches[0].clientX-rect.left,0,rect.width))+'px';
-  hoverLine.style.display='block';
-},{passive:true});
-document.addEventListener('scroll',()=>{hideTip(); hoverLine.style.display='none';}, true);
+/* Hoverline – nur Desktop */
+if(!isTouch){
+  barsEl.addEventListener('mousemove',e=>{
+    const rect=barsEl.getBoundingClientRect();
+    const x=clamp(e.clientX-rect.left,0,rect.width);
+    // auf Spaltenraster snappen:
+    const cols=parseInt(getComputedStyle(barsEl).getPropertyValue('--cols'))||1;
+    const gap=parseFloat(getComputedStyle(barsEl).gap)||0;
+    const cellW=(rect.width - gap*(cols-1))/cols;
+    const idx=Math.round(x / (cellW+gap));
+    const snapped = clamp(idx*(cellW+gap), 0, rect.width);
+    hoverLine.style.left=snapped+'px';
+    hoverLine.style.display='block';
+  });
+  barsEl.addEventListener('mouseleave',()=>{hoverLine.style.display='none'; hideTip();});
+}else{
+  hoverLine.style.display='none';
+}
 
 /* Tooltip */
 function showTip(e,range,ok,ts,src){
   TIP_ST.textContent=statusText(ok);
   TIP_TS.textContent=(range==='1 Tag')?localDate(ts):localTime(ts);
-  TIP_SRC.textContent=src||'';
-  TIP_RANGE.textContent=range;
+  TIP_SRC.textContent=src||''; TIP_RANGE.textContent=range;
   TIP.style.display='block';
   TIP.style.left=clamp(e.clientX,100,window.innerWidth-100)+'px';
   TIP.style.top =clamp(e.clientY,80,window.innerHeight-40)+'px';
 }
 function hideTip(){ TIP.style.display='none'; }
 
-/* Heatmap (90 Tage) */
+/* Heatmap */
 function renderHeatmap(days){
   clear(heatEl);
   const last90 = days.slice(-90);
-  // 13 Spalten = ~Quartal; wir packen einfach linear (7x13 ~91)
   last90.forEach(d=>{
     const c=document.createElement('div');
     c.className='cell '+(classifyDay(d));
@@ -366,100 +343,75 @@ function renderHeatmap(days){
     heatEl.appendChild(c);
   });
   const label=document.createElement('div'); label.className='label';
-  label.textContent=`Zeitraum: ${localDate(last90[0]?.from||new Date())} – ${localDate(last90[last90.length-1]?.from||new Date())}`;
+  if(last90.length){
+    label.textContent=`Zeitraum: ${localDate(last90[0].from)} – ${localDate(last90[last90.length-1].from)}`;
+  }else{ label.textContent='Keine Daten'; }
   heatEl.appendChild(label);
 }
 
-/* Incidents: externe Gründe mergen + optional Discord-Webhook */
-async function loadExternalIncidentReasons(){
-  try{ return await fetchJSON(API_INCIDENTS); } catch { return []; }
-}
-function overlap(aFrom,aTo,bFrom,bTo){
-  return (new Date(aFrom) <= new Date(bTo)) && (new Date(bFrom) <= new Date(aTo));
-}
+/* Incidents + externe Gründe + optional Discord */
+async function loadExternalIncidentReasons(){ try{ return await fetchJSON(API_INCIDENTS); } catch { return []; } }
+function overlap(aFrom,aTo,bFrom,bTo){ return (new Date(aFrom)<=new Date(bTo)) && (new Date(bFrom)<=new Date(aTo)); }
 async function renderIncidents(intervals){
   const incidents=computeIncidents(intervals);
   const reasons=await loadExternalIncidentReasons();
   if(!incidents.length){ incWrap.innerHTML=''; return; }
   const ul=document.createElement('ul');
   incidents.forEach(ev=>{
-    const match = reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
+    const match=reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
     const li=document.createElement('li');
     li.textContent=`Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})`+(match?` – Grund: ${match.reason}`:'');
     ul.appendChild(li);
   });
   incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
-  // Discord Webhook (nur neue Incidents melden)
-  try{
-    const wh=localStorage.getItem('status_webhook');
-    if(wh){
-      const lastKey='last_incident_to';
-      const lastTo=localStorage.getItem(lastKey);
-      const newest=incidents[incidents.length-1]?.to;
-      if(newest && newest!==lastTo){
-        fetch(wh,{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({content:`🟥 **Downtime**: ${localTime(incidents[incidents.length-1].from)} – ${localTime(newest)} (${fmtDur(Math.round(incidents[incidents.length-1].mins))})`})
-        }).catch(()=>{});
-        localStorage.setItem(lastKey,newest);
-      }
+  // Discord optional
+  const wh=localStorage.getItem('status_webhook');
+  if(wh){
+    const lastKey='last_incident_to', newest=incidents[incidents.length-1]?.to, lastTo=localStorage.getItem(lastKey);
+    if(newest && newest!==lastTo){
+      fetch(wh,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({content:`🟥 **Downtime**: ${localTime(incidents[incidents.length-1].from)} – ${localTime(newest)} (${fmtDur(Math.round(incidents[incidents.length-1].mins))})`})
+      }).catch(()=>{});
+      localStorage.setItem(lastKey,newest);
     }
-  }catch{}
+  }
 }
 
-/* Swipe für Range */
-let touchStartX=null;
-barsEl.addEventListener('touchstart',e=>{touchStartX=e.touches[0].clientX;},{passive:true});
-barsEl.addEventListener('touchend',e=>{
-  if(touchStartX==null) return;
-  const dx=e.changedTouches[0].clientX - touchStartX;
-  touchStartX=null;
-  const order=['24h','7d','30d'];
-  const current=rangeCtl.querySelector('input:checked')?.value||'24h';
-  let idx=order.indexOf(current);
-  if(dx<-50 && idx<order.length-1) idx++;
-  if(dx> 50 && idx>0) idx--;
-  const v=order[idx];
-  document.querySelector(`input[name="r"][value="${v}"]`).checked=true;
-  onRangeChange(v);
-});
+/* Range & Timer */
+function onRangeChange(v){
+  barsEl.classList.toggle('mode-24h',v==='24h');
+  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
+  $('foot-right').textContent='Today';
+  load(v);
+}
+let timer=null;
+function startTimer(){ stopTimer(); timer=setInterval(()=>{const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v);},60_000); }
+function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
+autoCtl.addEventListener('change', e=> e.target.checked?startTimer():stopTimer());
+rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
 
 /* Main Load */
-let timer=null;
 async function load(range){
-  // Live
-  try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }
-  catch{ setLive(null,null); }
-
-  // History (lazy + cache)
+  try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
   let data;
   try{ data=await loadHistory(range); }
-  catch{ // Fehler robust anzeigen
-    metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
-    kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='0'; kPoints.textContent='0';
-    incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>';
-    return;
-  }
+  catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
+         kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='0'; kPoints.textContent='0';
+         incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>'; return; }
 
-  const hist=Array.isArray(data.history)?data.history:[];
-  const generated=data.generated || new Date().toISOString();
-  const svc=data.service||{};
-  $('svc-name').textContent=svc.name||'Minecraft Bedrock';
-  $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
+  const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
+  const svc=data.service||{}; $('svc-name').textContent=svc.name||'Minecraft Bedrock'; $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
+  const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN; staleEl.hidden=!stale;
 
-  const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN;
-  staleEl.hidden=!stale;
-
-  // Intervals (echte Dauer)
   const intervals=toIntervals(hist,generated);
 
   if(range==='24h'){
     const since=Date.now()-DAY_MS;
-    const last24points=hist.filter(p=>new Date(p.ts).getTime()>=since);
+    const lastPts=hist.filter(p=>new Date(p.ts).getTime()>=since);
     const last24=intervals.filter(i=>new Date(i.from).getTime()>=since);
-    render24h(last24points);
+    render24h(lastPts);
     const k=kpisFromIntervals(last24);
-    uptimeEl.textContent=fmtPct(k.uptime);
-    dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
+    uptimeEl.textContent=fmtPct(k.uptime); dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
     kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
     await renderIncidents(last24);
   }else{
@@ -469,32 +421,13 @@ async function load(range){
     const days=daysFromIntervals(inSpan);
     renderDays(days, range==='7d'?'7 days':'30 days');
     const k=kpisFromIntervals(inSpan);
-    uptimeEl.textContent=fmtPct(k.uptime);
-    dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
+    uptimeEl.textContent=fmtPct(k.uptime); dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
     kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
-    incWrap.innerHTML=''; // keine Detail-Incidents in Tagesansicht
+    incWrap.innerHTML='';
   }
-
-  // Heatmap aus letzten 90 Tagen (immer aktualisieren)
   renderHeatmap(daysFromIntervals(intervals));
   metaSrc.textContent='Quelle: History ✓';
 }
-
-/* Range wechseln */
-function onRangeChange(v){
-  barsEl.classList.toggle('mode-24h',v==='24h');
-  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
-  $('foot-right').textContent='Today';
-  load(v);
-}
-
-/* Timer */
-function startTimer(){ stopTimer(); timer=setInterval(()=>{ const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v); },60_000); }
-function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
-
-/* Events */
-rangeCtl.addEventListener('change',e=> onRangeChange(e.target.value));
-autoCtl.addEventListener('change', e=> e.target.checked?startTimer():stopTimer());
 
 /* Init */
 onRangeChange('24h'); startTimer();
