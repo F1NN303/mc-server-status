@@ -9,7 +9,7 @@ permissions:
 
 env:
   FILEPATH: "data/status.json"
-  KEEP: "2016"   # 7 Tage à 5-Minuten
+  KEEP: "2016"                 # ~7 Tage bei 5-Minuten-Intervallen
   API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
 
 jobs:
@@ -23,10 +23,17 @@ jobs:
           ref: main
           persist-credentials: true
 
-      - name: Install jq & curl
-        run: sudo apt-get update && sudo apt-get install -y jq curl
+      - name: Anti-burst jitter (0–45s)
+        shell: bash
+        run: |
+          sleep $((RANDOM % 46))
 
-      # --- FIX: kein Heredoc, Datei sauber mit jq anlegen ---
+      - name: Install jq & curl & Python
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl python3
+
+      # --- status.json sicherstellen ---
       - name: Ensure status file exists
         shell: bash
         run: |
@@ -50,24 +57,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           : "${API_URL:?API_URL not set}"
-          echo "GET $API_URL"
-
           if ! curl --fail --show-error --silent --max-time 12 "$API_URL" -o resp.json; then
             echo "curl failed → treat as offline"
             echo '{"ok":false,"generated":null,"service":{}}' > resp.json
           fi
-
-          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json > /dev/null; then
-            echo "response has no boolean .ok → treat as offline"
+          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json >/dev/null; then
+            echo "response invalid → force ok=false"
             jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
           fi
-
-          echo "----- resp.json -----"
-          cat resp.json
-          echo "---------------------"
-
           echo "ok=$(jq -r '.ok' resp.json)"                         >> "$GITHUB_OUTPUT"
           echo "ts=$(jq -r '.generated // now|todate' resp.json)"    >> "$GITHUB_OUTPUT"
           echo "host=$(jq -r '.service.host // empty' resp.json)"    >> "$GITHUB_OUTPUT"
@@ -81,7 +79,6 @@ jobs:
           ok='${{ steps.ping.outputs.ok }}'
           host='${{ steps.ping.outputs.host }}'
           port='${{ steps.ping.outputs.port }}'
-
           : "${ts:=$(date -u +%FT%TZ)}"
           : "${ok:=false}"
 
@@ -97,11 +94,11 @@ jobs:
               .history |= (.[-($keep|tonumber):] // .) |
               .generated = $ts
             ' "$FILEPATH" > "$FILEPATH.tmp"
-
           mv "$FILEPATH.tmp" "$FILEPATH"
           echo "Updated $FILEPATH"
 
-      # >>> LATENCY: minimaler Block
+      # -------- LATENCY: robust & self-contained --------
+
       - name: Ensure latency.json exists
         shell: bash
         run: |
@@ -109,10 +106,58 @@ jobs:
           mkdir -p public
           [ -f public/latency.json ] || echo "[]" > public/latency.json
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+      - name: Write latency script (RakNet UDP ping)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p scripts
+          cat > scripts/bedrock_latency.py <<'PY'
+import os, socket, struct, time, json, statistics, random
+HOST = os.environ.get("HOST", "important-instrumentation.gl.at.ply.gg")
+PORT = int(os.environ.get("PORT", "18232"))
+SAMPLES = int(os.environ.get("SAMPLES", "5"))
+TIMEOUT = float(os.environ.get("TIMEOUT", "1.2"))
+RAKNET_MAGIC = bytes.fromhex("00ffff00fefefefefdfdfdfd12345678")
+
+def bedrock_ping_once(host, port, timeout=1.0):
+    pkt = bytearray([0x01])  # unconnected ping
+    now = int(time.time() * 1000)
+    pkt += struct.pack(">Q", now)
+    pkt += RAKNET_MAGIC
+    pkt += struct.pack(">Q", random.getrandbits(64))
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(timeout)
+            t0 = time.perf_counter()
+            s.sendto(pkt, (host, port))
+            data, _ = s.recvfrom(2048)
+            rtt_ms = int((time.perf_counter() - t0) * 1000)
+            if not data or data[0] != 0x1c:  # unconnected pong
+                return None
+            if RAKNET_MAGIC not in data:
+                return None
+            return rtt_ms
+    except Exception:
+        return None
+
+def main():
+    vals = []
+    for _ in range(SAMPLES):
+        ms = bedrock_ping_once(HOST, PORT, TIMEOUT)
+        vals.append(ms)
+        time.sleep(0.05)
+    filtered = [v for v in vals if v is not None]
+    out = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S")+"Z",
+        "p50_ms": int(statistics.median(filtered)) if filtered else None,
+        "p95_ms": int(sorted(filtered)[max(0, int(0.95*(len(filtered)-1)))]) if filtered else None,
+        "samples": [ (v if v is not None else None) for v in vals ],
+    }
+    print(json.dumps(out))
+
+if __name__ == "__main__":
+    main()
+PY
 
       - name: Prepare HOST/PORT for latency
         id: latenv
@@ -126,7 +171,7 @@ jobs:
           echo "host=$host" >> "$GITHUB_OUTPUT"
           echo "port=$port" >> "$GITHUB_OUTPUT"
 
-      - name: Measure Bedrock UDP latency (RakNet)
+      - name: Measure Bedrock UDP latency (robust)
         shell: bash
         env:
           HOST: ${{ steps.latenv.outputs.host }}
@@ -135,10 +180,21 @@ jobs:
           TIMEOUT: "1.2"
         run: |
           set -euo pipefail
+          mkdir -p public
+          # Messung – Fehler abfangen
+          set +e
           python3 scripts/bedrock_latency.py > latency_one.json
-          jq -e . latency_one.json > /dev/null
+          rc=$?
+          set -e
+          if [ $rc -ne 0 ] || ! jq -e . latency_one.json >/dev/null 2>&1; then
+            echo "Latency measure failed → write fallback with nulls"
+            printf '{"ts":"%s","p50_ms":null,"p95_ms":null,"samples":[null,null,null,null,null]}\n' "$(date -u +%FT%TZ)" > latency_one.json
+          fi
+          # Ziel initialisieren & anhängen
+          [ -f public/latency.json ] || echo "[]" > public/latency.json
           tmp=$(mktemp)
           jq -s '.[0] + [.[1]]' public/latency.json latency_one.json > "$tmp" && mv "$tmp" public/latency.json
+          echo "latency appended"
 
       - name: Trim latency.json (90 days)
         shell: bash
@@ -151,8 +207,8 @@ jobs:
               (try (.ts | sub("Z$";"") | fromdateiso8601) catch 0) >= ($now|tonumber - 90*24*3600)
             ))
           ' public/latency.json > "$tmp" && mv "$tmp" public/latency.json
-      # <<< LATENCY Ende
 
+      # --------------- Commit ----------------
       - name: Commit & push (data + latency)
         shell: bash
         run: |
