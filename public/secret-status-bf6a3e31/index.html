@@ -45,7 +45,6 @@ h1{margin:0;font-size:22px}
 .badges{display:flex;gap:8px;flex-wrap:wrap}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
   border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
-.badge-warn{border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b66 inset}
 .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
 .kpi strong{color:var(--fg);font-weight:600}
 
@@ -107,13 +106,6 @@ h1{margin:0;font-size:22px}
 .hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
 .hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
 
-/* Sparkline */
-#lat-spark { display:flex; gap:2px; align-items:flex-end; height:28px; margin-top:8px }
-#lat-spark .s { width:3px; background:#374151; border-radius:2px; }
-#lat-spark .s.ok { background: var(--g); }
-#lat-spark .s.warn { background: var(--o); }
-#lat-spark .s.bad { background: var(--r); }
-
 /* Mobile */
 @media (max-width:520px){
   h1{font-size:18px}
@@ -150,8 +142,6 @@ h1{margin:0;font-size:22px}
       <div class="badges">
         <div class="badge"><span>Uptime</span><strong id="uptime">–</strong></div>
         <div class="badge"><span>Downtime</span><strong id="downtime">–</strong></div>
-        <!-- NEU: Latency-Badge -->
-        <div class="badge" id="lat-badge"><span>Latency</span><strong id="lat-val">–</strong></div>
       </div>
     </div>
 
@@ -166,8 +156,6 @@ h1{margin:0;font-size:22px}
       <div id="bars" class="bars mode-24h" role="group" aria-label="Zeitachse"></div>
       <div id="hoverline" class="hoverline"></div>
       <div class="footline"><span id="foot-left">24 hours</span><span id="foot-right">Today</span></div>
-      <!-- NEU: Sparkline -->
-      <div id="lat-spark" aria-label="Latency Sparkline"></div>
     </div>
 
     <div class="legend">
@@ -200,15 +188,9 @@ h1{margin:0;font-size:22px}
 /* === Konfiguration / Endpunkte === */
 const API_HISTORY='/api/history';
 const API_LIVE='/api/bedrock';
-const API_INCIDENTS='/incidents.json'; // wenn in public/ liegt
-const API_LATENCY='/latency.json';     // von der GitHub Action gepflegt
+const API_INCIDENTS='/incidents.json'; // oder via Function /api/incidents
 
 const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
-
-/* Latenz-Schwellen (Anomalie) */
-const P95_WARN = 200;   // ms → Warnung
-const P95_BAD  = 250;   // ms → degraded
-const DEGRADE_WINDOW_MIN = 10; // letzte N Minuten
 
 /* DOM */
 const $=id=>document.getElementById(id);
@@ -217,9 +199,6 @@ const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHo
 const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
 const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('heatmap');
 const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
-const latBadge=$('lat-badge'), latVal=$('lat-val'), latSpark=$('lat-spark');
-
-const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
 /* Utils */
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
@@ -229,6 +208,7 @@ const localTime=iso=> new Date(iso).toLocaleString();
 const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
 const statusClass = ok => ok===true?'g': ok===false?'r':'u';
 const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
 async function fetchJSON(u, opts={}){ const r=await fetch(u,{cache:'no-store',...opts}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
 function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
@@ -369,42 +349,6 @@ function renderHeatmap(days){
   heatEl.appendChild(label);
 }
 
-/* ===== Latenz (Badge, Sparkline, Anomalie) ===== */
-async function loadLatencySeries(){
-  try{ const d = await fetchJSON(API_LATENCY); return Array.isArray(d)? d : []; }
-  catch{ return []; }
-}
-function renderLatencyBadge(lat){
-  const txt = (lat?.p50_ms!=null && lat?.p95_ms!=null) ? `${lat.p50_ms} / ${lat.p95_ms} ms` : '–';
-  latVal.textContent = txt;
-}
-function renderSparkline(series){
-  latSpark.innerHTML='';
-  if(!series.length) return;
-  const last = series.slice(-50);
-  const max = Math.max(100, ...last.map(x=>x.p95_ms||0));
-  last.forEach(x=>{
-    const h = Math.round(Math.min(1,(x.p95_ms||0)/max) * 26) + 2;
-    const d = document.createElement('div');
-    d.className='s ' + ((x.p95_ms||0)>=P95_BAD ? 'bad' : ( (x.p95_ms||0)>=P95_WARN ? 'warn':'ok'));
-    d.style.height = `${h}px`;
-    latSpark.appendChild(d);
-  });
-}
-function isDegraded(series){
-  if(!series.length) return false;
-  const cut = Date.now() - DEGRADE_WINDOW_MIN*60*1000;
-  const inWin = series.filter(x=> new Date(x.ts).getTime() >= cut);
-  if(inWin.some(x=> (x.p95_ms||0) >= P95_BAD)) return true;
-  // 3 in Folge >= WARN innerhalb der letzten 10 Punkte
-  let streak=0;
-  for(const x of series.slice(-10)){
-    if((x.p95_ms||0) >= P95_WARN){ streak++; if(streak>=3) return true; }
-    else streak=0;
-  }
-  return false;
-}
-
 /* Incidents + externe Gründe + optional Discord */
 async function loadExternalIncidentReasons(){ try{ return await fetchJSON(API_INCIDENTS); } catch { return []; } }
 function overlap(aFrom,aTo,bFrom,bTo){ return (new Date(aFrom)<=new Date(bTo)) && (new Date(bFrom)<=new Date(aTo)); }
@@ -448,10 +392,7 @@ rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
 
 /* Main Load */
 async function load(range){
-  // Live
   try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
-
-  // History
   let data;
   try{ data=await loadHistory(range); }
   catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
@@ -484,29 +425,8 @@ async function load(range){
     kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
     incWrap.innerHTML='';
   }
-
-  // Heatmap
   renderHeatmap(daysFromIntervals(intervals));
   metaSrc.textContent='Quelle: History ✓';
-
-  // ===== Latenz anzeigen & Degraded markieren =====
-  const latSeries = await loadLatencySeries();
-  const latestLat = latSeries[latSeries.length-1];
-  renderLatencyBadge(latestLat);
-  renderSparkline(latSeries);
-
-  const degraded = isDegraded(latSeries);
-  if(degraded && range==='24h'){
-    const bars = Array.from(document.querySelectorAll('#bars .bar'));
-    const n = Math.min(3, bars.length);
-    for(let i=1;i<=n;i++){
-      const el = bars[bars.length-i];
-      if(el) el.classList.remove('g','r','u'), el.classList.add('o'); // gelb
-    }
-    latBadge.classList.add('badge-warn');
-  } else {
-    latBadge.classList.remove('badge-warn');
-  }
 }
 
 /* Init */
