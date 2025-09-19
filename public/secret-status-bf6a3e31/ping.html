@@ -10,8 +10,7 @@
 :root{
   --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
   --fg:#e6e7eb; --muted:#9aa0a6;
-  --g:#19c37d; --r:#ef4444; --o:#f59e0b; --u:#95a3b6;
-  --radius:12px;
+  --g:#19c37d; --r:#ef4444; --o:#f59e0b;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -21,22 +20,20 @@ a:hover{text-decoration:underline}
 .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 h1{margin:0;font-size:22px}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);
-     background:linear-gradient(180deg,var(--panel),#0b0f1a); color:var(--fg); cursor:pointer; text-decoration:none}
+     background:linear-gradient(180deg,#0f1320,#0b0f1a); color:var(--fg); cursor:pointer; text-decoration:none}
 .btn:disabled{opacity:.6;cursor:not-allowed}
-.card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
-      border-radius:12px;padding:16px;margin-bottom:16px}
-.hint{font-size:12px;color:var(--muted)}
+.card{background:linear-gradient(180deg,#0f1320,#0c111c);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
 .row{display:flex;gap:16px;flex-wrap:wrap}
 .col{flex:1 1 420px;min-width:320px}
 .kpis{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-       border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
 .grid{display:flex;gap:2px;align-items:flex-end;height:80px;margin-top:8px}
 .bar{width:4px;background:#374151;border-radius:2px}
 .bar.ok{background:var(--g)} .bar.warn{background:var(--o)} .bar.bad{background:var(--r)}
 .table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
 .table th,.table td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left}
 .small{font-size:12px;color:var(--muted)}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -52,12 +49,11 @@ h1{margin:0;font-size:22px}
     <!-- Browser-HTTP-Ping -->
     <div class="col">
       <section class="card">
-        <h2 style="margin:0 0 8px">Live HTTP-Ping (Browser)</h2>
-        <div class="hint">Misst Roundtrip-Zeit zu <code>/api/bedrock</code> (HTTP, kein UDP/Bedrock). Gut für „gefühlte“ Latenz.</div>
+        <h2 style="margin:0 0 8px">Live HTTP-Ping</h2>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" id="start">▶ Start</button>
           <button class="btn" id="stop" disabled>⏹ Stop</button>
-          <label class="badge"><span>Interval</span>
+          <label class="badge"><span>Intervall</span>
             <select id="interval" style="background:transparent;border:none;color:var(--fg);outline:none">
               <option value="1000">1 s</option>
               <option value="2000" selected>2 s</option>
@@ -88,11 +84,10 @@ h1{margin:0;font-size:22px}
       </section>
     </div>
 
-    <!-- Server-/Action-Latenz -->
-    <div class="col">
+    <!-- Serverseitige Latenz (nur wenn vorhanden) -->
+    <div class="col" id="srv-col">
       <section class="card">
-        <h2 style="margin:0 0 8px">UDP-Latenz (von Bot/Action)</h2>
-        <div class="hint">Zeitreihe aus <code>/latency.json</code> (falls vorhanden). p50/p95 durch externen Job.</div>
+        <h2 style="margin:0 0 8px">Server-Latenz</h2>
         <div class="kpis">
           <div class="badge">Letzte p50/p95: <strong id="srv-last">–</strong></div>
           <div class="badge">Punkte: <strong id="srv-count">0</strong></div>
@@ -102,37 +97,43 @@ h1{margin:0;font-size:22px}
           <thead><tr><th>Zeit</th><th>p50</th><th>p95</th><th class="small">Samples</th></tr></thead>
           <tbody id="tbody-srv"></tbody>
         </table>
-        <div class="hint">Hinweis: Wenn hier nichts erscheint, existiert <code>public/latency.json</code> (noch) nicht.</div>
       </section>
     </div>
   </div>
-
-  <p class="small">Tipp: HTTP-Ping ≠ UDP-Bedrock-Ping. Für echte Bedrock-Latenz brauchst du eine Messung außerhalb des Browsers (z.&nbsp;B. dein GitHub-Action-Job).</p>
 </div>
 
 <script>
-const API_HTTP = '/api/bedrock';   // HTTP-Endpoint für Browser-Ping
-const API_SRV  = '/latency.json';  // UDP-Zeitreihe vom externen Job (falls vorhanden)
+/* ===== Back-Link automatisch korrekt setzen ===== */
+(function () {
+  var base = location.pathname.replace(/[^\/]+$/, ''); // alles nach letztem "/" abschneiden
+  var el = document.getElementById('back');
+  if (el) el.setAttribute('href', base);
+})();
 
+/* ===== Konfiguration ===== */
+const API_HTTP = '/api/bedrock';   // Browser-Ping: leichter GET auf deinen API-Endpoint
+const API_SRV  = '/latency.json';  // Serverseitige Zeitreihe (falls vorhanden)
+
+/* ===== DOM-Refs ===== */
 const $ = s => document.querySelector(s);
 const tbodyHttp = $('#tbody-http');
 const sparkHttp = $('#spark-http');
 const lastEl = $('#last'), mamEl = $('#mam'), ppEl = $('#pp'), countEl = $('#count');
 
+const srvCol = $('#srv-col');
 const tbodySrv = $('#tbody-srv');
 const sparkSrv = $('#spark-srv');
 const srvLastEl = $('#srv-last'), srvCountEl = $('#srv-count');
 
+/* ===== Browser HTTP Ping ===== */
 let timer = null;
 let seriesHttp = []; // {ts, ms, tries, values[]}
 
-/* ========== Browser HTTP Ping ========== */
 async function pingHTTP(n=3){
   const values=[];
   for(let i=0;i<n;i++){
     const t0=performance.now();
     try{
-      // small GET mit cache-busting
       await fetch(API_HTTP + '?ping=' + Date.now(), {cache:'no-store', method:'GET'});
       const ms = Math.round(performance.now() - t0);
       values.push(ms);
@@ -150,11 +151,10 @@ async function pingHTTP(n=3){
 }
 
 function renderHttp(){
-  // KPIs
   const arr = seriesHttp;
-  $('#count').textContent = String(arr.length);
+  countEl.textContent = String(arr.length);
   const last = arr[arr.length-1];
-  lastEl.textContent = last?.ms!=null ? `${last.ms} ms` : '–';
+  lastEl.textContent = last && last.ms!=null ? (last.ms + ' ms') : '–';
 
   const all = arr.map(x=>x.ms).filter(v=>v!=null);
   if(all.length){
@@ -163,14 +163,14 @@ function renderHttp(){
     const p50 = p[Math.floor(0.5*(p.length-1))];
     const p95 = p[Math.floor(0.95*(p.length-1))];
     mamEl.textContent = `${min}/${avg}/${max} ms`;
-    ppEl.textContent = `${p50}/${p95} ms`;
+    ppEl.textContent  = `${p50}/${p95} ms`;
   }else{
     mamEl.textContent = '–';
-    ppEl.textContent = '–';
+    ppEl.textContent  = '–';
   }
 
-  // Tabelle (max 30 Zeilen)
-  while(tbodyHttp.firstChild) tbodyHttp.removeChild(tbodyHttp.firstChild);
+  // Tabelle (max 30 Einträge)
+  tbodyHttp.innerHTML='';
   arr.slice(-30).reverse().forEach(x=>{
     const tr=document.createElement('tr');
     const td1=document.createElement('td'); td1.textContent=new Date(x.ts).toLocaleTimeString();
@@ -186,7 +186,7 @@ function renderHttp(){
   last80.forEach(x=>{
     const h = Math.round(Math.min(1,(x.ms||0)/max) * 76) + 4;
     const d = document.createElement('div');
-    let cls='bar'; 
+    let cls='bar';
     if(x.ms==null) cls+=' bad';
     else if(x.ms>=400) cls+=' bad';
     else if(x.ms>=200) cls+=' warn';
@@ -214,27 +214,26 @@ $('#stop').addEventListener('click', ()=>{
   $('#start').disabled=false; $('#stop').disabled=true;
 });
 
-/* ========== Serverseitige UDP-Latenz (Zeitreihe) ========== */
+/* ===== Serverseitige Latenz (nur anzeigen, wenn Datei existiert) ===== */
 async function loadSrvLatency(){
   try{
     const r = await fetch(API_SRV, {cache:'no-store'});
     if(!r.ok) throw 0;
     return await r.json();
   }catch{
-    return [];
+    return null;
   }
 }
 function renderSrv(series){
-  srvCountEl.textContent = String(series.length);
-  while(tbodySrv.firstChild) tbodySrv.removeChild(tbodySrv.firstChild);
-  if(!series.length){
-    srvLastEl.textContent = '–';
-    sparkSrv.innerHTML='';
+  if(!Array.isArray(series) || !series.length){
+    srvCol.classList.add('hidden'); // komplett ausblenden
     return;
   }
+  srvCountEl.textContent = String(series.length);
   const last = series[series.length-1];
-  srvLastEl.textContent = (last.p50_ms!=null && last.p95_ms!=null) ? `${last.p50_ms}/${last.p95_ms} ms` : '–';
+  srvLastEl.textContent = (last && last.p50_ms!=null && last.p95_ms!=null) ? `${last.p50_ms}/${last.p95_ms} ms` : '–';
 
+  tbodySrv.innerHTML='';
   series.slice(-50).reverse().forEach(x=>{
     const tr=document.createElement('tr');
     const td1=document.createElement('td'); td1.textContent=new Date(x.ts).toLocaleString();
@@ -260,9 +259,8 @@ function renderSrv(series){
 }
 
 (async ()=>{
-  // Lade vorhandene UDP-Zeitreihe einmalig beim Start
   const srv = await loadSrvLatency();
-  renderSrv(Array.isArray(srv)?srv:[]);
+  renderSrv(srv);
 })();
 </script>
 </body>
