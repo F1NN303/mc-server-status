@@ -1,208 +1,118 @@
+
 name: Update Bedrock Status
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"   # alle 5 Minuten
+  schedule: [{ cron: "*/5 * * * *" }]   # alle 5 Minuten
   workflow_dispatch: {}
-
-# verhinder Überlappungen
-concurrency:
-  group: bedrock-status
-  cancel-in-progress: false
 
 permissions:
   contents: write
 
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    env:
-      # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-      # Passe diese Werte ggf. an:
-      SERVICE_NAME: "Minecraft Bedrock"
-      HOST: "important-instrumentation.gl.at.ply.gg"
-      PORT: "18232"
-      BASE_URL: "https://mc-server-status-black.vercel.app"   # deine Vercel-Prod-URL
-      FILE_STATUS: "data/status.json"
-      FILE_LAT: "public/latency.json"
-      KEEP_MS: "604800000"          # 7 Tage in Millisekunden
-      # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    steps:
-      - name: Jitter 0–45s (spread load)
-        run: |
-          J=$(shuf -i 0-45 -n 1)
-          echo "Sleeping ${J}s for jitter…"
-          sleep $J
+env:
+  FILEPATH: "data/status.json"
+  KEEP: "2016"   # 7 Tage à 5-Minuten
+  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
 
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
           persist-credentials: true
 
-      - name: Install jq, curl & Node
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq curl
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      # Falls status.json fehlt: Grundgerüst erzeugen
-      - name: Ensure data/status.json exists
+      # --- FIX: kein Heredoc, Datei sauber mit jq anlegen ---
+      - name: Ensure status file exists
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$(dirname "${FILE_STATUS}")"
-          if [ ! -f "${FILE_STATUS}" ]; then
-            cat > "${FILE_STATUS}" <<'JSON'
-            {
-              "generated": "",
-              "service": { "name": "", "host": "", "port": 0 },
-              "history": []
-            }
-JSON
-          fi
-
-      # Live-Status robust laden (Vercel-API); wenn ok -> neuen Punkt anhängen
-      - name: Pull live status from Vercel API and append to history
-        shell: bash
-        run: |
-          set -euo pipefail
-          NOW_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          echo "Fetch ${BASE_URL}/api/bedrock …"
-          if curl -fsSL "${BASE_URL}/api/bedrock" -o live.json; then
-            echo "Live fetched."
+          mkdir -p "$(dirname "$FILEPATH")"
+          if [ ! -s "$FILEPATH" ]; then
+            jq -n \
+              --arg name "Minecraft Bedrock" \
+              --arg host "important-instrumentation.gl.at.ply.gg" \
+              --argjson port 18232 \
+              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' \
+              > "$FILEPATH"
+            echo "Created $FILEPATH"
           else
-            echo "Live fetch failed → write unknown."
-            echo "{\"generated\":\"${NOW_ISO}\",\"ok\":null}" > live.json
+            echo "Found $FILEPATH"
           fi
 
-          GEN="$(jq -r '.generated // empty' live.json)"
-          [ -z "$GEN" ] && GEN="${NOW_ISO}"
-
-          # service-Metadaten aktualisieren
-          jq --arg n  "${SERVICE_NAME}" \
-             --arg h  "${HOST}" \
-             --argjson p ${PORT} \
-             '.service = {name:$n,host:$h,port:$p}' "${FILE_STATUS}" > s.tmp && mv s.tmp "${FILE_STATUS}"
-
-          # generated setzen
-          jq --arg g "${GEN}" '.generated=$g' "${FILE_STATUS}" > s.tmp && mv s.tmp "${FILE_STATUS}"
-
-          # neuen History-Punkt aus Live ableiten
-          OK="$(jq -r '.ok' live.json)"
-          # OK kann true/false/null sein → als JSON übernehmen
-          jq --arg ts "${GEN}" --argjson ok "$(jq -c '.ok' live.json)" \
-             '.history += [{ts:$ts, ok:$ok}]' "${FILE_STATUS}" > s.tmp && mv s.tmp "${FILE_STATUS}"
-
-          # Duplikate (gleicher ts) entfernen, nach ts sortieren, Trim auf 7 Tage
-          CUTOFF_MS=$(( $(date -u +%s%3N) - ${KEEP_MS} ))
-          CUTOFF="$(date -u -d @$((${CUTOFF_MS}/1000)) +%Y-%m-%dT%H:%M:%SZ)"
-          jq --arg cutoff "$CUTOFF" '
-            .history = (
-              [ .history
-                | group_by(.ts)        # Duplikate zusammenfassen
-                | map(.[0])            # ersten behalten
-                | sort_by(.ts)
-                | map(select(.ts >= $cutoff))
-              ]
-              | .[0]
-            )
-          ' "${FILE_STATUS}" > s.tmp && mv s.tmp "${FILE_STATUS}"
-
-      # UDP-Latenz messen (3 Proben → p50/p95)
-      - name: Measure Bedrock UDP latency (3 samples)
+      # --- robuster Fetch: Fehler => offline statt null ---
+      - name: Pull latest status from Vercel API (robust)
+        id: ping
         shell: bash
         run: |
           set -euo pipefail
-          node - <<'NODE' > latency.tmp.json
-          const dgram = require('dgram');
 
-          const HOST = process.env.HOST;
-          const PORT = parseInt(process.env.PORT, 10);
+          : "${API_URL:?API_URL not set}"
+          echo "GET $API_URL"
 
-          function pingOnce(host, port, timeoutMs=3000){
-            return new Promise((resolve)=>{
-              const sock = dgram.createSocket('udp4');
-              const payload = Buffer.alloc(25);
-              payload.writeUInt8(0x01, 0);
-              const now = BigInt(Date.now());
-              payload.writeBigUInt64BE(now, 1);
-              Buffer.from('00ffff00fefefefefdfdfdfd12345678','hex').copy(payload, 9);
-              let done=false;
-              const t0 = process.hrtime.bigint();
-              const timer = setTimeout(()=>{ if(!done){done=true; sock.close(); resolve(null);} }, timeoutMs);
-              sock.on('message', ()=>{
-                if(done) return;
-                done=true; clearTimeout(timer);
-                const t1 = process.hrtime.bigint();
-                const ms = Number(t1 - t0)/1e6;
-                sock.close(); resolve(Math.round(ms));
-              });
-              sock.on('error', ()=>{
-                if(!done){done=true; clearTimeout(timer); sock.close(); resolve(null);}
-              });
-              sock.send(payload, port, host);
-            });
-          }
-
-          (async ()=>{
-            const samples = [];
-            for (let i=0;i<3;i++){
-              const ms = await pingOnce(HOST, PORT);
-              if (ms !== null) samples.push(ms);
-              await new Promise(r=>setTimeout(r,200));
-            }
-            samples.sort((a,b)=>a-b);
-            const p50 = samples.length ? samples[Math.floor(0.5*(samples.length-1))] : null;
-            const p95 = samples.length ? samples[Math.floor(0.95*(samples.length-1))] : null;
-            const obj = { ts: new Date().toISOString(), samples, p50_ms: p50, p95_ms: p95 };
-            console.log(JSON.stringify(obj));
-          })();
-          NODE
-
-      - name: Merge latency stats into status.json
-        shell: bash
-        run: |
-          set -euo pipefail
-          jq -s '.[0] * {latency: {ts: .[1].ts, p50_ms: .[1].p50_ms, p95_ms: .[1].p95_ms}}' "${FILE_STATUS}" latency.tmp.json > status.new.json
-          mv status.new.json "${FILE_STATUS}"
-
-      # Zeitreihe public/latency.json pflegen (append + Trim auf 7 Tage)
-      - name: Ensure latency series exists
-        run: |
-          mkdir -p "$(dirname "${FILE_LAT}")"
-          [ -f "${FILE_LAT}" ] || echo "[]" > "${FILE_LAT}"
-
-      - name: Append latency sample & trim to 7 days
-        shell: bash
-        run: |
-          set -euo pipefail
-          # anhängen
-          jq --slurpfile s latency.tmp.json '. + $s' "${FILE_LAT}" > lat.tmp && mv lat.tmp "${FILE_LAT}"
-          # trim
-          CUTOFF="$(date -u -d @$(($(date -u +%s)-604800)) +%Y-%m-%dT%H:%M:%SZ)"
-          jq --arg cutoff "$CUTOFF" '[ .[] | select(.ts >= $cutoff) ]' "${FILE_LAT}" > lat.tmp && mv lat.tmp "${FILE_LAT}"
-
-      # Nur committen, wenn sich wirklich was geändert hat
-      - name: Commit & push if changed
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name  "Status-Bot"
-          git config user.email "status-bot@users.noreply.github.com"
-          git fetch --depth=1 origin main || true
-
-          OLD_STATUS="$(git show origin/main:${FILE_STATUS} 2>/dev/null || echo '')"
-          NEW_STATUS="$(cat ${FILE_STATUS} || echo '')"
-          OLD_LAT="$(git show origin/main:${FILE_LAT} 2>/dev/null || echo '')"
-          NEW_LAT="$(cat ${FILE_LAT} || echo '')"
-
-          if diff -q <(echo "$OLD_STATUS") <(echo "$NEW_STATUS") >/dev/null 2>&1 && \
-             diff -q <(echo "$OLD_LAT") <(echo "$NEW_LAT") >/dev/null 2>&1; then
-            echo "No changes → exit without commit."
-            exit 0
+          if ! curl --fail --show-error --silent --max-time 12 "$API_URL" -o resp.json; then
+            echo "curl failed → treat as offline"
+            echo '{"ok":false,"generated":null,"service":{}}' > resp.json
           fi
 
-          git add "${FILE_STATUS}" "${FILE_LAT}"
-          TS=$(jq -r '.generated // now' "${FILE_STATUS}" 2>/dev/null || date -u +%Y-%m-%dT%H:%M:%SZ)
-          git commit -m "status: ${TS}"
-          git push origin HEAD:main
+          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json > /dev/null; then
+            echo "response has no boolean .ok → treat as offline"
+            jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
+          fi
+
+          echo "----- resp.json -----"
+          cat resp.json
+          echo "---------------------"
+
+          echo "ok=$(jq -r '.ok' resp.json)"                         >> "$GITHUB_OUTPUT"
+          echo "ts=$(jq -r '.generated // now|todate' resp.json)"    >> "$GITHUB_OUTPUT"
+          echo "host=$(jq -r '.service.host // empty' resp.json)"    >> "$GITHUB_OUTPUT"
+          echo "port=$(jq -r '.service.port // empty' resp.json)"    >> "$GITHUB_OUTPUT"
+
+      - name: Append + trim history
+        shell: bash
+        run: |
+          set -euo pipefail
+          ts='${{ steps.ping.outputs.ts }}'
+          ok='${{ steps.ping.outputs.ok }}'
+          host='${{ steps.ping.outputs.host }}'
+          port='${{ steps.ping.outputs.port }}'
+
+          : "${ts:=$(date -u +%FT%TZ)}"
+          : "${ok:=false}"
+
+          jq --arg ts "$ts" \
+             --argjson ok ${ok} \
+             --arg host "$host" \
+             --argjson port ${port:-0} \
+             --argjson keep ${KEEP:-2016} '
+              if .service == null then .service = {} else . end |
+              .service.host = (if $host != "" then $host else .service.host end) |
+              .service.port = (if $port != 0  then $port else .service.port end) |
+              .history += [{"ts":$ts,"ok":$ok}] |
+              .history |= (.[-($keep|tonumber):] // .) |
+              .generated = $ts
+            ' "$FILEPATH" > "$FILEPATH.tmp"
+
+          mv "$FILEPATH.tmp" "$FILEPATH"
+          echo "Updated $FILEPATH"
+
+      - name: Commit & push (only the data file)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- "$FILEPATH"; then
+            git config user.name  "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
+            git add "$FILEPATH"
+            git commit -m "history: $(date -u +%FT%TZ) [skip vercel]"
+            git push origin main
+            echo "Pushed update"
+          else
+            echo "No changes"
+          fi
