@@ -1,19 +1,16 @@
 name: Update Bedrock Status
 
 on:
-  schedule: [{ cron: "*/5 * * * *" }]  # alle 5 Minuten
+  schedule: [{ cron: "*/5 * * * *" }]   # alle 5 Minuten
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
 env:
-  FILEPATH: "data/status.json"                                  # Status-Historie (Uptime)
+  FILEPATH: "data/status.json"
+  KEEP: "2016"   # 7 Tage à 5-Minuten
   API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
-  KEEP_POINTS: "2016"                                            # ~7 Tage bei 5-Min-Intervallen
-  LATENCY_KEEP_DAYS: "90"                                        # Latenz-Historie: 90 Tage
-  DEFAULT_HOST: "important-instrumentation.gl.at.ply.gg"
-  DEFAULT_PORT: "18232"
 
 jobs:
   run:
@@ -26,28 +23,20 @@ jobs:
           ref: main
           persist-credentials: true
 
-      - name: Anti-burst jitter (0–45 s)
-        shell: bash
-        run: |
-          sleep $((RANDOM % 46))
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      - name: Install jq, curl, Python
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq curl python3
-
-      # ---------- STATUS (UPTIME) ----------
-
-      - name: Ensure status.json exists
+      # --- FIX: kein Heredoc, Datei sauber mit jq anlegen ---
+      - name: Ensure status file exists
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$FILEPATH")"
           if [ ! -s "$FILEPATH" ]; then
             jq -n \
-              --arg name  "Minecraft Bedrock" \
-              --arg host  "${DEFAULT_HOST}" \
-              --argjson port ${DEFAULT_PORT} \
+              --arg name "Minecraft Bedrock" \
+              --arg host "important-instrumentation.gl.at.ply.gg" \
+              --argjson port 18232 \
               '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' \
               > "$FILEPATH"
             echo "Created $FILEPATH"
@@ -55,24 +44,36 @@ jobs:
             echo "Found $FILEPATH"
           fi
 
+      # --- robuster Fetch: Fehler => offline statt null ---
       - name: Pull latest status from Vercel API (robust)
         id: ping
         shell: bash
         run: |
           set -euo pipefail
-          if ! curl --fail --silent --show-error --max-time 12 "${API_URL}" -o resp.json; then
+
+          : "${API_URL:?API_URL not set}"
+          echo "GET $API_URL"
+
+          if ! curl --fail --show-error --silent --max-time 12 "$API_URL" -o resp.json; then
+            echo "curl failed → treat as offline"
             echo '{"ok":false,"generated":null,"service":{}}' > resp.json
           fi
-          # Sicherstellen, dass ok-Bool existiert
-          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json >/dev/null; then
+
+          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json > /dev/null; then
+            echo "response has no boolean .ok → treat as offline"
             jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
           fi
+
+          echo "----- resp.json -----"
+          cat resp.json
+          echo "---------------------"
+
           echo "ok=$(jq -r '.ok' resp.json)"                         >> "$GITHUB_OUTPUT"
           echo "ts=$(jq -r '.generated // now|todate' resp.json)"    >> "$GITHUB_OUTPUT"
           echo "host=$(jq -r '.service.host // empty' resp.json)"    >> "$GITHUB_OUTPUT"
           echo "port=$(jq -r '.service.port // empty' resp.json)"    >> "$GITHUB_OUTPUT"
 
-      - name: Append + trim status history
+      - name: Append + trim history
         shell: bash
         run: |
           set -euo pipefail
@@ -88,7 +89,7 @@ jobs:
              --argjson ok ${ok} \
              --arg host "$host" \
              --argjson port ${port:-0} \
-             --argjson keep ${KEEP_POINTS} '
+             --argjson keep ${KEEP:-2016} '
               if .service == null then .service = {} else . end |
               .service.host = (if $host != "" then $host else .service.host end) |
               .service.port = (if $port != 0  then $port else .service.port end) |
@@ -100,130 +101,69 @@ jobs:
           mv "$FILEPATH.tmp" "$FILEPATH"
           echo "Updated $FILEPATH"
 
-      # ---------- LATENZ (immer neu schreiben) ----------
-
-      - name: Prepare latency target & load previous
-        id: latprev
+      # >>> LATENCY: minimaler Block
+      - name: Ensure latency.json exists
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p public
-          # Vorhandene Datei lesen oder leeres Array
-          if [ -s public/latency.json ]; then
-            cp public/latency.json latency_prev.json
-          else
-            echo "[]" > latency_prev.json
-          fi
-          # Host/Port aus status.json beziehen (Fallback auf Defaults)
-          host=$(jq -r '.service.host // empty' "$FILEPATH")
-          port=$(jq -r '.service.port // empty' "$FILEPATH")
-          : "${host:=${DEFAULT_HOST}}"
-          : "${port:=${DEFAULT_PORT}}"
-          echo "host=$host" >> "$GITHUB_OUTPUT"
-          echo "port=$port" >> "$GITHUB_OUTPUT"
+          [ -f public/latency.json ] || echo "[]" > public/latency.json
 
-      - name: Write latency probe script (RakNet UDP)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Prepare HOST/PORT for latency
+        id: latenv
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p scripts
-          cat > scripts/bedrock_latency.py <<'PY'
-import os, socket, struct, time, json, statistics, random
-HOST = os.environ.get("HOST")
-PORT = int(os.environ.get("PORT", "19132"))
-SAMPLES = int(os.environ.get("SAMPLES", "5"))
-TIMEOUT = float(os.environ.get("TIMEOUT", "1.2"))
-RAKNET_MAGIC = bytes.fromhex("00ffff00fefefefefdfdfdfd12345678")
+          host=$(jq -r '.service.host // empty' "$FILEPATH")
+          port=$(jq -r '.service.port // empty' "$FILEPATH")
+          : "${host:=important-instrumentation.gl.at.ply.gg}"
+          : "${port:=18232}"
+          echo "host=$host" >> "$GITHUB_OUTPUT"
+          echo "port=$port" >> "$GITHUB_OUTPUT"
 
-def ping_once(host, port, timeout):
-    pkt = bytearray([0x01])
-    pkt += struct.pack(">Q", int(time.time()*1000))
-    pkt += RAKNET_MAGIC
-    pkt += struct.pack(">Q", random.getrandbits(64))
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.settimeout(timeout)
-            t0 = time.perf_counter()
-            s.sendto(pkt, (host, port))
-            data, _ = s.recvfrom(2048)
-            rtt = int((time.perf_counter() - t0)*1000)
-            if not data or data[0] != 0x1c or (RAKNET_MAGIC not in data):
-                return None
-            return rtt
-    except Exception:
-        return None
-
-def main():
-    vals = []
-    for _ in range(SAMPLES):
-        vals.append(ping_once(HOST, PORT, TIMEOUT))
-        time.sleep(0.05)
-    filtered = [v for v in vals if v is not None]
-    out = {
-        "ts": time.strftime("%Y-%m-%dT%H:%M:%S")+"Z",
-        "p50_ms": (int(statistics.median(filtered)) if filtered else None),
-        "p95_ms": (int(sorted(filtered)[max(0, int(0.95*(len(filtered)-1)))]) if filtered else None),
-        "samples": [v if v is not None else None for v in vals]
-    }
-    print(json.dumps(out))
-if __name__ == "__main__":
-    main()
-PY
-
-      - name: Measure latency and rebuild latency.json
+      - name: Measure Bedrock UDP latency (RakNet)
         shell: bash
         env:
-          HOST: ${{ steps.latprev.outputs.host }}
-          PORT: ${{ steps.latprev.outputs.port }}
+          HOST: ${{ steps.latenv.outputs.host }}
+          PORT: ${{ steps.latenv.outputs.port }}
           SAMPLES: "5"
           TIMEOUT: "1.2"
         run: |
           set -euo pipefail
-          # Messung durchführen (Fehler robust abfangen)
-          set +e
           python3 scripts/bedrock_latency.py > latency_one.json
-          rc=$?
-          set -e
-
-          if [ $rc -ne 0 ] || ! jq -e . latency_one.json >/dev/null 2>&1; then
-            echo "Latency probe failed → use null datapoint"
-            printf '{"ts":"%s","p50_ms":null,"p95_ms":null,"samples":[null,null,null,null,null]}\n' \
-              "$(date -u +%FT%TZ)" > latency_one.json
-          fi
-
-          # Vorherige laden, neuen Punkt anhängen, auf 90 Tage trimmen
-          now=$(date -u +%s)
+          jq -e . latency_one.json > /dev/null
           tmp=$(mktemp)
-          jq -s --arg now "$now" --argjson keepDays ${LATENCY_KEEP_DAYS} '
-            (.[0] + [.[1]])                                        # append
-            | map(select(
-                (try (.ts | sub("Z$";"") | fromdateiso8601) catch 0)
-                >= ($now|tonumber - ($keepDays*24*3600))
-              ))
-          ' latency_prev.json latency_one.json > "$tmp"
+          jq -s '.[0] + [.[1]]' public/latency.json latency_one.json > "$tmp" && mv "$tmp" public/latency.json
 
-          # Datei IMMER NEU schreiben
-          mv "$tmp" public/latency.json
-          echo "Rebuilt public/latency.json"
-
-      # ---------- COMMIT ----------
-
-      - name: Commit & push (status + latency)
+      - name: Trim latency.json (90 days)
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name  "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          now=$(date -u +%s)
+          tmp=$(mktemp)
+          jq --arg now "$now" '
+            map(select(
+              (try (.ts | sub("Z$";"") | fromdateiso8601) catch 0) >= ($now|tonumber - 90*24*3600)
+            ))
+          ' public/latency.json > "$tmp" && mv "$tmp" public/latency.json
+      # <<< LATENCY Ende
 
-          # Beide Dateien stage’n (nimmt auch neue mit)
-          git add "$FILEPATH" "public/latency.json"
-
-          # Nur committen, wenn etwas gestaged ist
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-            exit 0
+      - name: Commit & push (data + latency)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- "$FILEPATH" "public/latency.json"; then
+            echo "No changes"
+          else
+            git config user.name  "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
+            git add "$FILEPATH" "public/latency.json"
+            git commit -m "history+latency: $(date -u +%FT%TZ) [skip vercel]"
+            git push origin main
+            echo "Pushed update"
           fi
-
-          git commit -m "history+latency: $(date -u +%FT%TZ) [skip vercel]"
-          git push origin main
-          echo "Pushed update"
