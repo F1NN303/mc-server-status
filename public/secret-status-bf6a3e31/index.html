@@ -11,12 +11,13 @@
   --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
   --fg:#e6e7eb; --muted:#9aa0a6;
   --g:#19c37d; --r:#ef4444; --o:#f59e0b; --u:#95a3b6;
-  --radius:12px;
-  --cols: 288; /* wird per JS gesetzt */
+  --radius:12px; --cols:288;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
+a{color:#93c5fd;text-decoration:none}
+a:hover{text-decoration:underline}
 
 /* Header */
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -34,6 +35,9 @@ h1{margin:0;font-size:22px}
 .seg input:checked + label{background:var(--line);color:var(--fg)}
 .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .toggle input{accent-color:#60a5fa}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+.badge-warn{border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b66 inset}
 
 /* Card */
 .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
@@ -43,40 +47,29 @@ h1{margin:0;font-size:22px}
 .svc-name{font-weight:700}
 .svc-host{font-size:12px;color:var(--muted)}
 .badges{display:flex;gap:8px;flex-wrap:wrap}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
 .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
 .kpi strong{color:var(--fg);font-weight:600}
 
-/* Bars als Grid (keine horizontale Scrollbar) */
+/* Bars als Grid + Skeleton */
 .bars-wrap{margin-top:12px;position:relative}
 .bars{
-  position:relative;
-  display:grid;
+  position:relative; display:grid;
   grid-template-columns: repeat(var(--cols), minmax(2px, 1fr));
-  gap:6px;
-  align-items:end;
-  min-height:90px;
-  padding:10px;
-  border-radius:12px;
+  gap:6px; align-items:end; min-height:90px;
+  padding:10px; border-radius:12px;
   background:linear-gradient(180deg,#0a0e19,#0a0d14);
-  overflow:hidden;
-  overscroll-behavior: contain;
-  touch-action: pan-y; /* Seite scrollt vertikal normal, keine horizontale „Reibung“ */
+  overflow:hidden; touch-action: pan-y;
 }
 .bars.mode-24h{min-height:70px; gap:2px}
-.bar{
-  height:60px; border-radius:8px; background:#2a3242; box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)
-}
+.bar{height:60px;border-radius:8px;background:#2a3242;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
 .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.o{background:var(--o)} .bar.u{background:var(--u)}
+.hoverline{position:absolute;top:10px;bottom:10px;width:2px;background:#ffffff40;pointer-events:none;display:none}
 
-/* Hoverline nur Desktop (wird via JS ein-/ausgeblendet) */
-.hoverline{
-  position:absolute; top:10px; bottom:10px; width:2px;
-  background:#ffffff40; pointer-events:none; display:none;
-}
+/* Skeleton */
+.skeleton{animation:shimmer 1.2s infinite; background: linear-gradient(90deg,#0f1422 0%,#131a2a 50%,#0f1422 100%);
+  background-size: 200% 100%;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* Footer Text */
 .footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
 
 /* Legend */
@@ -85,6 +78,7 @@ h1{margin:0;font-size:22px}
 .sq{width:10px;height:10px;border-radius:2px}
 .sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.o{background:var(--o)} .sq.u{background:var(--u)}
 
+/* Misc */
 .disclaimer{margin-top:8px;font-size:12px;color:var(--muted)}
 .incidents{margin-top:10px}
 .incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
@@ -131,6 +125,10 @@ h1{margin:0;font-size:22px}
       <input type="radio" name="r" id="r30" value="30d"><label for="r30">30 d</label>
     </div>
     <label class="toggle"><input type="checkbox" id="auto" checked/> Live-Refresh (60 s)</label>
+    <!-- Link zur separaten Ping-Seite -->
+    <a href="/ping.html" class="badge" title="Ping &amp; Latenz">🔧 Ping &amp; Latenz</a>
+    <!-- CSV Export -->
+    <button id="btn-csv" class="badge" title="CSV der aktuellen Ansicht exportieren" style="cursor:pointer">⬇ CSV exportieren</button>
   </div>
 
   <section class="card">
@@ -185,10 +183,10 @@ h1{margin:0;font-size:22px}
 </div>
 
 <script>
-/* === Konfiguration / Endpunkte === */
+/* === Endpunkte / Parameter === */
 const API_HISTORY='/api/history';
 const API_LIVE='/api/bedrock';
-const API_INCIDENTS='/incidents.json'; // oder via Function /api/incidents
+const API_INCIDENTS='/incidents.json'; // in public/ ablegen (oder API-Route bereitstellen)
 
 const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
 
@@ -199,6 +197,8 @@ const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHo
 const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
 const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('heatmap');
 const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
+const btnCSV = $('btn-csv');
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
 /* Utils */
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
@@ -208,11 +208,22 @@ const localTime=iso=> new Date(iso).toLocaleString();
 const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
 const statusClass = ok => ok===true?'g': ok===false?'r':'u';
 const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
-const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
 async function fetchJSON(u, opts={}){ const r=await fetch(u,{cache:'no-store',...opts}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
 function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
 function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'–'}`;}
+
+/* URL-Params (Deep-Link) */
+function getParams(){
+  const p=new URLSearchParams(location.search);
+  return { range: p.get('range')||'24h', live: p.get('live')!=='0' };
+}
+function setInitialFromParams(){
+  const {range, live}=getParams();
+  const id = range==='7d'?'r7':(range==='30d'?'r30':'r24');
+  const el=document.getElementById(id); if(el){el.checked=true;}
+  autoCtl.checked = !!live;
+}
 
 /* Lazy + Cache */
 const cacheKey=(range)=>`hist:${range}`;
@@ -233,29 +244,15 @@ function toIntervals(points, nowIso){
     const from=new Date(arr[i].ts);
     const to=new Date(i<arr.length-1?arr[i+1].ts:(nowIso||new Date().toISOString()));
     let mins=Math.max(1,Math.round((to-from)/60000));
-    if(mins>30) mins=30;
+    if(mins>30) mins=30; // cap
     out.push({from:arr[i].ts,to:to.toISOString(),ok:arr[i].ok,mins});
-  }
-  return out;
-}
-function computeIncidents(intervals,minMinutes=INCIDENT_MIN){
-  const out=[]; let i=0;
-  while(i<intervals.length){
-    if(intervals[i].ok===false){
-      let from=intervals[i].from, mins=0, j=i;
-      while(j<intervals.length && intervals[j].ok===false){ mins+=intervals[j].mins; j++; }
-      if(mins>=minMinutes) out.push({from,to:intervals[j-1].to,mins});
-      i=j;
-    } else i++;
   }
   return out;
 }
 function kpisFromIntervals(intervals){
   let on=0,off=0,unk=0;
   for(const it of intervals){ if(it.ok===true) on+=it.mins; else if(it.ok===false) off+=it.mins; else unk+=it.mins; }
-  const total=on+off+unk||1;
-  return {uptime:on/(on+off), downtimeMin:off, onlineSlots:Math.round(on/SLOT_MIN),
-          offlineSlots:Math.round(off/SLOT_MIN), unknownSlots:Math.round(unk/SLOT_MIN), points:intervals.length};
+  return {on,off,unk,total:on+off+unk, points: intervals.length};
 }
 function daysFromIntervals(intervals){
   const map=new Map();
@@ -270,8 +267,23 @@ function daysFromIntervals(intervals){
 function classifyDay(d){ const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
   if(offPct>=0.5) return 'r'; if(d.off>0 || unkPct>=0.2) return 'o'; return 'g'; }
 
+/* Externe Incidents (optional, inkl. planned:true) */
+async function loadExternalIncidentReasons(){ try{ return await fetchJSON(API_INCIDENTS); } catch { return []; } }
+function overlap(aFrom,aTo,bFrom,bTo){ return (new Date(aFrom)<=new Date(bTo)) && (new Date(bFrom)<=new Date(aTo)); }
+function overlapMinutes(aFrom,aTo,bFrom,bTo){
+  const s=Math.max(new Date(aFrom).getTime(), new Date(bFrom).getTime());
+  const e=Math.min(new Date(aTo).getTime(),   new Date(bTo).getTime());
+  return Math.max(0, Math.round((e-s)/60000));
+}
+
 /* Render: Grid */
 function setCols(n){ barsEl.style.setProperty('--cols', Math.max(1,n)); }
+function renderSkeleton(n=60){
+  clear(barsEl); barsEl.className='bars mode-24h'; setCols(n);
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<n;i++){ const el=document.createElement('div'); el.className='bar skeleton'; frag.appendChild(el); }
+  barsEl.appendChild(frag);
+}
 function render24h(points){
   clear(barsEl); barsEl.className='bars mode-24h'; setCols(points.length);
   const frag=document.createDocumentFragment();
@@ -307,7 +319,6 @@ if(!isTouch){
   barsEl.addEventListener('mousemove',e=>{
     const rect=barsEl.getBoundingClientRect();
     const x=clamp(e.clientX-rect.left,0,rect.width);
-    // auf Spaltenraster snappen:
     const cols=parseInt(getComputedStyle(barsEl).getPropertyValue('--cols'))||1;
     const gap=parseFloat(getComputedStyle(barsEl).gap)||0;
     const cellW=(rect.width - gap*(cols-1))/cols;
@@ -349,50 +360,25 @@ function renderHeatmap(days){
   heatEl.appendChild(label);
 }
 
-/* Incidents + externe Gründe + optional Discord */
-async function loadExternalIncidentReasons(){ try{ return await fetchJSON(API_INCIDENTS); } catch { return []; } }
-function overlap(aFrom,aTo,bFrom,bTo){ return (new Date(aFrom)<=new Date(bTo)) && (new Date(bFrom)<=new Date(aTo)); }
-async function renderIncidents(intervals){
-  const incidents=computeIncidents(intervals);
-  const reasons=await loadExternalIncidentReasons();
-  if(!incidents.length){ incWrap.innerHTML=''; return; }
-  const ul=document.createElement('ul');
-  incidents.forEach(ev=>{
-    const match=reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
-    const li=document.createElement('li');
-    li.textContent=`Ausfall ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})`+(match?` – Grund: ${match.reason}`:'');
-    ul.appendChild(li);
-  });
-  incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
-  // Discord optional
-  const wh=localStorage.getItem('status_webhook');
-  if(wh){
-    const lastKey='last_incident_to', newest=incidents[incidents.length-1]?.to, lastTo=localStorage.getItem(lastKey);
-    if(newest && newest!==lastTo){
-      fetch(wh,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({content:`🟥 **Downtime**: ${localTime(incidents[incidents.length-1].from)} – ${localTime(newest)} (${fmtDur(Math.round(incidents[incidents.length-1].mins))})`})
-      }).catch(()=>{});
-      localStorage.setItem(lastKey,newest);
-    }
-  }
+/* CSV Export */
+function toCSV(rows){
+  const esc=s=>('"'+String(s).replaceAll('"','""')+'"');
+  return rows.map(r=>r.map(esc).join(',')).join('\n');
 }
-
-/* Range & Timer */
-function onRangeChange(v){
-  barsEl.classList.toggle('mode-24h',v==='24h');
-  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
-  $('foot-right').textContent='Today';
-  load(v);
+function download(filename, text){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));
+  a.download=filename; document.body.appendChild(a); a.click(); a.remove();
 }
-let timer=null;
-function startTimer(){ stopTimer(); timer=setInterval(()=>{const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v);},60_000); }
-function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
-autoCtl.addEventListener('change', e=> e.target.checked?startTimer():stopTimer());
-rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
 
 /* Main Load */
+let timer=null, lastRenderedPoints=[];
 async function load(range){
+  renderSkeleton(60); // kurzer Skeleton bis Daten da sind
+
+  // Live
   try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
+
+  // History
   let data;
   try{ data=await loadHistory(range); }
   catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
@@ -402,35 +388,133 @@ async function load(range){
   const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
   const svc=data.service||{}; $('svc-name').textContent=svc.name||'Minecraft Bedrock'; $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
   const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN; staleEl.hidden=!stale;
+  metaSrc.textContent='Quelle: History ✓';
 
   const intervals=toIntervals(hist,generated);
 
+  // Ansicht + KPIs
   if(range==='24h'){
     const since=Date.now()-DAY_MS;
-    const lastPts=hist.filter(p=>new Date(p.ts).getTime()>=since);
+    const points=hist.filter(p=>new Date(p.ts).getTime()>=since);
     const last24=intervals.filter(i=>new Date(i.from).getTime()>=since);
-    render24h(lastPts);
-    const k=kpisFromIntervals(last24);
-    uptimeEl.textContent=fmtPct(k.uptime); dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
-    kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
-    await renderIncidents(last24);
+    render24h(points); lastRenderedPoints=points;
+
+    // KPIs (mit „planned“ Abzug)
+    const base=kpisFromIntervals(last24);
+    const plannedMin = await plannedOverlapMinutes(last24); // minutes
+    const downtimeEff = Math.max(0, base.off - plannedMin);
+    const uptime = base.on / (base.on + downtimeEff || 1);
+
+    uptimeEl.textContent=fmtPct(uptime);
+    dtimeEl.textContent=fmtDur(Math.round(downtimeEff));
+    kOnline.textContent=Math.round(base.on/SLOT_MIN);
+    kOffline.textContent=Math.round(downtimeEff/SLOT_MIN);
+    kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
+    kPoints.textContent=points.length;
+
+    await renderIncidents(last24); // Liste (geplante Ausfälle mit ⚙️)
   }else{
     const span=range==='7d'?7*DAY_MS:30*DAY_MS;
     const since=Date.now()-span;
     const inSpan=intervals.filter(i=>new Date(i.from).getTime()>=since);
-    const days=daysFromIntervals(inSpan);
-    renderDays(days, range==='7d'?'7 days':'30 days');
-    const k=kpisFromIntervals(inSpan);
-    uptimeEl.textContent=fmtPct(k.uptime); dtimeEl.textContent=fmtDur(Math.round(k.downtimeMin));
-    kOnline.textContent=k.onlineSlots; kOffline.textContent=k.offlineSlots; kUnknown.textContent=k.unknownSlots; kPoints.textContent=k.points;
+    renderDays(daysFromIntervals(inSpan), range==='7d'?'7 days':'30 days'); lastRenderedPoints=[];
+    const base=kpisFromIntervals(inSpan);
+    const plannedMin = await plannedOverlapMinutes(inSpan);
+    const downtimeEff = Math.max(0, base.off - plannedMin);
+    const uptime = base.on / (base.on + downtimeEff || 1);
+
+    uptimeEl.textContent=fmtPct(uptime);
+    dtimeEl.textContent=fmtDur(Math.round(downtimeEff));
+    kOnline.textContent=Math.round(base.on/SLOT_MIN);
+    kOffline.textContent=Math.round(downtimeEff/SLOT_MIN);
+    kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
+    kPoints.textContent=inSpan.length;
+
     incWrap.innerHTML='';
   }
+
+  // Heatmap
   renderHeatmap(daysFromIntervals(intervals));
-  metaSrc.textContent='Quelle: History ✓';
 }
 
+/* Geplante Wartungen: Overlap berechnen + Liste rendern */
+async function plannedOverlapMinutes(intervals){
+  const reasons=await loadExternalIncidentReasons(); // [{from,to,reason,planned:true?},...]
+  const planned = reasons.filter(r=>r.planned);
+  if(!planned.length) return 0;
+
+  // summiere Überschneidung nur mit offline-Intervallen
+  let mins=0;
+  for(const it of intervals){
+    if(it.ok!==false) continue; // nur offline
+    for(const r of planned){ mins += overlapMinutes(it.from,it.to,r.from,r.to); }
+  }
+  return mins;
+}
+async function renderIncidents(intervals){
+  const reasons=await loadExternalIncidentReasons();
+  // automatische Incidents (echte Dauer zusammenhängender Offlines)
+  const incidents=[];
+  let i=0; while(i<intervals.length){
+    if(intervals[i].ok===false){
+      let from=intervals[i].from, mins=0, j=i;
+      while(j<intervals.length && intervals[j].ok===false){ mins+=intervals[j].mins; j++; }
+      if(mins>=INCIDENT_MIN) incidents.push({from,to:intervals[j-1].to,mins});
+      i=j;
+    } else i++;
+  }
+  if(!incidents.length){ incWrap.innerHTML=''; return; }
+
+  const ul=document.createElement('ul');
+  incidents.forEach(ev=>{
+    const match=reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
+    const isPlanned = !!(match && match.planned);
+    const li=document.createElement('li');
+    li.textContent = `${isPlanned?'⚙️ Geplante Wartung':'Ausfall'} ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})` + (match?` – Grund: ${match.reason}`:'');
+    ul.appendChild(li);
+  });
+  incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
+}
+
+/* Events */
+function onRangeChange(v){
+  barsEl.classList.toggle('mode-24h',v==='24h');
+  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
+  $('foot-right').textContent='Today';
+  const url=new URL(location.href); url.searchParams.set('range',v); history.replaceState(null,'',url.toString());
+  load(v);
+}
+function startTimer(){ stopTimer(); timer=setInterval(()=>{const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v);},60_000); }
+function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
+
+/* CSV Export der aktuell sichtbaren Range */
+btnCSV.addEventListener('click', async ()=>{
+  const range = rangeCtl.querySelector('input:checked')?.value||'24h';
+  let data;
+  try{ data=await loadHistory(range); }catch{ alert('Keine History verfügbar'); return; }
+  const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
+  const intervals=toIntervals(hist,generated);
+  let subset=[];
+  if(range==='24h'){ const since=Date.now()-DAY_MS; subset=intervals.filter(i=>new Date(i.from).getTime()>=since); }
+  else { const span=range==='7d'?7*DAY_MS:30*DAY_MS; const since=Date.now()-span; subset=intervals.filter(i=>new Date(i.from).getTime()>=since); }
+  const rows=[['from','to','ok','minutes']].concat(subset.map(i=>[i.from,i.to, i.ok, i.mins]));
+  download(`status_${range}.csv`, toCSV(rows));
+});
+
 /* Init */
-onRangeChange('24h'); startTimer();
+setInitialFromParams();
+rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
+autoCtl.addEventListener('change', e=>{
+  const url=new URL(location.href); url.searchParams.set('live', e.target.checked?'1':'0'); history.replaceState(null,'',url.toString());
+  e.target.checked?startTimer():stopTimer();
+});
+
+/* Hoverline – Desktop only bereits oben aktiviert */
+document.addEventListener('scroll', ()=>{TIP.style.display='none';}, true);
+
+/* Start */
+onRangeChange( (rangeCtl.querySelector('input:checked')?.value)||'24h' );
+if(autoCtl.checked) startTimer();
 </script>
 </body>
 </html>
