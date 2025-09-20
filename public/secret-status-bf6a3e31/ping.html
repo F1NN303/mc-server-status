@@ -1,389 +1,345 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<meta name="robots" content="noindex, nofollow"/>
-<title>Ping & Latenz</title>
-<meta name="color-scheme" content="dark light"/>
-<style>
-:root{
-  --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
-  --fg:#e6e7eb; --muted:#9aa0a6;
-  --g:#19c37d; --r:#ef4444; --o:#f59e0b; --b:#60a5fa;
-}
-*{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:1100px;margin:28px auto;padding:0 16px}
-a{color:#93c5fd;text-decoration:none}
-a:hover{text-decoration:underline}
-h1{margin:0;font-size:22px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);
-     background:linear-gradient(180deg,#0f1320,#0b0f1a); color:var(--fg); cursor:pointer; text-decoration:none}
-.btn:disabled{opacity:.6;cursor:not-allowed}
-.card{background:linear-gradient(180deg,#0f1320,#0c111c);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
-.kpis{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-.grid{display:flex;gap:2px;align-items:flex-end;height:80px;margin-top:8px}
-.bar{width:4px;background:#374151;border-radius:2px}
-.bar.ok{background:var(--g)} .bar.warn{background:var(--o)} .bar.bad{background:var(--r)} .bar.na{background:#374151}
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <title>Ping & Latenz</title>
+  <meta name="color-scheme" content="dark light"/>
 
-.table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
-.table th,.table td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left}
-.small{font-size:12px;color:var(--muted)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:900px){.row{grid-template-columns:1fr}}
-.section-title{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-.warn{color:#fbbf24}
-.ok{color:#19c37d}
-.red{color:#ef4444}
+  <!-- Chart.js via CDN (klein, ohne Plugins) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-.hist{display:flex;gap:6px;align-items:flex-end;height:80px;margin-top:8px}
-.hb{flex:1 1 0;background:#2a3242;border-radius:3px;position:relative}
-.hb::after{content:attr(data-l);position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted)}
-.hb.g{background:var(--g)} .hb.o{background:var(--o)} .hb.r{background:var(--r)} .hb.f{background:#64748b}
+  <style>
+    :root{
+      --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
+      --fg:#e6e7eb; --muted:#9aa0a6; --accent:#0bf0fa;
+      --ok:#19c37d; --warn:#f59e0b; --bad:#ef4444; --fail:#555;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    a{color:#93c5fd;text-decoration:none}
+    a:hover{text-decoration:underline}
 
-.anom{display:none;margin:0 0 10px;padding:8px 10px;border-radius:8px;border:1px solid #f59e0b33;background:#f59e0b1a;color:#fef3c7}
-.flex{display:flex;gap:8px;flex-wrap:wrap}
-.right{margin-left:auto}
-.hl{border-top:1px dashed var(--line);margin:10px 0}
-input[type="number"],select{background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:6px 8px}
-.code{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;font-size:12px;color:#cbd5e1}
-</style>
+    header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+    h1{margin:0;font-size:22px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+         background:linear-gradient(180deg,var(--panel),#0b0f1a);color:var(--fg);cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media (min-width:900px){ .grid{grid-template-columns:1.2fr .8fr} }
+
+    .card{background:linear-gradient(180deg,#121829,#0e1422);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+    .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+    .kpis{display:flex;flex-wrap:wrap;gap:8px}
+    .badge{background:linear-gradient(180deg,#0c1423,#0a0f1a);border:1px solid var(--line);border-radius:999px;padding:6px 10px}
+    .muted{color:var(--muted);font-size:12px}
+
+    .row{display:flex;flex-wrap:wrap;gap:8px}
+    select,input[type="number"]{background:#0e1423;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+
+    canvas{width:100% !important;height:320px !important}
+    .hl{height:1px;background:var(--line);margin:8px 0}
+
+    .legend-dot{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;vertical-align:-1px}
+    .d-ok{background:var(--ok)} .d-warn{background:var(--warn)} .d-bad{background:var(--bad)} .d-fail{background:var(--fail)}
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <h1>Ping &amp; Latenz</h1>
-    <a class="btn" id="back" href="#">← Zurück zum Status</a>
+  <div class="wrap">
+    <header>
+      <button id="backBtn" class="btn">← Zurück</button>
+      <h1>Ping &nbsp;·&nbsp; Latenz</h1>
+    </header>
+
+    <!-- Steuerleiste -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="row">
+        <button id="startBtn" class="btn">▶ Start</button>
+        <button id="stopBtn" class="btn" disabled>⏸ Stopp</button>
+        <button id="resetBtn" class="btn">↺ Reset</button>
+        <button id="csvBtn" class="btn" title="CSV exportieren">⤓ CSV</button>
+
+        <div style="flex:1"></div>
+
+        <label class="muted">Intervall
+          <select id="intervalSel">
+            <option value="5000">5 s</option>
+            <option value="10000" selected>10 s</option>
+            <option value="30000">30 s</option>
+            <option value="60000">60 s</option>
+          </select>
+        </label>
+
+        <label class="muted">Max. Punkte
+          <input id="limitInp" type="number" min="20" max="2000" step="10" value="180" style="width:86px"/>
+        </label>
+
+        <label class="muted">Ziel
+          <select id="targetSel" title="Wohin gemessen wird (HTTP-RTT)">
+            <option value="/api/bedrock" selected>/api/bedrock (empfohlen)</option>
+            <option value="https://mc-server-status-black.vercel.app/api/bedrock">Vercel (voll)</option>
+            <option value="https://example.com/">example.com</option>
+          </select>
+        </label>
+      </div>
+      <div class="hl"></div>
+      <div class="kpis">
+        <div class="badge">Letztes Update: <strong id="lastTs">–</strong></div>
+        <div class="badge">Ping: <strong id="lastPing">–</strong></div>
+        <div class="badge">Ø: <strong id="avgPing">–</strong></div>
+        <div class="badge">Min: <strong id="minPing">–</strong></div>
+        <div class="badge">Max: <strong id="maxPing">–</strong></div>
+        <div class="badge">Samples: <strong id="countPing">0</strong></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="section-title">
+          <strong>Verlauf (ms)</strong>
+          <span class="muted">HTTP-Round-Trip zum Ziel</span>
+        </div>
+        <canvas id="lineChart"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <strong>Verteilung</strong>
+          <span class="muted">
+            <span class="legend-dot d-ok"></span> gut (≤80 ms)
+            &nbsp; <span class="legend-dot d-warn"></span> okay (≤150 ms)
+            &nbsp; <span class="legend-dot d-bad"></span> hoch (&gt;150 ms)
+            &nbsp; <span class="legend-dot d-fail"></span> fehlgeschl.
+          </span>
+        </div>
+        <canvas id="histChart"></canvas>
+      </div>
+    </div>
+
+    <p class="muted" style="margin-top:10px">
+      Hinweis: Browser können kein echtes ICMP/UDP „Ping“. Gemessen wird die HTTP-Latenz (RTT) zu deinem gewählten Ziel.
+      Das beeinflusst den Minecraft-Port nicht und ist bewusst **separat** von deiner Status-Seite.
+    </p>
   </div>
 
-  <section class="card">
-    <div class="section-title">
-      <strong>Live HTTP-Ping</strong>
-      <div class="flex right">
-        <button class="btn" id="start">▶ Start</button>
-        <button class="btn" id="stop" disabled>⏹ Stop</button>
-        <label class="badge">Intervall
-          <select id="interval">
-            <option value="1000">1 s</option>
-            <option value="2000" selected>2 s</option>
-            <option value="5000">5 s</option>
-            <option value="10000">10 s</option>
-            <option value="30000">30 s</option>
-          </select>
-        </label>
-        <label class="badge">Samples
-          <select id="samples">
-            <option value="1">1</option>
-            <option value="3" selected>3</option>
-            <option value="5">5</option>
-          </select>
-        </label>
-      </div>
-    </div>
+  <script>
+  (function(){
+    // ======= Konfiguration / UI =======
+    const backBtn = document.getElementById('backBtn');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn  = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const csvBtn   = document.getElementById('csvBtn');
+    const intervalSel = document.getElementById('intervalSel');
+    const limitInp    = document.getElementById('limitInp');
+    const targetSel   = document.getElementById('targetSel');
 
-    <div id="anom" class="anom">⚠️ Ungewöhnlich hohe Latenz (p95 kurzfristig deutlich über Trend)</div>
+    const elLastTs = document.getElementById('lastTs');
+    const elLast   = document.getElementById('lastPing');
+    const elAvg    = document.getElementById('avgPing');
+    const elMin    = document.getElementById('minPing');
+    const elMax    = document.getElementById('maxPing');
+    const elCnt    = document.getElementById('countPing');
 
-    <div class="kpis">
-      <div class="badge">Letzter: <strong id="last">–</strong></div>
-      <div class="badge">Min/Avg/Max: <strong id="mam">–</strong></div>
-      <div class="badge">p50/p90/p95/p99: <strong id="pp">–</strong></div>
-      <div class="badge">Jitter σ: <strong id="jitter">–</strong></div>
-      <div class="badge">Erfolg/Fail: <strong id="succ">–</strong></div>
-      <div class="badge">Session-Uptime: <strong id="upt">–</strong></div>
-      <div class="badge">EMA-Trend: <strong id="ema">–</strong></div>
-      <div class="badge">Messungen: <strong id="count">0</strong></div>
-    </div>
+    // Sicherer Zurück-Button:
+    backBtn.addEventListener('click', () => {
+      try{
+        const ref = document.referrer;
+        if (ref && new URL(ref).origin === location.origin) history.back();
+        else location.href = './'; // relativer Fallback (bleibt im gleichen Ordner)
+      }catch{ location.href = './'; }
+    });
 
-    <div id="spark" class="grid" aria-label="Ping Sparkline"></div>
+    // ======= Datenhaltung =======
+    let timer = null;
+    let samples = []; // {t: Date, ms: number|null}
 
-    <div class="hl"></div>
+    function pushSample(ms){
+      const limit = Math.max(20, Math.min(2000, parseInt(limitInp.value||'180',10)));
+      samples.push({t:new Date(), ms});
+      if(samples.length > limit) samples.splice(0, samples.length - limit);
+      renderStats();
+      updateCharts();
+    }
 
-    <div class="row">
-      <div>
-        <div class="section-title"><strong>Histogramm (Session)</strong></div>
-        <div id="hist" class="hist" aria-label="Ping Histogramm"></div>
-      </div>
-      <div>
-        <div class="section-title">
-          <strong>SLA-Checker</strong>
-          <div class="flex">
-            <label class="badge">Ziel &lt; 
-              <input id="slaMs" type="number" value="200" min="10" step="10" style="width:80px"/> ms
-            </label>
-            <label class="badge">Quote ≥ 
-              <input id="slaPct" type="number" value="95" min="50" max="100" step="1" style="width:70px"/> %
-            </label>
-          </div>
-        </div>
-        <div class="kpis">
-          <div class="badge">Erreicht: <strong id="slaRes">–</strong></div>
-          <div class="badge">Quote &lt; Ziel: <strong id="slaAch">–</strong></div>
-        </div>
-        <div class="small">Regel: Mindestens <span class="code">Quote</span> % aller erfolgreichen Pings sollen kleiner als <span class="code">Ziel</span> ms sein (Session-Basis).</div>
-      </div>
-    </div>
+    function renderStats(){
+      if(!samples.length){
+        elLastTs.textContent = '–';
+        elLast.textContent = elAvg.textContent = elMin.textContent = elMax.textContent = '–';
+        elCnt.textContent = '0'; return;
+      }
+      const last = samples[samples.length-1];
+      elLastTs.textContent = last.t.toLocaleTimeString();
+      elLast.textContent   = (last.ms==null? 'Fail' : `${last.ms} ms`);
+      elCnt.textContent    = samples.length.toString();
 
-    <div class="hl"></div>
+      const okVals = samples.filter(s => s.ms!=null).map(s=>s.ms);
+      if(okVals.length){
+        const sum=okVals.reduce((a,b)=>a+b,0);
+        const avg=Math.round(sum/okVals.length);
+        const mn = Math.min(...okVals);
+        const mx = Math.max(...okVals);
+        elAvg.textContent = `${avg} ms`;
+        elMin.textContent = `${mn} ms`;
+        elMax.textContent = `${mx} ms`;
+      } else {
+        elAvg.textContent = elMin.textContent = elMax.textContent = '–';
+      }
+    }
 
-    <div class="section-title">
-      <strong>Details (letzte 30)</strong>
-      <div class="flex right">
-        <button class="btn" id="copy">📋 Letzten Ping kopieren</button>
-        <button class="btn" id="csv">⬇ CSV exportieren</button>
-      </div>
-    </div>
-    <table class="table">
-      <thead><tr><th>Zeit</th><th>ms</th><th class="small">Samples</th></tr></thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </section>
+    // ======= Messung (HTTP RTT) =======
+    async function measureOnce(){
+      // „no-store“ verhindert Cache; query-Param sorgt für frische Antwort
+      const base = targetSel.value;
+      const url = base + (base.includes('?') ? '&' : '?') + 't=' + Date.now();
+      const t0 = performance.now();
+      try{
+        const resp = await fetch(url, { method:'GET', cache:'no-store', mode:'cors' });
+        // nur die Header reichen; wir konsumieren den Body nicht bewusst
+        if(!resp.ok) throw new Error('HTTP '+resp.status);
+        const ms = Math.max(0, Math.round(performance.now() - t0));
+        pushSample(ms);
+      }catch(e){
+        // fehlgeschlagene Messung als null markieren
+        pushSample(null);
+        console.warn('Ping failed:', e);
+      }
+    }
 
-  <section class="card">
-    <div class="section-title">
-      <strong>Session-Zusammenfassung</strong>
-      <div class="small" id="netinfo">Netzwerk: –</div>
-    </div>
-    <div class="kpis">
-      <div class="badge">Count: <strong id="sum-count">0</strong></div>
-      <div class="badge">Erfolg: <strong id="sum-ok">0</strong></div>
-      <div class="badge">Fail: <strong id="sum-fail">0</strong></div>
-      <div class="badge">Best Streak (gut): <strong id="sum-best">0</strong></div>
-      <div class="badge">Worst Streak (schlecht): <strong id="sum-worst">0</strong></div>
-    </div>
-  </section>
-</div>
+    function start(){
+      if(timer) return;
+      const iv = Math.max(3000, parseInt(intervalSel.value||'10000',10));
+      measureOnce();
+      timer = setInterval(measureOnce, iv);
+      startBtn.disabled = true;
+      stopBtn.disabled  = false;
+    }
 
-<script>
-/* ===== Back-Link ordnerrelativ ===== */
-(function(){
-  var base = location.pathname.replace(/[^\/]+$/, '');
-  document.getElementById('back').setAttribute('href', base);
-})();
+    function stop(){
+      if(timer){ clearInterval(timer); timer = null; }
+      startBtn.disabled = false;
+      stopBtn.disabled  = true;
+    }
 
-/* ===== Konfiguration ===== */
-const API_HTTP = '/api/bedrock'; // Endpoint für Browser-HTTP-Ping
-const isMobile = ('maxTouchPoints' in navigator && navigator.maxTouchPoints>0);
+    function reset(){
+      samples = [];
+      renderStats();
+      updateCharts(true);
+    }
 
-/* ===== DOM ===== */
-const $ = s => document.querySelector(s);
-const tbody = $('#tbody'), spark = $('#spark'), hist = $('#hist');
-const lastEl=$('#last'), mamEl=$('#mam'), ppEl=$('#pp'), jitterEl=$('#jitter'), succEl=$('#succ'), uptEl=$('#upt'), emaEl=$('#ema'), countEl=$('#count');
-const slaMs=$('#slaMs'), slaPct=$('#slaPct'), slaRes=$('#slaRes'), slaAch=$('#slaAch');
-const sumCount=$('#sum-count'), sumOk=$('#sum-ok'), sumFail=$('#sum-fail'), sumBest=$('#sum-best'), sumWorst=$('#sum-worst');
-const anom=$('#anom'); const netinfo=$('#netinfo');
+    function exportCSV(){
+      if(!samples.length){ alert('Keine Daten.'); return; }
+      const rows = [['timestamp','localTime','ms']];
+      for(const s of samples){
+        rows.push([
+          s.t.toISOString(),
+          s.t.toLocaleString(),
+          (s.ms==null?'':s.ms)
+        ]);
+      }
+      const csv = rows.map(r=>r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ping_${new Date().toISOString().replace(/[:.]/g,'-')}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    }
 
-/* ===== State ===== */
-let timer=null;
-let series=[];        // {ts, ms|null, tries, values[]}
-let ema=null;         // EMA Trend
-let successes=0, fails=0;
-let bestStreak=0, worstStreak=0; // gut = aufeinanderfolgende OKs (<200ms), schlecht = Fehler/≥400ms
+    startBtn.addEventListener('click', start);
+    stopBtn .addEventListener('click', stop);
+    resetBtn.addEventListener('click', reset);
+    csvBtn  .addEventListener('click', exportCSV);
+    intervalSel.addEventListener('change', ()=>{ if(timer){ stop(); start(); } });
 
-/* ===== Utils ===== */
-const nowISO=()=>new Date().toISOString();
-const fmtTime=s=>new Date(s).toLocaleTimeString();
-const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
-function quantile(sorted, q){ if(!sorted.length) return null; const idx=Math.floor(q*(sorted.length-1)); return sorted[idx]; }
-function stdev(a){ if(a.length<2) return 0; const m=avg(a); return Math.sqrt(a.map(v=>(v-m)*(v-m)).reduce((x,y)=>x+y,0)/a.length); }
-function toCSV(rows){return rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\n');}
+    // ======= Charts =======
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    const ctxHist = document.getElementById('histChart').getContext('2d');
 
-/* ===== Messen ===== */
-async function pingHTTP(n=3){
-  const values=[];
-  for(let i=0;i<n;i++){
-    const t0=performance.now();
-    try{
-      await fetch(API_HTTP+'?t='+Date.now(), {cache:'no-store'});
-      const ms=Math.round(performance.now()-t0);
-      values.push(ms);
-    }catch{ values.push(null); }
-  }
-  const okVals=values.filter(v=>v!=null);
-  return { ts:nowISO(), tries:n, values, ms: okVals.length? Math.round(avg(okVals)) : null };
-}
+    const lineChart = new Chart(ctxLine, {
+      type: 'line',
+      data: { labels: [], datasets: [{
+        label:'Ping (ms)',
+        data: [],
+        tension: .25,
+        borderWidth: 2,
+        pointRadius: 0
+      }]},
+      options: {
+        animation:false,
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ ticks:{color:'#8a93a6'}, grid:{color:'#111722'} },
+          y:{ beginAtZero:true, ticks:{color:'#8a93a6'}, grid:{color:'#111722'} }
+        },
+        plugins:{
+          legend:{display:false},
+          tooltip:{mode:'index', intersect:false}
+        }
+      }
+    });
 
-/* ===== Render ===== */
-function renderKPIs(){
-  countEl.textContent=String(series.length);
-  const okAll=series.map(s=>s.ms).filter(v=>v!=null);
-  const last = series[series.length-1];
-  lastEl.textContent = (last && last.ms!=null)? `${last.ms} ms` : '–';
+    const histChart = new Chart(ctxHist, {
+      type: 'bar',
+      data: {
+        labels:['≤80ms','≤150ms','>150ms','Fail'],
+        datasets:[{ label:'Anzahl', data:[0,0,0,0] }]
+      },
+      options:{
+        animation:false,
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ ticks:{color:'#8a93a6'}, grid:{display:false} },
+          y:{ beginAtZero:true, ticks:{color:'#8a93a6'}, grid:{color:'#111722'} }
+        },
+        plugins:{ legend:{display:false}, tooltip:{intersect:false} }
+      }
+    });
 
-  if(okAll.length){
-    const min=Math.min(...okAll), max=Math.max(...okAll), m=Math.round(avg(okAll));
-    const sorted=[...okAll].sort((a,b)=>a-b);
-    const p50=quantile(sorted,0.5), p90=quantile(sorted,0.9), p95=quantile(sorted,0.95), p99=quantile(sorted,0.99);
-    mamEl.textContent=`${min}/${m}/${max} ms`;
-    ppEl.textContent=`${p50}/${p90}/${p95}/${p99} ms`;
-    const sd=Math.round(stdev(okAll));
-    const jitterPct = m? Math.round((sd/m)*100) : 0;
-    jitterEl.textContent=`${sd} ms (${jitterPct}%)`;
+    function updateCharts(full=false){
+      // Line: letzte Samples als ms (null → NaN → Lücken)
+      const labels = samples.map(s=>s.t.toLocaleTimeString());
+      const values = samples.map(s=> (s.ms==null ? NaN : s.ms));
+      lineChart.data.labels = labels;
+      lineChart.data.datasets[0].data = values;
 
-    // EMA Trend (α = 0.3)
-    if(ema==null && last && last.ms!=null) ema = last.ms;
-    if(last && last.ms!=null) ema = Math.round(0.3*last.ms + 0.7*(ema??last.ms));
-    emaEl.textContent = (ema!=null)? `${ema} ms` : '–';
-  }else{
-    mamEl.textContent='–'; ppEl.textContent='–'; jitterEl.textContent='–'; emaEl.textContent='–';
-  }
+      // Farbe dynamisch (Ø-wert)
+      const okVals = samples.filter(s=>s.ms!=null).map(s=>s.ms);
+      const avg = okVals.length ? okVals.reduce((a,b)=>a+b,0)/okVals.length : 0;
+      let color = getColor(avg||200);
+      lineChart.data.datasets[0].borderColor = color;
+      lineChart.update('none');
 
-  // Erfolg/Fail + Session-Uptime
-  const total=successes+fails;
-  succEl.textContent = total? `${successes}/${total} (${Math.round(successes/total*100)}%)` : '–';
-  uptEl.textContent  = total? `${(successes/total*100).toFixed(2)}%` : '–';
+      // Histogramm
+      let b1=0,b2=0,b3=0,b4=0;
+      for(const s of samples){
+        if(s.ms==null){ b4++; continue; }
+        if(s.ms<=80) b1++;
+        else if(s.ms<=150) b2++;
+        else b3++;
+      }
+      histChart.data.datasets[0].backgroundColor=[ 'var(--ok)','var(--warn)','var(--bad)','var(--fail)' ];
+      histChart.data.datasets[0].data=[b1,b2,b3,b4];
+      histChart.update('none');
+    }
 
-  // SLA Checker
-  const targetMs = parseInt(slaMs.value,10)||200;
-  const targetPct = (parseInt(slaPct.value,10)||95)/100;
-  const okUnder = series.filter(s=>s.ms!=null && s.ms<targetMs).length;
-  const okCount = series.filter(s=>s.ms!=null).length;
-  const ratio = okCount? okUnder/okCount : 0;
-  slaAch.textContent = okCount? `${Math.round(ratio*100)}%` : '–';
-  slaRes.innerHTML   = (okCount && ratio>=targetPct)? '<span class="ok">OK</span>' : '<span class="warn">nicht erfüllt</span>';
+    function getColor(ms){
+      if(ms<=80) return getCSS('--ok');
+      if(ms<=150) return getCSS('--warn');
+      return getCSS('--bad');
+    }
+    function getCSS(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#19c37d'; }
 
-  // Anomalie (Vergleich kurz vs. lang)
-  const short = okAll.slice(-20); const long = okAll.slice(-200);
-  const p95s = short.length? quantile([...short].sort((a,b)=>a-b),0.95) : null;
-  const p95l = long.length?  quantile([...long].sort((a,b)=>a-b),0.95) : null;
-  const spike = (p95s!=null && p95l!=null && p95s > 1.8*(p95l||1) && short.length>=10 && long.length>=40);
-  anom.style.display = spike ? 'block' : 'none';
-}
+    // Auto-Start
+    start();
 
-function renderTable(){
-  tbody.innerHTML='';
-  series.slice(-30).reverse().forEach(s=>{
-    const tr=document.createElement('tr');
-    const td1=document.createElement('td'); td1.textContent=fmtTime(s.ts);
-    const td2=document.createElement('td'); td2.textContent=(s.ms!=null? s.ms : '×');
-    const td3=document.createElement('td'); td3.className='small'; td3.textContent=`${s.tries}x: ${s.values.map(v=>v??'×').join(', ')}`;
-    tr.append(td1,td2,td3); tbody.appendChild(tr);
-  });
-}
-
-function renderSpark(){
-  spark.innerHTML='';
-  const last80 = series.slice(-80);
-  const max = Math.max(100, ...last80.map(x=>x.ms||0));
-  last80.forEach(x=>{
-    const h = Math.round(Math.min(1,(x.ms||0)/max) * 76) + 4;
-    const d = document.createElement('div');
-    let cls='bar na';
-    if(x.ms==null) cls='bar bad';
-    else if(x.ms>=400) cls='bar bad';
-    else if(x.ms>=200) cls='bar warn';
-    else cls='bar ok';
-    d.className=cls; d.style.height=h+'px'; spark.appendChild(d);
-  });
-}
-
-function renderHistogram(){
-  const okAll=series.map(s=>s.ms).filter(v=>v!=null);
-  const buckets={ lt100:0, g100:0, g200:0, g400:0, fail:0 };
-  series.forEach(s=>{
-    if(s.ms==null){ buckets.fail++; return; }
-    if(s.ms<100) buckets.lt100++;
-    else if(s.ms<200) buckets.g100++;
-    else if(s.ms<400) buckets.g200++;
-    else buckets.g400++;
-  });
-  const maxCount=Math.max(1, ...Object.values(buckets));
-  hist.innerHTML='';
-  const mk=(h,cls,label)=>{ const d=document.createElement('div'); d.className='hb '+cls; d.style.height=(h)+'%'; d.setAttribute('data-l',label); hist.appendChild(d); };
-  mk(Math.round(buckets.lt100/maxCount*100),'g','<100');
-  mk(Math.round(buckets.g100 /maxCount*100),'g','100–199');
-  mk(Math.round(buckets.g200 /maxCount*100),'o','200–399');
-  mk(Math.round(buckets.g400 /maxCount*100),'r','≥400');
-  mk(Math.round(buckets.fail /maxCount*100),'f','fail');
-}
-
-function renderSummary(){
-  sumCount.textContent=String(series.length);
-  sumOk.textContent=String(successes);
-  sumFail.textContent=String(fails);
-  sumBest.textContent=String(bestStreak);
-  sumWorst.textContent=String(worstStreak);
-}
-
-/* ===== Streaks ===== */
-function updateStreaks(lastMs){
-  // gut: <200ms; schlecht: fail oder >=400ms
-  let curGood=0, curBad=0, best=0, worst=0;
-  for(const s of series){
-    if(s.ms!=null && s.ms<200){ curGood++; curBad=0; }
-    else if(s.ms==null || s.ms>=400){ curBad++; curGood=0; }
-    else { curGood=0; curBad=0; }
-    if(curGood>best) best=curGood;
-    if(curBad>worst) worst=curBad;
-  }
-  bestStreak=best; worstStreak=worst;
-}
-
-/* ===== Hauptlogik ===== */
-async function tick(){
-  const n = parseInt($('#samples').value,10)||3;
-  const m = await pingHTTP(n);
-  series.push(m);
-  if(m.ms!=null) successes++; else fails++;
-  updateStreaks(m.ms);
-  renderKPIs(); renderSpark(); renderHistogram(); renderTable(); renderSummary();
-}
-
-function start(){
-  if(timer) return;
-  $('#start').disabled=true; $('#stop').disabled=false;
-  // Sofort starten
-  tick();
-  let every=parseInt($('#interval').value,10)||2000;
-  if(isMobile && every<5000) every=5000; // Energiesparen auf Mobile
-  timer=setInterval(tick, every);
-}
-function stop(){
-  if(!timer) return;
-  clearInterval(timer); timer=null;
-  $('#start').disabled=false; $('#stop').disabled=true;
-}
-
-/* ===== Auto-Pause bei Tab-Wechsel ===== */
-document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){ stop(); }
-});
-
-/* ===== Buttons ===== */
-$('#start').addEventListener('click', start);
-$('#stop').addEventListener('click', stop);
-$('#interval').addEventListener('change', ()=>{ if(timer){ stop(); start(); }});
-$('#samples').addEventListener('change', ()=>{ /* next tick nutzt neuen Wert */ });
-
-$('#csv').addEventListener('click', ()=>{
-  const rows=[['ts','ms','tries','values']];
-  series.forEach(s=>rows.push([s.ts, s.ms==null?'':s.ms, s.tries, s.values.join(' ')]));
-  const blob=new Blob([toCSV(rows)],{type:'text/csv'}); const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='ping_session.csv'; a.click(); URL.revokeObjectURL(a.href);
-});
-
-$('#copy').addEventListener('click', async ()=>{
-  const last=series[series.length-1];
-  const text = last? `Ping ${last.ms!=null?last.ms+' ms':'FAIL'} @ ${new Date(last.ts).toLocaleString()}` : 'Noch keine Messung';
-  try{ await navigator.clipboard.writeText(text); $('#copy').textContent='✅ Kopiert'; setTimeout(()=>$('#copy').textContent='📋 Letzten Ping kopieren',1200); }
-  catch{ alert(text); }
-});
-
-/* ===== Network Info (optional) ===== */
-(function(){
-  const c = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
-  if(!c){ netinfo.textContent='Netzwerk: unbekannt'; return; }
-  const bits=[];
-  if(c.effectiveType) bits.push('Typ '+c.effectiveType);
-  if(c.downlink) bits.push('Downlink '+c.downlink+'Mbps');
-  if(c.rtt) bits.push('RTT '+c.rtt+'ms');
-  netinfo.textContent = 'Netzwerk: ' + (bits.join(', ')||'–');
-})();
-
-/* ===== Init ===== */
-</script>
+  })();
+  </script>
 </body>
 </html>
