@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="color-scheme" content="dark light"/>
+  <title>📜 Regeln – Minecraft Bedrock Server</title>
+
+  <style>
+    :root{
+      --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
+      --fg:#e6e7eb; --muted:#9aa0a6; --accent:#0bf0fa;
+      --ok:#19c37d; --warn:#f59e0b; --bad:#ef4444;
+      --radius:12px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--fg);
+      font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif; line-height:1.5}
+    a{color:#93c5fd;text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .wrap{max-width:1000px;margin:28px auto;padding:0 16px}
+    header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .left, .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#0b0f1a);color:var(--fg)}
+    .badge{border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+    h1{margin:0;font-size:24px}
+    .card{background:linear-gradient(180deg,#121829,#0e1422);border:1px solid var(--line);
+      border-radius:var(--radius);padding:14px;margin:10px 0}
+    .toc{display:grid;grid-template-columns:1fr;gap:6px}
+    @media(min-width:700px){.toc{grid-template-columns:1fr 1fr}}
+
+    .muted{color:var(--muted)}
+    .section-title{margin:0 0 6px 0;font-size:18px}
+    .hint{font-size:12px;color:var(--muted)}
+
+    /* Accordion */
+    details{border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,#0f1525,#0c1220);padding:10px 12px;margin:8px 0}
+    details[open]{background:linear-gradient(180deg,#10182b,#0d1526)}
+    summary{cursor:pointer;list-style:none}
+    summary::-webkit-details-marker{display:none}
+    summary .s{display:inline-block;width:1.35em;text-align:center;margin-right:.25em;color:var(--accent)}
+    .sub{margin:.25rem 0 .5rem 1.6rem}
+    .dot{display:inline-block;width:.6em;height:.6em;background:var(--muted);border-radius:50%;margin-right:.4em;vertical-align:middle}
+
+    .footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="left">
+        <a class="btn" href="./">← Zurück zur Status-Seite</a>
+        <a class="btn" href="./ping.html">⏱ Ping & Latenz</a>
+      </div>
+      <div class="right">
+        <span class="badge" id="updated">Zuletzt aktualisiert: —</span>
+        <span class="badge">Version 1.0</span>
+      </div>
+    </header>
+
+    <div class="card">
+      <h1>📜 Regeln für den Minecraft-Server</h1>
+      <p class="muted">Gilt ausschließlich für diesen Server (Minecraft Bedrock) und den zugehörigen Discord-Bereich.</p>
+
+      <!-- TOC -->
+      <div class="card" style="margin-top:12px">
+        <strong>Inhalt</strong>
+        <div class="toc">
+          <a href="#r1">1 Kein Griefing</a>
+          <a href="#r2">2 Kein grundloses Angreifen</a>
+          <a href="#r3">3 Kein Cheating/Hacks</a>
+          <a href="#r4">4 Fairness beim Spielen</a>
+          <a href="#r5">5 Respektvoller Umgang</a>
+          <a href="#r6">6 Discord-Regeln</a>
+          <a href="#r7">7 Keine Lag-Maschinen</a>
+          <a href="#r8">8 Spielerstrafen & Durchsetzung</a>
+          <a href="#r9">9 Änderungen & Ergänzungen</a>
+          <a href="#agree">Einverständnis & Hausrecht</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1 -->
+    <section id="r1" class="card">
+      <details open>
+        <summary><span class="s">§1</span><strong>Kein Griefing</strong></summary>
+        <div class="sub">
+          <p><span class="dot"></span><strong>1.1</strong> „Unangemessenes Gebäude“ umfasst u. a. beleidigende Inhalte, massive Sicht-/Wegeblocker am Spawn, ungefragte Anbauten an fremden Basen.</p>
+          <p><span class="dot"></span><strong>1.2</strong> Basen markieren (Schilder/Karten), fremde Farmen nur mit Einverständnis nutzen.</p>
+          <p><span class="dot"></span><strong>1.3</strong> Keine fremden Bauten zerstören, beschädigen, bestehlen oder bebauen, außer es dient dem Wohl der Gemeinschaft (unangemessene Gebäude). Bei permanent gebannten Spielern sind Items und Bauten frei verfügbar.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 2 -->
+    <section id="r2" class="card">
+      <details>
+        <summary><span class="s">§2</span><strong>Kein grundloses Angreifen</strong></summary>
+        <div class="sub">
+          <p><span class="dot"></span><strong>2.1</strong> Unzulässig: Spawn-Kill, Hinterhalte ohne Kontext, Ketten-Kills, „Base-Camping“, AFK-Kills.</p>
+          <p><span class="dot"></span><strong>2.2</strong> PvP nur in angebrachten Situationen, nicht ohne Grund und nicht überhand.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 3 -->
+    <section id="r3" class="card">
+      <details>
+        <summary><span class="s">§3</span><strong>Kein Cheating oder Hacks</strong></summary>
+        <div class="sub">
+          <p><span class="dot"></span><strong>3.1</strong> Verboten: X-Ray/Wallhacks, Auto-Clicker/Makros, Fly/Speed, Paket-Manipulation, Script-Bots.</p>
+          <p><span class="dot"></span><strong>3.2</strong> Erkennung kann still erfolgen (XUID/Logs).</p>
+          <ul>
+            <li>Jegliche Mod-Clients, Hacks oder Tools, die einen unfairen Vorteil verschaffen (z. B. X-Ray, Kill Aura, Fly-Hacks), sind verboten.</li>
+            <li>Auch Dupes und Item-Bugs dürfen nicht ausgenutzt werden.</li>
+            <li>Jegliche automatischen Systeme wie Makros oder andere autonome Systeme sind untersagt.</li>
+            <li><strong>Achtung:</strong> Es existieren Erkennungssysteme (z. B. Anti-Cheat/Log-Analyse), die Verstöße automatisch aufdecken.</li>
+            <li>Versuche, sich unfaire Vorteile zu verschaffen, werden gleich behandelt wie erfolgreiche Cheats.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- 4 -->
+    <section id="r4" class="card">
+      <details>
+        <summary><span class="s">§4</span><strong>Fairness beim Spielen</strong></summary>
+        <div class="sub">
+          <p>Ressourcen gerecht teilen; keine übermäßigen Farmen, die den Server belasten. Dazu gehört auch, nicht sofort auf Full-Netherite zu rushen.</p>
+          <p class="muted">(Sinn: keine Erze/Ressourcen anderer „wegminen“ oder stehlen.)</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 5 -->
+    <section id="r5" class="card">
+      <details>
+        <summary><span class="s">§5</span><strong>Respektvoller Umgang</strong></summary>
+        <div class="sub">
+          <p>Keine diskriminierenden, rassistischen, sexistischen oder toxischen Aussagen.</p>
+          <p><span class="dot"></span><strong>5.1</strong> Gilt In-Game, im Voice und im Discord.</p>
+          <p><span class="dot"></span><strong>5.2</strong> Beleidigungen, Belästigung, Doxxing, Hetze sind untersagt.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 6 -->
+    <section id="r6" class="card">
+      <details>
+        <summary><span class="s">§6</span><strong>Discord-Regeln</strong></summary>
+        <div class="sub">
+          <ul>
+            <li>Kein Spam, kein Capslock-Spam, keine unnötigen Geräusche im Voice-Chat.</li>
+            <li>Respektvoller Umgang auch dort; keine Beleidigungen oder Belästigungen.</li>
+            <li>Werbung/Links nur, wenn sie für den Server relevant sind.</li>
+          </ul>
+        </div>
+      </details>
+    </section>
+
+    <!-- 7 -->
+    <section id="r7" class="card">
+      <details>
+        <summary><span class="s">§7</span><strong>Keine Lag-Maschinen</strong></summary>
+        <div class="sub">
+          <p>Auch wenn der Server gut dimensioniert ist, sind Maschinen, die absichtlich oder unabsichtlich laggen, verboten (z. B. extreme Redstone-/Mob-Farben, Freezing-Setups).</p>
+          <ul>
+            <li>Große automatische Farmen, Hopper-Systeme oder Redstone-Projekte bitte vorher absprechen.</li>
+            <li>Im Zweifel entscheidet das Admin-Team, was unzulässig viel Last erzeugt.</li>
+          </ul>
+          <p><span class="dot"></span><strong>7.1</strong> Beispiele: TNT-/Wither-Farmen, tick-schnelle Clocks ohne Off-Switch, Spawner-Stapel, Portal-Lag-Farmen.</p>
+          <p><span class="dot"></span><strong>7.2</strong> Technik-Auflagen: sichtbarer AUS-Schalter; Clocks ≥ 1 s Takt oder abschaltbar; Entity-Stau vermeiden (Boote/Minecarts/Tiermassen).</p>
+          <p><span class="dot"></span><strong>7.3</strong> Admins dürfen Anlagen drosseln/abschalten, wenn TPS/Last leidet.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 8 -->
+    <section id="r8" class="card">
+      <details>
+        <summary><span class="s">§8</span><strong>Spielerstrafen & Durchsetzung</strong></summary>
+        <div class="sub">
+          <p><span class="dot"></span><strong>8.1</strong> Maßnahmen je nach Schwere: Verwarnung → Kick → temporärer Ban → permanenter Ban.</p>
+          <p><span class="dot"></span><strong>8.2</strong> Permanente Sperren sind endgültig und nicht anfechtbar.</p>
+          <p><span class="dot"></span><strong>8.3</strong> Schwere Verstöße (Cheats/Dupes/massives Griefing/Hate Speech) können sofort zu Permaban führen.</p>
+          <p><span class="dot"></span><strong>8.4</strong> Umgehungsversuche (z. B. Alt/XUID-Wechsel) führen zu weiteren Maßnahmen.</p>
+          <p><span class="dot"></span><strong>8.5</strong> Grundlage sind Server-Logs/Beweise; Admin-Entscheidungen sind final.</p>
+          <p><span class="dot"></span><strong>8.6</strong> Sanktionen gelten serverweit.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- 9 -->
+    <section id="r9" class="card">
+      <details>
+        <summary><span class="s">§9</span><strong>Änderungen & Ergänzungen</strong></summary>
+        <div class="sub">
+          <p><span class="dot"></span><strong>9.1</strong> Weitere Regeln können jederzeit ergänzt/angepasst werden, um Lücken zu schließen oder Missbrauch zu verhindern.</p>
+          <p><span class="dot"></span><strong>9.2</strong> Änderungen werden unten mit <em>„zuletzt aktualisiert“</em> gekennzeichnet und gelten ab Veröffentlichung.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- Einverständnis -->
+    <section id="agree" class="card">
+      <h2 class="section-title">Einverständnis, Eigentum & Änderungen</h2>
+      <p><strong>Mit dem Betritt erklärst du dich einverstanden, alle aktuell gültigen Regeln einzuhalten.</strong></p>
+      <p>Hausrecht: Der Server gehört dem Betreiber. Owner, Admins, Mods dürfen Inhalte verschieben, sperren oder entfernen, wenn Regeln verletzt, Ressourcen übermäßig belastet oder Sicherheits-/sonstige Regularien betroffen sind.</p>
+      <p><strong>Verstöße gegen diese Regeln führen – je nach Schwere – zu Verwarnung, Kick, temporärem oder permanentem Ban. Die Entscheidung liegt beim Admin-Team.</strong></p>
+
+      <div class="footer">
+        <span class="hint">Bei Fragen melde dich im Discord-Support.</span>
+        <a class="btn" href="./">✔️ Regeln gelesen – zurück</a>
+      </div>
+    </section>
+
+    <p class="hint">© Dein Server – Diese Seite ist kein Rechtsdokument, dient aber als verbindliche Hausordnung.</p>
+  </div>
+
+  <script>
+    // Datum einfach hier setzen (oder automatisch „heute“):
+    const LAST_UPDATE = '20.09.2025'; // <- hier pflegen
+    document.getElementById('updated').textContent = 'Zuletzt aktualisiert: ' + LAST_UPDATE;
+  </script>
+</body>
+</html>
