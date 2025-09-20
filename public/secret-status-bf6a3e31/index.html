@@ -516,5 +516,74 @@ document.addEventListener('scroll', ()=>{TIP.style.display='none';}, true);
 onRangeChange( (rangeCtl.querySelector('input:checked')?.value)||'24h' );
 if(autoCtl.checked) startTimer();
 </script>
+  <!-- Player-Stats (Bedrock, mcsrvstat.us) -->
+<section id="playerCard" class="card" style="margin-top:12px">
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <strong>Spieler aktuell</strong>
+    <span id="playerUpdated" class="small" style="color:#9aa0a6">lädt…</span>
+  </div>
+  <div id="playerSummary" class="kpis" style="display:flex;gap:8px;flex-wrap:wrap">
+    <div class="badge">Status: <strong id="srvState">–</strong></div>
+    <div class="badge">Online: <strong id="pOnline">–</strong></div>
+    <div class="badge">Max: <strong id="pMax">–</strong></div>
+    <div class="badge">MOTD: <strong id="motd">–</strong></div>
+  </div>
+  <div id="playerListWrap" class="hl" style="display:none"></div>
+  <div id="playerList" class="small"></div>
+</section>
+
+<script>
+/** Minimal, konfliktfrei – keine externen Libs. **/
+(function(){
+  // === Konfiguration: bitte Host/Port prüfen ===
+  const HOST = "important-instrumentation.gl.at.ply.gg"; // dein Bedrock Host
+  const PORT = 18232;                                     // dein Bedrock Port
+  const ENDPOINT = `https://api.mcsrvstat.us/bedrock/3/${HOST}:${PORT}`;
+
+  const $ = s => document.querySelector(s);
+  const elUpd = $("#playerUpdated"), elState = $("#srvState");
+  const elOn = $("#pOnline"), elMax = $("#pMax"), elMotd = $("#motd");
+  const elListWrap = $("#playerListWrap"), elList = $("#playerList");
+
+  async function fetchPlayers(){
+    try{
+      const res = await fetch(ENDPOINT, {cache:"no-store"});
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const j = await res.json();
+
+      const online = !!j.online;
+      elState.textContent = online ? "online" : "offline";
+      elState.style.color = online ? "#19c37d" : "#ef4444";
+
+      elOn.textContent = (j.players && typeof j.players.online==="number") ? j.players.online : "0";
+      elMax.textContent = (j.players && typeof j.players.max==="number") ? j.players.max : "–";
+      elMotd.textContent = (j.motd && j.motd.clean && j.motd.clean.length) ? j.motd.clean.join(" ") : "–";
+
+      // Spieler-Liste (Bedrock liefert oft keine Namen – defensiv!)
+      const names = (j.players && Array.isArray(j.players.list)) ? j.players.list : [];
+      if(names.length){
+        elListWrap.style.display = "block";
+        elListWrap.textContent = ""; // Linie
+        elList.innerHTML = names.map(n => `<span style="display:inline-block;margin:3px 6px;padding:4px 8px;border:1px solid #1b2231;border-radius:999px;background:linear-gradient(180deg,#0c1423,#0a0f1a)">${n}</span>`).join("");
+      }else{
+        elListWrap.style.display = "none";
+        elList.innerHTML = `<span class="small" style="color:#9aa0a6">Keine Namen vom Server geliefert.</span>`;
+      }
+
+      elUpd.textContent = "aktualisiert " + new Date().toLocaleTimeString();
+    }catch(e){
+      elState.textContent = "unbekannt"; elState.style.color = "#f59e0b";
+      elOn.textContent = "–"; elMax.textContent = "–"; elMotd.textContent = "–";
+      elListWrap.style.display = "none"; elList.innerHTML = "";
+      elUpd.textContent = "Fehler beim Laden";
+      console.warn("Player fetch failed:", e);
+    }
+  }
+
+  // Initial + Auto-Refresh alle 60s
+  fetchPlayers();
+  setInterval(fetchPlayers, 60000);
+})();
+</script>
 </body>
 </html>
