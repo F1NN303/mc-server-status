@@ -46,7 +46,7 @@
     <header>
       <h1>📜 Regeln für den Minecraft-Server</h1>
       <nav class="actions" aria-label="Navigation">
-        <!-- Links mit korrekten Secret-Pfaden -->
+        <!-- Secret-Seite & Ping mit korrekten Pfaden -->
         <a class="btn" href="/secret-status-bf6a3e31/">
           <span>🟩 Statusseite</span>
         </a>
@@ -115,28 +115,20 @@
   </div>
 
   <script>
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // TRAGE HIER DEINE DISCORD-URL EIN:
-    const DISCORD_URL = "https://discord.gg/DEIN-EINLADUNGS-LINK";
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // Fester Discord-Invite:
+    const DISCORD_URL = "https://discord.gg/GtCaTP7GW6";
 
-    // Button klickt zum Discord
+    // Discord-Button verlinken
     document.getElementById('btn-discord').href = DISCORD_URL;
 
-    // „Zurück“-Navigation (Browser-Back) → zum Discord leiten
-    // Wir legen einen State an und fangen popstate ab.
+    // Browser-Back → direkt zum Discord leiten
     try {
       history.replaceState({landing:true}, "");
       history.pushState({trap:true}, "");
       window.addEventListener('popstate', (ev) => {
-        // Nur wenn der Trap-Back getroffen wird
-        if (ev.state && ev.state.landing) {
-          location.href = DISCORD_URL;
-        } else {
-          location.href = DISCORD_URL;
-        }
+        location.href = DISCORD_URL;
       });
-    } catch(e) { /* still */ }
+    } catch(e) { /* no-op */ }
   </script>
   <noscript>
     <div class="wrap" style="margin-top:-8px">
