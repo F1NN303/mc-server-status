@@ -1,0 +1,8 @@
+[
+  {
+    "from": "2025-10-01T18:00:00Z",
+    "to":   "2025-10-01T19:00:00Z",
+    "planned": true,
+    "reason": "Kernel-Update / Neustart"
+  }
+]
