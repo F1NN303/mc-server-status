@@ -18,10 +18,6 @@ env:
   KEEP: "2016"    # 7 Tage à 5-Minuten-Slots
   API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
 
-  # (NEU, optional – schadet nicht, wenn Dateien fehlen)
-  INCIDENTS_JSON: "public/incidents.json"
-  ICS_FILE: "public/maintenance.ics"
-
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -63,7 +59,7 @@ jobs:
           echo "HEAD of $FILEPATH:"
           head -n 30 "$FILEPATH" || true
 
-            - name: Pull latest from API (retry, robust)
+      - name: Pull latest from API (retry, robust)
         id: ping
         shell: bash
         run: |
@@ -87,12 +83,11 @@ jobs:
           echo "------------------------"
 
           # Outputs für nachfolgende Steps
-          {
-            printf 'ok=%s\n'  "$(jq -r '.ok' resp.json)"
-            printf 'ts=%s\n'  "$(jq -r '.generated // (now|todate)' resp.json)"
-            printf 'host=%s\n' "$(jq -r '.service.host // empty' resp.json)"
-            printf 'port=%s\n' "$(jq -r '.service.port // empty' resp.json)"
-          } >> "$GITHUB_OUTPUT"
+          echo "ok=$(jq -r '.ok' resp.json)"                          >> "$GITHUB_OUTPUT"
+          echo "ts=$(jq -r '.generated // (now|todate)' resp.json)"   >> "$GITHUB_OUTPUT"
+          echo "host=$(jq -r '.service.host // empty' resp.json)"     >> "$GITHUB_OUTPUT"
+          echo "port=$(jq -r '.service.port // empty' resp.json)"     >> "$GITHUB_OUTPUT"
+
       - name: Append + trim history (only keep latest window)
         shell: bash
         run: |
@@ -119,66 +114,20 @@ jobs:
             ' "$FILEPATH" > "$FILEPATH.tmp"
 
           mv "$FILEPATH.tmp" "$FILEPATH"
+
           echo "TAIL of $FILEPATH:"
           tail -n 20 "$FILEPATH" || true
-          
-      # --------------------- NEU (optional) ---------------------
-      # Baut einen ICS-Kalender aus public/incidents.json.
-      # Bricht NICHT, wenn incidents.json fehlt oder leer ist.
-            - name: Build maintenance.ics from incidents.json (optional, safe)
-        shell: bash
-        env:
-          INCIDENTS_JSON: public/incidents.json
-          ICS_FILE: public/maintenance.ics
-        run: |
-          set -euo pipefail
-          SRC="$INCIDENTS_JSON"
-          DEST="$ICS_FILE"
-          mkdir -p "$(dirname "$DEST")"
-
-          # Nur erzeugen, wenn incidents.json existiert und ein Array ist
-          if [ -s "$SRC" ] && jq -e 'type=="array"' "$SRC" >/dev/null 2>&1; then
-            {
-              cat <<'EOF'
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//mc-status//ics//EN
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-EOF
-              jq -r '
-                .[] | select(.planned==true) |
-                "BEGIN:VEVENT",
-                "UID:" + (.from) + "-planned@mcstatus",
-                "DTSTART:" + ( .from
-                                | sub("[-:]";"";"g")
-                                | sub("\\.\\d+Z$";"Z") ),
-                ( if has("to") and .to != null then
-                    "DTEND:" + ( .to
-                                  | sub("[-:]";"";"g")
-                                  | sub("\\.\\d+Z$";"Z") )
-                  else empty end ),
-                "SUMMARY:" + ( .reason // "Planned Maintenance" ),
-                "END:VEVENT"
-              ' "$SRC"
-              echo "END:VCALENDAR"
-            } > "$DEST"
-            echo "Wrote $DEST"
-          else
-            echo "No valid incidents.json -> no $DEST generated."
-          fi
-      # ------------------- Ende NEU (optional) ------------------
 
       - name: Commit & push if changed
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- "$FILEPATH" "$ICS_FILE"; then
+          if git diff --quiet -- "$FILEPATH"; then
             echo "No changes → nothing to commit."
           else
             git config user.name  "${{ github.actor }}"
             git config user.email "${{ github.actor }}@users.noreply.github.com"
-            git add "$FILEPATH" "$ICS_FILE" || true
+            git add "$FILEPATH"
             git commit -m "status: $(date -u +%FT%TZ) [skip vercel]"
             git push origin main
             echo "Pushed update."
