@@ -93,7 +93,6 @@ jobs:
             printf 'host=%s\n' "$(jq -r '.service.host // empty' resp.json)"
             printf 'port=%s\n' "$(jq -r '.service.port // empty' resp.json)"
           } >> "$GITHUB_OUTPUT"
-
       - name: Append + trim history (only keep latest window)
         shell: bash
         run: |
