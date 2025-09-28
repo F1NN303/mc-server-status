@@ -124,14 +124,18 @@ jobs:
       # --------------------- NEU (optional) ---------------------
       # Baut einen ICS-Kalender aus public/incidents.json.
       # Bricht NICHT, wenn incidents.json fehlt oder leer ist.
-      - name: Build maintenance.ics from incidents.json (optional, safe)
+            - name: Build maintenance.ics from incidents.json (optional, safe)
         shell: bash
+        env:
+          INCIDENTS_JSON: public/incidents.json
+          ICS_FILE: public/maintenance.ics
         run: |
           set -euo pipefail
           SRC="$INCIDENTS_JSON"
           DEST="$ICS_FILE"
           mkdir -p "$(dirname "$DEST")"
 
+          # Nur erzeugen, wenn incidents.json existiert und ein Array ist
           if [ -s "$SRC" ] && jq -e 'type=="array"' "$SRC" >/dev/null 2>&1; then
             {
               cat <<'EOF'
@@ -142,27 +146,25 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 EOF
               jq -r '
-                .[] |
+                .[] | select(.planned==true) |
                 "BEGIN:VEVENT",
-                "UID:\(.from)@mcstatus",
-                "DTSTART:\(.from | sub("[:-]";"";"g") | sub("\\..*";"Z"))",
-                (if .to then "DTEND:\(.to | sub("[:-]";"";"g") | sub("\\..*";"Z"))" else empty end),
-                ("SUMMARY:" + (.reason // "Wartung / Ereignis")),
+                "UID:" + (.from) + "-planned@mcstatus",
+                "DTSTART:" + ( .from
+                                | sub("[-:]";"";"g")
+                                | sub("\\.\\d+Z$";"Z") ),
+                ( if has("to") and .to != null then
+                    "DTEND:" + ( .to
+                                  | sub("[-:]";"";"g")
+                                  | sub("\\.\\d+Z$";"Z") )
+                  else empty end ),
+                "SUMMARY:" + ( .reason // "Planned Maintenance" ),
                 "END:VEVENT"
               ' "$SRC"
               echo "END:VCALENDAR"
-            } > "$DEST.tmp"
-            mv "$DEST.tmp" "$DEST"
-            echo "Wrote ICS with incidents → $DEST"
+            } > "$DEST"
+            echo "Wrote $DEST"
           else
-            # Minimaler leerer Kalender, verhindert 404/Fehler
-            cat > "$DEST" <<EOF
-BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//mc-status//ics//EN
-END:VCALENDAR
-EOF
-            echo "No incidents → wrote empty ICS to $DEST"
+            echo "No valid incidents.json -> no $DEST generated."
           fi
       # ------------------- Ende NEU (optional) ------------------
 
