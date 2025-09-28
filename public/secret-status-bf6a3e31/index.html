@@ -79,6 +79,10 @@ h1{margin:0;font-size:22px}
 .incidents ul{margin:0;padding-left:16px;font-size:12px;color:var(--muted)}
 .incidents li{margin:4px 0}
 .stale{margin-top:8px;font-size:12px;color:#fbbf24}
+.tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
+  background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
+  font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px;max-width:90vw}
+.t-line{display:flex;justify-content:space-between;gap:10px}
 
 /* Heatmap */
 .heat{margin-top:18px}
@@ -88,11 +92,13 @@ h1{margin:0;font-size:22px}
 .hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
 .hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
 
-/* News + SLA Gauge */
+/* News + Player Sparkline + SLA Gauge */
 .grid2{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
 @media(min-width:900px){ .grid2{grid-template-columns:1fr 1fr} }
 .news li{margin:6px 0}
-
+.spark{display:flex;gap:2px;align-items:flex-end;height:28px}
+.spark .s{width:3px;background:#374151;border-radius:2px}
+.spark .ok{background:var(--g)} .spark .warn{background:var(--o)} .spark .bad{background:var(--r)}
 .gauge{width:100%;max-width:360px;height:110px}
 .theme{margin-left:auto}
 
@@ -130,7 +136,7 @@ h1{margin:0;font-size:22px}
     <label class="toggle"><input type="checkbox" id="auto" checked/> Live-Refresh (60 s)</label>
     <a href="./ping.html" class="badge" title="Ping &amp; Latenz">🔧 Ping &amp; Latenz</a>
     <button id="btn-csv" class="badge" title="CSV exportieren" style="cursor:pointer">⬇ CSV</button>
-    <a href="./rules.html" class="badge">📜 Regeln</a>
+
     <span id="maintBadge" class="badge" style="display:none">⚙️ Nächste Wartung: <strong id="maintTxt"></strong></span>
   </div>
 
@@ -187,13 +193,19 @@ h1{margin:0;font-size:22px}
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong>Server News</strong>
+          <a href="./rules.html" class="badge">📜 Regeln</a>
         </div>
         <ul id="news" class="news" aria-live="polite"></ul>
       </div>
-      <!-- Maintenance Badge Info (leer – rechter Slot bleibt für künftige Widgets) -->
+      <!-- Player Sparkline -->
       <div class="card">
-        <strong>Wartung</strong>
-        <p id="maintInfo" style="color:var(--muted);margin:6px 0 0">Wird automatisch eingeblendet, sobald geplante Wartung erkannt wird.</p>
+        <strong>Player-Aktivität (p95 der letzten Abfragen)</strong>
+        <div id="playerSpark" class="spark" aria-label="Player Sparkline"></div>
+        <div class="kpi" style="margin-top:6px">
+          <div>Aktuell: <strong id="pNow">–</strong></div>
+          <div>Ø 24h: <strong id="pAvg">–</strong></div>
+          <div>Peak: <strong id="pMax">–</strong></div>
+        </div>
       </div>
     </div>
 
@@ -207,6 +219,11 @@ h1{margin:0;font-size:22px}
   </section>
 </div>
 
+<div class="tip" id="tip">
+  <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
+  <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
+</div>
+
 <script>
 /* === Konfig / Endpoints === */
 const HOST="important-instrumentation.gl.at.ply.gg"; const PORT=18232; const COPY_STR=`${HOST}:${PORT}`;
@@ -214,6 +231,7 @@ const API_HISTORY='/api/history';
 const API_LIVE='/api/bedrock';
 const API_INCIDENTS='/secret-status-bf6a3e31/incidents.json';
 const API_NEWS='/data/news.json';
+const API_PLAYERS='/data/players.json';
 const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
 const SLO_TARGET = 0.999;           // 99.9% als Beispiel
 const WINDOW_DAYS_FOR_SLO = 30;     // SLO-Fenster in Tagen
@@ -222,13 +240,14 @@ const ERROR_BUDGET_MIN = WINDOW_DAYS_FOR_SLO*24*60*(1-SLO_TARGET);
 /* DOM refs */
 const $=id=>document.getElementById(id);
 const barsEl=$('bars'), hoverLine=$('hoverline'), rangeCtl=$('range'), autoCtl=$('auto');
-const liveDot=$('live-dot'), liveTxt=$('live-txt');
+const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHost=$('svc-host');
 const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
 const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('heatmap');
-const btnCSV=$('btn-csv');
-const gArc=document.getElementById('gArc'), gKnob=document.getElementById('gKnob'), gText=document.getElementById('gText'), gSub=document.getElementById('gSub'), budgetEl=document.getElementById('budget');
-const maintBadge=document.getElementById('maintBadge'), maintTxt=document.getElementById('maintTxt');
-const newsEl=$('news');
+const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
+const btnCSV=$('btn-csv'), copyBtn=$('copyBtn'), themeBtn=$('themeBtn');
+const gArc=$('gArc'), gKnob=$('gKnob'), gText=$('gText'), gSub=$('gSub'), budgetEl=$('budget');
+const maintBadge=$('maintBadge'), maintTxt=$('maintTxt');
+const newsEl=$('news'), spark=$('playerSpark'), pNow=$('pNow'), pAvg=$('pAvg'), pMax=$('pMax');
 
 /* Utils */
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
@@ -243,29 +262,26 @@ const startOfDay = d => { const x=new Date(d); x.setHours(0,0,0,0); return x; };
 const endOfDay   = d => { const x=new Date(d); x.setHours(23,59,59,999); return x; };
 async function fetchJSON(u, opts={}){ const r=await fetch(u,{cache:'no-store',...opts}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
 function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
-function setLive(ok,ts){
-  liveDot.className='dot '+statusClass(ok);
-  const svc=document.getElementById('svc-name'); const host=document.getElementById('svc-host');
-  liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'—'}`;
-  host.textContent=`${HOST}:${PORT}`;
-}
+function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'—'}`;}
 
-/* Theme + Copy */
+/* Theme Toggle */
 (function(){
-  const themeBtn=document.getElementById('themeBtn');
+  const key='theme';
   const apply=t=>{ document.documentElement.style.colorScheme = (t==='light'?'light':'dark'); };
-  let cur=localStorage.getItem('theme')||'auto';
+  let cur=localStorage.getItem(key)||'auto';
   if(cur==='auto') apply(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'); else apply(cur);
   themeBtn.addEventListener('click', ()=>{
     cur = (cur==='dark'?'light': (cur==='light'?'auto':'dark'));
-    localStorage.setItem('theme',cur);
+    localStorage.setItem(key,cur);
     apply(cur==='auto'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):cur);
     themeBtn.textContent = '🌓 ' + (cur==='auto'?'Auto':(cur==='light'?'Light':'Dark'));
   });
   themeBtn.textContent = '🌓 ' + (cur==='auto'?'Auto':(cur==='light'?'Light':'Dark'));
 })();
-document.getElementById('copyBtn').addEventListener('click', async ()=>{
-  try{ await navigator.clipboard.writeText(COPY_STR); const b=document.getElementById('copyBtn'); b.textContent='✅ Kopiert!'; setTimeout(()=>b.textContent='📋 Kopiere IP',1400); }
+
+/* Copy IP */
+copyBtn.addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText(COPY_STR); copyBtn.textContent='✅ Kopiert!'; setTimeout(()=>copyBtn.textContent='📋 Kopiere IP',1400); }
   catch{ prompt('Kopiere diese IP:', COPY_STR); }
 });
 
@@ -283,7 +299,7 @@ function getParams(){ const p=new URLSearchParams(location.search); return { ran
 function setInitialFromParams(){
   const {range, live}=getParams();
   (document.getElementById(range==='7d'?'r7':(range==='30d'?'r30':'r24'))||{}).checked=true;
-  document.getElementById('auto').checked = !!live;
+  autoCtl.checked = !!live;
 }
 
 /* Intervals */
@@ -346,6 +362,7 @@ async function renderIncidents(intervals){
     } else i++;
   }
   if(!incidents.length){ incWrap.innerHTML=''; return; }
+
   const ul=document.createElement('ul');
   incidents.forEach(ev=>{
     const match=reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
@@ -356,7 +373,7 @@ async function renderIncidents(intervals){
   });
   incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
 }
-document.getElementById('btn-csv').addEventListener('click', async ()=>{
+btnCSV.addEventListener('click', async ()=>{
   const range = rangeCtl.querySelector('input:checked')?.value||'24h';
   let data; try{ data=await loadHistory(range); }catch{ alert('Keine History verfügbar'); return; }
   const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
@@ -415,12 +432,6 @@ if(!isTouch){
   barsEl.addEventListener('mouseleave',()=>{hoverLine.style.display='none'; hideTip();});
 }
 /* Tooltip */
-const TIP=document.createElement('div'); TIP.className='tip'; TIP.id='tip';
-TIP.innerHTML=`<div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
-<div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>`;
-document.body.appendChild(TIP);
-const TIP_TS=document.getElementById('tip-ts'), TIP_ST=document.getElementById('tip-status'),
-      TIP_SRC=document.getElementById('tip-src'), TIP_RANGE=document.getElementById('tip-range');
 function showTip(e,range,ok,ts,src){
   TIP_ST.textContent=statusText(ok);
   TIP_TS.textContent=(range==='1 Tag')?localDate(ts):localTime(ts);
@@ -434,7 +445,7 @@ document.addEventListener('touchstart', (ev)=>{ if(!ev.target.closest('.bar')) h
 
 /* Heatmap */
 function renderHeatmap(days){
-  const heatEl=document.getElementById('heatmap'); clear(heatEl);
+  clear(heatEl);
   const last90 = days.slice(-90);
   last90.forEach(d=>{
     const c=document.createElement('div');
@@ -450,10 +461,12 @@ function renderHeatmap(days){
 
 /* SLA Gauge + Maintenance Badge */
 function setGauge(uptime, errorBudgetLeftMin){
-  const maxLen = Math.PI*80;
-  const used = Math.max(0,Math.min(1,uptime))*maxLen;
+  // Halbkreis hat ~ PI*R, aber wir machen einfache „Prozent auf Pfadlänge“:
+  const maxLen = 3.14159*80; // grob, reicht als visuelle Näherung
+  const used = clamp(uptime,0,1)*maxLen;
   gArc.setAttribute('stroke-dasharray', `${used} 999`);
-  const angle = Math.PI*(1 - Math.max(0,Math.min(1,uptime)));
+  // Knopfposition entlang Halbkreis:
+  const angle = Math.PI*(1 - clamp(uptime,0,1)); // 0..PI von links nach rechts
   const cx = 100 + 80*Math.cos(angle);
   const cy = 100 - 80*Math.sin(angle);
   gKnob.setAttribute('cx', cx.toFixed(1));
@@ -469,26 +482,47 @@ async function setNextMaintenance(){
     if(upcoming){
       maintTxt.textContent = `${localDate(upcoming.from)} ${new Date(upcoming.from).toLocaleTimeString()} – ${upcoming.reason}`;
       maintBadge.style.display='inline-flex';
-      document.getElementById('maintInfo').textContent = 'Siehe Badge in der Leiste oben.';
     } else maintBadge.style.display='none';
   }catch{ maintBadge.style.display='none'; }
 }
 
-/* News */
+/* News + Player Sparkline */
 async function renderNews(){
   try{
     const list = await fetchJSON(API_NEWS);
     const last = (Array.isArray(list)? list:[]).slice(-6).reverse();
-    newsEl.innerHTML = last.length ? last.map(n=>`<li>• ${new Date(n.ts).toLocaleString()}: ${n.text}</li>`).join('') : '<li class="muted">Keine News</li>';
+    if(!last.length){ newsEl.innerHTML = '<li class="muted">Keine News</li>'; return; }
+    newsEl.innerHTML = last.map(n=>`<li>• ${new Date(n.ts).toLocaleString()}: ${n.text}</li>`).join('');
   }catch{ newsEl.innerHTML='<li class="muted">News nicht verfügbar</li>'; }
+}
+async function renderPlayerSpark(){
+  clear(spark);
+  try{
+    const arr = await fetchJSON(API_PLAYERS);
+    const last = (Array.isArray(arr)?arr:[]).slice(-48); // ca. 24h bei 30min Takt oder mehr bei 10–15min
+    if(!last.length){ spark.innerHTML='<span class="muted">Keine Daten</span>'; pNow.textContent='—'; pAvg.textContent='—'; pMax.textContent='—'; return; }
+    const vals = last.map(x=>x.online||0);
+    const mx = Math.max(1, ...vals);
+    vals.forEach(v=>{
+      const d=document.createElement('div');
+      const h = Math.round((v/mx)*26)+2;
+      d.className='s '+(v>=mx*0.7?'ok':(v>=mx*0.3?'warn':'bad'));
+      d.style.height = `${h}px`;
+      spark.appendChild(d);
+    });
+    const now = last[last.length-1].online ?? 0;
+    const avg = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+    const pk  = Math.max(...vals);
+    pNow.textContent=now; pAvg.textContent=avg; pMax.textContent=pk;
+  }catch{ spark.innerHTML='<span class="muted">Keine Daten</span>'; }
 }
 
 /* Live Range & Timer */
 function onRangeChange(v){
   barsEl.classList.toggle('mode-24h',v==='24h');
-  document.getElementById('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
-  document.getElementById('foot-right').textContent='Today';
-  document.getElementById('legend-interval').textContent = v==='24h' ? '1 Balken = 1 Probe (variable Minuten)' : '1 Balken = 1 Tag';
+  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
+  $('foot-right').textContent='Today';
+  $('legend-interval').textContent = v==='24h' ? '1 Balken = 1 Probe (variable Minuten)' : '1 Balken = 1 Tag';
   const url=new URL(location.href); url.searchParams.set('range',v); history.replaceState(null,'',url.toString());
   load(v);
 }
@@ -500,8 +534,10 @@ function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
 async function load(range){
   renderSkeleton(60);
 
+  // Live
   try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
 
+  // History
   let data;
   try{ data=await loadHistory(range); }
   catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='—'; dtimeEl.textContent='—';
@@ -509,12 +545,13 @@ async function load(range){
          incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>'; return; }
 
   const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
-  const svc=data.service||{}; document.getElementById('svc-name').textContent=svc.name||'Minecraft Bedrock'; document.getElementById('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
+  const svc=data.service||{}; $('svc-name').textContent=svc.name||'Minecraft Bedrock'; $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
   const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN; staleEl.hidden=!stale;
   metaSrc.textContent='Quelle: History ✓';
 
   const intervals=toIntervals(hist,generated);
 
+  // Uptime / Downtime + Render
   let uptime=0, downtimeMin=0, k;
   if(range==='24h'){
     const since=Date.now()-DAY_MS;
@@ -526,7 +563,7 @@ async function load(range){
     await renderIncidents(last24);
   }else{
     const n = (range==='7d')?7:30;
-    const days = aggregateByDays(intervals, n);
+    const days = aggregateByDays(intervals, n);   // exakt N Tage
     renderDays(days);
     const totalOn = days.reduce((a,b)=>a+b.on,0);
     const totalOff= days.reduce((a,b)=>a+b.off,0);
@@ -544,10 +581,13 @@ async function load(range){
   kUnknown.textContent=Math.round(k.unk/SLOT_MIN);
   kPoints.textContent=k.points;
 
+  // Gauge + Maintenance + News + Player Sparkline
   setGauge(uptime, ERROR_BUDGET_MIN - downtimeMin);
   setNextMaintenance();
   renderNews();
+  renderPlayerSpark();
 
+  // Heatmap (Gesamt)
   const totalDays = Math.max(1, Math.ceil((Date.now()-new Date(hist[0]?.ts || Date.now()))/DAY_MS)+1);
   const days90 = aggregateByDays(intervals, Math.min(90,totalDays));
   renderHeatmap(days90);
@@ -556,18 +596,20 @@ async function load(range){
 /* Init */
 setInitialFromParams();
 rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
-document.getElementById('auto').addEventListener('change', e=>{
+autoCtl.addEventListener('change', e=>{
   const url=new URL(location.href); url.searchParams.set('live', e.target.checked?'1':'0'); history.replaceState(null,'',url.toString());
   e.target.checked?startTimer():stopTimer();
 });
-document.addEventListener('scroll', ()=>{document.getElementById('tip').style.display='none';}, true);
+document.addEventListener('scroll', ()=>{TIP.style.display='none';}, true);
 onRangeChange( (rangeCtl.querySelector('input:checked')?.value)||'24h' );
-if(document.getElementById('auto').checked) startTimer();
+if(autoCtl.checked) startTimer();
 
-/* Service Worker (harmlos) */
+/* Service Worker registrieren (optional, aber harmlos) */
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').catch(()=>{});
 }
 </script>
+
+<!-- Player-Card von dir bleibt separat als zweite Section, falls gewünscht -->
 </body>
 </html>
