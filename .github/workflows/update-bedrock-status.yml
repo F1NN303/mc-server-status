@@ -18,6 +18,10 @@ env:
   KEEP: "2016"    # 7 Tage à 5-Minuten-Slots
   API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
 
+  # (NEU, optional – schadet nicht, wenn Dateien fehlen)
+  INCIDENTS_JSON: "public/incidents.json"
+  ICS_FILE: "public/maintenance.ics"
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -117,16 +121,61 @@ jobs:
           echo "TAIL of $FILEPATH:"
           tail -n 20 "$FILEPATH" || true
 
+      # --------------------- NEU (optional) ---------------------
+      # Baut einen ICS-Kalender aus public/incidents.json.
+      # Bricht NICHT, wenn incidents.json fehlt oder leer ist.
+      - name: Build maintenance.ics from incidents.json (optional, safe)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="$INCIDENTS_JSON"
+          DEST="$ICS_FILE"
+          mkdir -p "$(dirname "$DEST")"
+
+          if [ -s "$SRC" ] && jq -e 'type=="array"' "$SRC" >/dev/null 2>&1; then
+            {
+              cat <<'EOF'
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//mc-status//ics//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+EOF
+              jq -r '
+                .[] |
+                "BEGIN:VEVENT",
+                "UID:\(.from)@mcstatus",
+                "DTSTART:\(.from | sub("[:-]";"";"g") | sub("\\..*";"Z"))",
+                (if .to then "DTEND:\(.to | sub("[:-]";"";"g") | sub("\\..*";"Z"))" else empty end),
+                ("SUMMARY:" + (.reason // "Wartung / Ereignis")),
+                "END:VEVENT"
+              ' "$SRC"
+              echo "END:VCALENDAR"
+            } > "$DEST.tmp"
+            mv "$DEST.tmp" "$DEST"
+            echo "Wrote ICS with incidents → $DEST"
+          else
+            # Minimaler leerer Kalender, verhindert 404/Fehler
+            cat > "$DEST" <<EOF
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//mc-status//ics//EN
+END:VCALENDAR
+EOF
+            echo "No incidents → wrote empty ICS to $DEST"
+          fi
+      # ------------------- Ende NEU (optional) ------------------
+
       - name: Commit & push if changed
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- "$FILEPATH"; then
+          if git diff --quiet -- "$FILEPATH" "$ICS_FILE"; then
             echo "No changes → nothing to commit."
           else
             git config user.name  "${{ github.actor }}"
             git config user.email "${{ github.actor }}@users.noreply.github.com"
-            git add "$FILEPATH"
+            git add "$FILEPATH" "$ICS_FILE" || true
             git commit -m "status: $(date -u +%FT%TZ) [skip vercel]"
             git push origin main
             echo "Pushed update."
