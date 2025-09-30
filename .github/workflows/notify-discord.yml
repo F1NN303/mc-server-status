@@ -1,77 +1,252 @@
-name: Notify Discord on Status Change
+name: Update Bedrock Status
+
 on:
   schedule:
+    # alle 5 Minuten
     - cron: "*/5 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+concurrency:
+  group: bedrock-status
+  cancel-in-progress: true
+
 env:
-  LIVE_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
-  CACHE_FILE: ".github/status-cache.json"
+  FILEPATH: "data/status.json"
+  KEEP: "2016"        # 7 Tage à 5-Minuten-Slots
+  API_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
+  LIVE_CACHE: "data/live-cache.json"
 
 jobs:
-  notify:
+  update:
+    name: Update history (data/status.json)
     runs-on: ubuntu-latest
     steps:
+      - name: Random jitter (0–45s)
+        run: sleep $(( RANDOM % 46 ))
+
       - name: Checkout main
         uses: actions/checkout@v4
-        with: { ref: main, persist-credentials: true }
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Show workflow permissions (debug)
+        run: |
+          echo "GITHUB_TOKEN available: ${{ secrets.GITHUB_TOKEN != '' }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Ref:   ${{ github.ref }}"
+
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
+
+      - name: Ensure status file exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$FILEPATH")"
+          if [ ! -s "$FILEPATH" ]; then
+            jq -n \
+              --arg name "Minecraft Bedrock" \
+              --arg host "important-instrumentation.gl.at.ply.gg" \
+              --argjson port 18232 \
+              '{generated:"", service:{name:$name, host:$host, port:$port}, history:[]}' \
+              > "$FILEPATH"
+            echo "Created $FILEPATH"
+          else
+            echo "Found $FILEPATH"
+          fi
+          echo "HEAD of $FILEPATH:"
+          head -n 30 "$FILEPATH" || true
+
+      - name: Pull latest from API (retry, robust)
+        id: ping
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${API_URL:?API_URL not set}"
+          echo "GET $API_URL"
+          # 3 Versuche, kleiner Timeout
+          if ! curl --fail --show-error --silent --max-time 12 --retry 2 --retry-delay 2 "$API_URL" -o resp.json; then
+            echo "curl failed → treat as offline"
+            echo '{"ok":false,"generated":null,"service":{}}' > resp.json
+          fi
+
+          # .ok muss bool sein – sonst offline
+          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json >/dev/null; then
+            echo "response has no boolean .ok → force offline"
+            jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
+          fi
+
+          echo "----- API response -----"
+          cat resp.json || true
+          echo "------------------------"
+
+          # Werte für nachfolgende Steps
+          {
+            printf 'ok=%s\n'   "$(jq -r '.ok' resp.json)"
+            # tolerant (mit/ohne Millisekunden); Fallback auf now
+            printf 'ts=%s\n'   "$(jq -r '( .generated | fromdateiso8601? ) // now | todate' resp.json)"
+            printf 'host=%s\n' "$(jq -r '.service.host // empty' resp.json)"
+            printf 'port=%s\n' "$(jq -r '.service.port // empty' resp.json)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Append + trim history (only keep latest window)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ts='${{ steps.ping.outputs.ts }}'
+          ok='${{ steps.ping.outputs.ok }}'
+          host='${{ steps.ping.outputs.host }}'
+          port='${{ steps.ping.outputs.port }}'
+
+          : "${ts:=$(date -u +%FT%TZ)}"
+          : "${ok:=false}"
+
+          jq --arg ts "$ts" \
+             --argjson ok ${ok} \
+             --arg host "$host" \
+             --argjson port ${port:-0} \
+             --argjson keep ${KEEP:-2016} '
+              if .service == null then .service = {} else . end |
+              .service.host = (if $host != "" then $host else .service.host end) |
+              .service.port = (if $port != 0  then $port else .service.port end) |
+              .history += [{"ts":$ts,"ok":$ok}] |
+              .history |= (.[-($keep|tonumber):] // .) |
+              .generated = $ts
+            ' "$FILEPATH" > "$FILEPATH.tmp"
+
+          mv "$FILEPATH.tmp" "$FILEPATH"
+
+          echo "TAIL of $FILEPATH:"
+          tail -n 20 "$FILEPATH" || true
+
+      - name: Commit & push if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- "$FILEPATH"; then
+            echo "No changes → nothing to commit."
+          else
+            git config user.name  "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
+            git add "$FILEPATH"
+            git commit -m "status: $(date -u +%FT%TZ) [skip vercel]"
+            git push origin main
+            echo "Pushed update."
+          fi
+
+  notify:
+    name: Notify on status change (optional Discord)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Random jitter (0–30s)
+        run: sleep $(( RANDOM % 31 ))
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Install jq & curl
+        run: sudo apt-get update && sudo apt-get install -y jq curl
 
       - name: Fetch live status
+        shell: bash
         run: |
-          curl -sS --fail --max-time 10 "$LIVE_URL" -o live.json || echo '{"ok":null}' > live.json
-          echo "LIVE:"
-          cat live.json
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 12 \
+            "${API_URL}" -o live.json \
+            || echo '{"ok":false,"generated":null,"service":{}}' > live.json
 
       - name: Load previous status (if any)
+        id: prev
+        shell: bash
         run: |
-          if [ -f "$CACHE_FILE" ]; then
-            cp "$CACHE_FILE" prev.json
+          set -euo pipefail
+          mkdir -p "$(dirname "$LIVE_CACHE")"
+          if [ -s "$LIVE_CACHE" ]; then
+            cp "$LIVE_CACHE" prev.json
           else
             echo '{"ok":null,"generated":null}' > prev.json
           fi
-          echo "PREV:"
-          cat prev.json
+          echo "prev_ok=$(jq -r '.ok // empty' prev.json)" >> "$GITHUB_OUTPUT"
 
       - name: Check change and notify
+        if: ${{ always() }}
+        shell: bash
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          prev_ok=$(jq -r '.ok' prev.json)
-          cur_ok=$(jq -r '.ok' live.json)
+          set -euo pipefail
 
-          if [ -z "$DISCORD_WEBHOOK" ]; then
-            echo "No DISCORD_WEBHOOK secret set; skipping notify."
-            exit 0
+          live_ok="$(jq -r '.ok' live.json)"
+          prev_ok="${{ steps.prev.outputs.prev_ok }}"
+
+          # Epochenzeiten (tolerant für ms)
+          live_epoch="$(jq -r '( .generated | fromdateiso8601? ) // now' live.json)"
+          prev_epoch="$(jq -r '( .generated | fromdateiso8601? ) // 0' prev.json)"
+
+          echo "live_ok=$live_ok prev_ok=$prev_ok"
+          echo "live_epoch=$live_epoch prev_epoch=$prev_epoch"
+
+          change="no"
+          if [ "${prev_ok:-}" = "" ]; then
+            echo "No previous cache → treat as first run."
+          elif [ "$live_ok" != "$prev_ok" ]; then
+            change="yes"
           fi
 
-          if [ "$prev_ok" != "$cur_ok" ] && [ "$cur_ok" != "null" ]; then
-            status_txt=$([ "$cur_ok" = "true" ] && echo "🟢 **online**" || echo "🔴 **offline**")
-            ts=$(jq -r '.generated // now | fromdate | strftime("%Y-%m-%d %H:%M:%S UTC")' live.json)
-            host=$(jq -r '.service.host // "-" ' live.json)
-            port=$(jq -r '.service.port // "-" ' live.json)
+          # Nachricht bauen
+          status_txt="online"
+          color=3066993   # grün
+          emoji="🟢"
+          if [ "$live_ok" != "true" ]; then
+            status_txt="offline"
+            color=15158332 # rot
+            emoji="🔴"
+          fi
 
-            payload=$(jq -n --arg content ":satellite: Server-Status geändert → $status_txt\nHost: \`$host:$port\`\nZeit: $ts" '{content:$content}')
+          title="Minecraft Bedrock ist ${status_txt}"
+          desc="Zeitpunkt: $(date -u -d @${live_epoch} +'%Y-%m-%d %H:%M:%SZ')"
 
-            curl -sS -H "Content-Type: application/json" -X POST -d "$payload" "$DISCORD_WEBHOOK"
-            echo "Alert sent."
+          if [ -n "${DISCORD_WEBHOOK:-}" ] && [ "$change" = "yes" ]; then
+            echo "Sending Discord notification…"
+            curl -sS -X POST "$DISCORD_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d @- <<JSON
+{
+  "username": "MC Status",
+  "embeds": [{
+    "title": "${emoji} ${title}",
+    "description": "${desc}",
+    "color": ${color},
+    "footer": { "text": "mc-server-status" },
+    "timestamp": "$(date -u -d @${live_epoch} +'%Y-%m-%dT%H:%M:%SZ')"
+  }]
+}
+JSON
           else
-            echo "No status change → no alert."
+            echo "No webhook set or no change → skipping Discord post."
           fi
 
       - name: Update cache file (commit only if changed)
+        shell: bash
         run: |
-          mkdir -p "$(dirname "$CACHE_FILE")"
-          jq '{ok:.ok, generated:.generated, service:.service}' live.json > "$CACHE_FILE"
+          set -euo pipefail
+          # Nur das Nötigste im Cache
+          jq '{ok, generated}' live.json > "$LIVE_CACHE"
 
-          if git diff --quiet -- "$CACHE_FILE"; then
+          if git diff --quiet -- "$LIVE_CACHE"; then
             echo "Cache unchanged."
           else
             git config user.name  "${{ github.actor }}"
             git config user.email "${{ github.actor }}@users.noreply.github.com"
-            git add "$CACHE_FILE"
-            git commit -m "chore: update status cache [skip vercel]"
+            git add "$LIVE_CACHE"
+            git commit -m "cache: live status $(date -u +%FT%TZ) [skip vercel]"
             git push origin main
+            echo "Cache updated."
           fi
