@@ -1,0 +1,77 @@
+name: Notify Discord on Status Change
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  LIVE_URL: "https://mc-server-status-black.vercel.app/api/bedrock"
+  CACHE_FILE: ".github/status-cache.json"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with: { ref: main, persist-credentials: true }
+
+      - name: Fetch live status
+        run: |
+          curl -sS --fail --max-time 10 "$LIVE_URL" -o live.json || echo '{"ok":null}' > live.json
+          echo "LIVE:"
+          cat live.json
+
+      - name: Load previous status (if any)
+        run: |
+          if [ -f "$CACHE_FILE" ]; then
+            cp "$CACHE_FILE" prev.json
+          else
+            echo '{"ok":null,"generated":null}' > prev.json
+          fi
+          echo "PREV:"
+          cat prev.json
+
+      - name: Check change and notify
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          prev_ok=$(jq -r '.ok' prev.json)
+          cur_ok=$(jq -r '.ok' live.json)
+
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "No DISCORD_WEBHOOK secret set; skipping notify."
+            exit 0
+          fi
+
+          if [ "$prev_ok" != "$cur_ok" ] && [ "$cur_ok" != "null" ]; then
+            status_txt=$([ "$cur_ok" = "true" ] && echo "🟢 **online**" || echo "🔴 **offline**")
+            ts=$(jq -r '.generated // now | fromdate | strftime("%Y-%m-%d %H:%M:%S UTC")' live.json)
+            host=$(jq -r '.service.host // "-" ' live.json)
+            port=$(jq -r '.service.port // "-" ' live.json)
+
+            payload=$(jq -n --arg content ":satellite: Server-Status geändert → $status_txt\nHost: \`$host:$port\`\nZeit: $ts" '{content:$content}')
+
+            curl -sS -H "Content-Type: application/json" -X POST -d "$payload" "$DISCORD_WEBHOOK"
+            echo "Alert sent."
+          else
+            echo "No status change → no alert."
+          fi
+
+      - name: Update cache file (commit only if changed)
+        run: |
+          mkdir -p "$(dirname "$CACHE_FILE")"
+          jq '{ok:.ok, generated:.generated, service:.service}' live.json > "$CACHE_FILE"
+
+          if git diff --quiet -- "$CACHE_FILE"; then
+            echo "Cache unchanged."
+          else
+            git config user.name  "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
+            git add "$CACHE_FILE"
+            git commit -m "chore: update status cache [skip vercel]"
+            git push origin main
+          fi
