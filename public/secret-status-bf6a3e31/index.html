@@ -124,6 +124,17 @@ h1{margin:0;font-size:22px}
   .svc-host,.badge{font-size:11px}
   .seg label{padding:6px 8px}
 }
+
+/* --- NEU: Detail-Charts + SLA-Panel --- */
+.chart-card{margin-top:16px}
+.chart-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:900px){.chart-grid{grid-template-columns:1.5fr .9fr}}
+canvas{max-width:100%}
+.sla{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:560px){.sla{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.sla .tile{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a);padding:12px}
+.sla .t1{font-size:12px;color:var(--muted)}
+.sla .t2{font-weight:700}
 </style>
 </head>
 <body>
@@ -190,6 +201,28 @@ h1{margin:0;font-size:22px}
       <div class="hm" id="heatmap"></div>
     </div>
   </section>
+
+  <!-- NEU: Detail-Charts + SLA -->
+  <section class="card chart-card">
+    <div class="chart-grid">
+      <div>
+        <h3 style="margin:0 0 8px;color:#9aa0a6;font-weight:600">Detail-Chart (24 h)</h3>
+        <canvas id="chart24" height="140" aria-label="Status 24h"></canvas>
+        <div class="small" style="color:#9aa0a6;margin-top:6px">Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)</div>
+      </div>
+      <div>
+        <h3 style="margin:0 0 8px;color:#9aa0a6;font-weight:600">SLA / Uptime</h3>
+        <div class="sla">
+          <div class="tile"><div class="t1">Uptime 24 h</div><div class="t2" id="sla24">–</div></div>
+          <div class="tile"><div class="t1">Uptime 7 d</div><div class="t2" id="sla7">–</div></div>
+          <div class="tile"><div class="t1">Uptime 30 d</div><div class="t2" id="sla30">–</div></div>
+          <div class="tile"><div class="t1">Längster Ausfall (30 d)</div><div class="t2" id="slaLongest">–</div></div>
+          <div class="tile"><div class="t1">Ausfälle gesamt (30 d)</div><div class="t2" id="slaCount">–</div></div>
+          <div class="tile"><div class="t1">Geplante Wartung (abgezogen)</div><div class="t2" id="slaPlanned">–</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- Tooltip -->
@@ -197,6 +230,9 @@ h1{margin:0;font-size:22px}
   <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
   <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
 </div>
+
+<!-- Chart.js (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 /* === Endpunkte / Parameter === */
@@ -215,6 +251,10 @@ const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('hea
 const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
 const btnCSV = $('btn-csv');
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
+
+/* NEU: Chart + SLA Dom */
+const chart24Canvas = $('chart24');
+const sla24=$('sla24'), sla7=$('sla7'), sla30=$('sla30'), slaLongest=$('slaLongest'), slaCount=$('slaCount'), slaPlanned=$('slaPlanned');
 
 /* Utils */
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
@@ -402,8 +442,67 @@ function download(filename, text){
   a.download=filename; document.body.appendChild(a); a.click(); a.remove();
 }
 
+/* ---------- NEU: Detail-Chart (24h) ---------- */
+let chart24;
+function statusValue(ok){ return ok===true?1 : (ok===false?0 : 0.5); }
+function build24hSeries(intervals){
+  // Erzeuge Step-Line: (Zeit, Wert) für Beginn jedes Intervalls (letzte 24h)
+  const since = Date.now()-DAY_MS;
+  const pts = intervals.filter(i=> new Date(i.from).getTime()>=since);
+  const labels=[], values=[];
+  pts.forEach(p=>{
+    labels.push(new Date(p.from));
+    values.push(statusValue(p.ok));
+  });
+  // Sicherstellen, dass letzter Punkt bis jetzt anliegt
+  if(pts.length){
+    labels.push(new Date());
+    values.push(values[values.length-1]);
+  }
+  return {labels, values};
+}
+function renderChart24(series){
+  if(!chart24){
+    chart24 = new Chart(chart24Canvas.getContext('2d'), {
+      type:'line',
+      data:{ labels: series.labels, datasets:[{
+        label:'Status',
+        data: series.values,
+        stepped:true,
+        borderWidth:2,
+        pointRadius:0
+      }]},
+      options:{
+        responsive:true, maintainAspectRatio:false, aspectRatio:2.6,
+        scales:{
+          x:{ type:'time', time:{ tooltipFormat:'dd.MM.yyyy HH:mm' }, grid:{color:'#1b2231'} , ticks:{color:'#9aa0a6'} },
+          y:{ min:0, max:1, ticks:{
+                callback:(v)=> v===1?'online': (v===0.5?'eingeschr.': (v===0?'offline':v)),
+                color:'#9aa0a6'
+              }, grid:{color:'#1b2231'} }
+        },
+        plugins:{ legend:{ display:false } },
+        animation:false
+      }
+    });
+  }else{
+    chart24.data.labels = series.labels;
+    chart24.data.datasets[0].data = series.values;
+    chart24.update();
+  }
+}
+
+/* ---------- NEU: SLA-Panel ---------- */
+function longestOutage(intervals, sinceMs){
+  let maxMin=0,count=0,plannedMin=0;
+  const span = intervals.filter(i=> new Date(i.to).getTime()>=sinceMs);
+  // Count outages + longest
+  for(const it of span){ if(it.ok===false){ count++; if(it.mins>maxMin) maxMin=it.mins; } }
+  return {maxMin, count};
+}
+
 /* Main Load */
-let timer=null;
+let timer=null, lastIntervals=null;
 async function load(range){
   renderSkeleton(60);
 
@@ -423,6 +522,7 @@ async function load(range){
   metaSrc.textContent='Quelle: History ✓';
 
   const intervals=toIntervals(hist,generated);
+  lastIntervals = intervals;
 
   if(range==='24h'){
     const since=Date.now()-DAY_MS;
@@ -442,13 +542,18 @@ async function load(range){
     kPoints.textContent=last24.length;
 
     await renderIncidents(last24);
+
+    // NEU: Chart 24h + SLA24
+    const series = build24hSeries(intervals);
+    renderChart24(series);
+    sla24.textContent = fmtPct(uptime);
+
   }else{
     const n = (range==='7d')?7:30;
     const days = aggregateByDays(intervals, n);
     renderDays(days, range==='7d'?'7 days':'30 days');
 
     const base=kpisFromIntervals(days.map(d=>({mins:d.on, ok:true})).concat(days.map(d=>({mins:d.off,ok:false}))).concat(days.map(d=>({mins:d.unk,ok:null}))));
-    // Für Downtime-Abzug geplante Wartungen gegen die originalen Intervalle rechnen:
     const since = startOfDay(new Date(Date.now() - (n-1)*DAY_MS)).toISOString();
     const spanIntervals = intervals.filter(i=>new Date(i.to).getTime()>=new Date(since).getTime());
     const plannedMin = await plannedOverlapMinutes(spanIntervals);
@@ -462,11 +567,36 @@ async function load(range){
     kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
     kPoints.textContent=n;
 
-    incWrap.innerHTML=''; // Incidents nur für 24h gelistet
+    incWrap.innerHTML='';
+
+    // NEU: Chart 24h bleibt bestehen (nur Daten aktualisieren, wenn vorhanden)
+    const series = build24hSeries(intervals);
+    renderChart24(series);
+  }
+
+  // NEU: SLA 7d/30d (unabhängig von aktuell gewählter Ansicht)
+  const d7  = aggregateByDays(intervals, 7);
+  const d30 = aggregateByDays(intervals, 30);
+  const up7  = (d7.reduce((a,d)=>a+d.on,0)) / Math.max(1, d7.reduce((a,d)=>a+d.on+d.off,0));
+  const up30 = (d30.reduce((a,d)=>a+d.on,0)) / Math.max(1, d30.reduce((a,d)=>a+d.on+d.off,0));
+  sla7.textContent  = fmtPct(up7);
+  sla30.textContent = fmtPct(up30);
+
+  // längster Ausfall / Anzahl (30d) + geplante Minuten (abgezogen)
+  const since30 = Date.now() - 30*DAY_MS;
+  const {maxMin, count} = longestOutage(intervals, since30);
+  slaLongest.textContent = maxMin ? fmtDur(maxMin) : '–';
+  slaCount.textContent   = String(count);
+  {
+    const span30 = intervals.filter(i=> new Date(i.to).getTime()>=since30);
+    const planned30 = await plannedOverlapMinutes(span30);
+    slaPlanned.textContent = planned30 ? fmtDur(planned30) : '–';
   }
 
   // Heatmap (auf Gesamthistory)
-  const allDays = aggregateByDays(intervals, Math.min(90, Math.ceil((Date.now()-new Date(intervals[0]?.from||Date.now()))/DAY_MS)+1));
+  const firstTs = intervals[0]?.from || new Date().toISOString();
+  const daysBack = Math.min(90, Math.ceil((Date.now()-new Date(firstTs))/DAY_MS)+1);
+  const allDays = aggregateByDays(intervals, daysBack);
   renderHeatmap(allDays);
 }
 
