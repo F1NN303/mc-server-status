@@ -16,20 +16,20 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:950px;margin:28px auto;padding:0 16px}
+.wrap{max-width:1100px;margin:28px auto;padding:0 16px}
 a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 h1{margin:0;font-size:22px}
 .btn,.chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);
-  background:linear-gradient(180deg,#0c1423,#0a0f1a);color:var(--fg);font-size:13px}
+  background:linear-gradient(180deg,var(--panel),#0b0f1a);color:var(--fg);font-size:13px}
 .btn{cursor:pointer}
+.small{font-size:12px;color:var(--muted)}
+.card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);border-radius:var(--radius)}
+.pad{padding:16px}
 .grid{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:860px){.grid{grid-template-columns:1fr 1fr}}
-.card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
-h2{font-size:16px;margin:0 0 10px}
-.small{font-size:12px;color:var(--muted)}
-.kv{display:grid;grid-template-columns:120px 1fr;gap:8px 12px}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:8px 12px}
 .kv div{min-height:22px;display:flex;align-items:center}
 .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .badge{border:1px solid var(--line);background:linear-gradient(180deg,#0c1423,#0a0f1a);padding:6px 10px;border-radius:999px;font-size:12px}
@@ -41,6 +41,8 @@ h2{font-size:16px;margin:0 0 10px}
 .footer-note{margin-top:10px;font-size:12px;color:#fbbf24}
 .links{display:flex;gap:8px;flex-wrap:wrap}
 .tip{font-size:12px;color:var(--muted);margin-top:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
 </style>
 </head>
 <body>
@@ -56,58 +58,64 @@ h2{font-size:16px;margin:0 0 10px}
   <div class="grid">
     <!-- Steckbrief -->
     <section class="card">
-      <h2>Steckbrief</h2>
-      <div class="kv">
-        <div><strong>Name</strong></div><div id="s-name">Minecraft Bedrock</div>
-        <div><strong>IP:Port</strong></div><div id="s-host">important-instrumentation.gl.at.ply.gg:18232</div>
-        <div><strong>Edition</strong></div><div id="s-ed">Bedrock</div>
-        <div><strong>Status</strong></div><div id="s-status"><span class="small">lädt …</span></div>
+      <div class="pad">
+        <h2 style="margin:0 0 10px">Steckbrief</h2>
+        <div class="kv">
+          <div><strong>Name</strong></div><div id="s-name">Minecraft Bedrock</div>
+          <div><strong>IP:Port</strong></div><div id="s-host">important-instrumentation.gl.at.ply.gg:18232</div>
+          <div><strong>Edition</strong></div><div id="s-ed">Bedrock</div>
+          <div><strong>Status</strong></div><div id="s-status"><span class="small">lädt …</span></div>
+        </div>
+        <div class="badges">
+          <span class="badge">Uptime 24 h: <strong id="upt-24">—</strong></span>
+          <span class="badge">Uptime 7 d: <strong id="upt-7d">—</strong></span>
+          <span class="badge">Downtime 24 h: <strong id="down-24">—</strong></span>
+        </div>
+        <div class="hr"></div>
+        <div class="links">
+          <a class="chip" href="./index.html">📊 Status</a>
+          <a class="chip" href="./ping.html">🔧 Ping &amp; Latenz</a>
+          <a class="chip" href="./rules.html">📜 Regeln</a>
+          <a class="chip" href="https://discord.gg/GtCaTP7GW6" target="_blank" rel="noopener">💬 Discord</a>
+        </div>
+        <div class="tip">Diese Seite aktualisiert Live-Daten alle 60 s. Zahlen können leicht abweichen.</div>
       </div>
-      <div class="badges">
-        <span class="badge">Uptime 24 h: <strong id="upt-24">—</strong></span>
-        <span class="badge">Uptime 7 d: <strong id="upt-7d">—</strong></span>
-        <span class="badge">Downtime 24 h: <strong id="down-24">—</strong></span>
-      </div>
-      <div class="hr"></div>
-      <div class="links">
-        <a class="chip" href="./index.html">📊 Status</a>
-        <a class="chip" href="./ping.html">🔧 Ping &amp; Latenz</a>
-        <a class="chip" href="./rules.html">📜 Regeln</a>
-        <a class="chip" href="https://discord.gg/GtCaTP7GW6" target="_blank" rel="noopener">💬 Discord</a>
-      </div>
-      <div class="tip">Hinweis: Diese Seite aktualisiert Live-Daten alle 60 s. Zahlen können leicht abweichen.</div>
     </section>
 
     <!-- Spieler -->
     <section class="card">
-      <h2>Spieler</h2>
-      <div class="players-row">
-        <span class="chip">Jetzt online: <strong id="p-now">—</strong></span>
-        <span class="chip">Max Capacity: <strong id="p-max">—</strong></span>
-        <span class="chip">Peak 24 h: <strong id="p-peak">n/v</strong></span>
-        <span class="chip">Ø 24 h: <strong id="p-avg">n/v</strong></span>
+      <div class="pad">
+        <h2 style="margin:0 0 10px">Spieler</h2>
+        <div class="players-row">
+          <span class="chip">Jetzt online: <strong id="p-now">—</strong></span>
+          <span class="chip">Max Capacity: <strong id="p-max">—</strong></span>
+          <span class="chip">Peak 24 h: <strong id="p-peak">n/v</strong></span>
+          <span class="chip">Ø 24 h: <strong id="p-avg">n/v</strong></span>
+        </div>
+        <div id="spark-wrap" class="spark" aria-live="polite">24 h-Spieler-Chart nicht verfügbar</div>
+        <canvas id="spark" class="spark-canvas" height="70"></canvas>
+        <div class="tip">„Peak/Ø 24 h“ und Mini-Chart erscheinen automatisch, sobald <code>data/players.json</code> existiert.</div>
       </div>
-      <div id="spark-wrap" class="spark" aria-live="polite">24 h-Spieler-Chart nicht verfügbar</div>
-      <canvas id="spark" class="spark-canvas" height="70"></canvas>
-      <div class="tip">„Peak/Ø 24 h“ und Mini-Chart werden automatisch gezeigt, sobald <code>data/players.json</code> mit Zeitreihen existiert.</div>
     </section>
   </div>
 
-  <!-- Wartung unten -->
+  <!-- Geplante Wartung unten -->
   <section class="card" id="maint" style="margin-top:12px;display:none">
-    <h2>Geplante Wartung</h2>
-    <div id="maint-body" class="small">—</div>
+    <div class="pad">
+      <h2 style="margin:0 0 10px">Geplante Wartung</h2>
+      <div id="maint-body" class="small">—</div>
+    </div>
   </section>
 
   <p class="footer-note">Diese Daten sind Schätzungen bzw. Pings an den Server und können nicht zu 100 % stimmen.</p>
 </div>
 
 <script>
-/* Endpoints */
+/* Endpoints (wie index) */
 const API_LIVE='/api/bedrock';
 const API_HIST='/api/history';
-const API_INC='/secret-status-bf6a3e31/incidents.json';
-const API_PLAYERS='/data/players.json'; // optional – nur wenn vorhanden
+const API_INC='/incidents.json';
+const API_PLAYERS='/data/players.json'; // optional
 
 /* DOM */
 const $=id=>document.getElementById(id);
@@ -117,9 +125,9 @@ const pNow=$('p-now'), pMax=$('p-max'), pPeak=$('p-peak'), pAvg=$('p-avg');
 const spark=$('spark'), sparkWrap=$('spark-wrap');
 const maint=$('maint'), maintBody=$('maint-body');
 
-/* Theme + Copy */
+/* Theme + Copy (wie index) */
 (function(){
-  const btn=$('themeBtn');
+  const btn=document.getElementById('themeBtn');
   const apply=t=>{ document.documentElement.style.colorScheme=(t==='light'?'light':'dark'); };
   let cur=localStorage.getItem('theme')||'auto';
   if(cur==='auto') apply(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'); else apply(cur);
@@ -131,33 +139,36 @@ const maint=$('maint'), maintBody=$('maint-body');
   });
   btn.textContent='🌓 '+(cur==='auto'?'Auto':(cur==='light'?'Light':'Dark'));
 })();
-$('copyBtn').addEventListener('click', async ()=>{
+document.getElementById('copyBtn').addEventListener('click', async ()=>{
   const text=sHost.textContent.trim();
-  try{ await navigator.clipboard.writeText(text); const b=$('copyBtn'); b.textContent='✅ Kopiert!'; setTimeout(()=>b.textContent='📋 IP kopieren',1400); }
+  try{ await navigator.clipboard.writeText(text);
+       const b=document.getElementById('copyBtn'); b.textContent='✅ Kopiert!'; setTimeout(()=>b.textContent='📋 IP kopieren',1400); }
   catch{ prompt('Kopiere IP:', text); }
 });
 
-/* Helpers */
+/* Helpers (wie index) */
 const fmtPct=v=> isFinite(v)?(v*100).toFixed(2)+'%':'—';
 const fmtMin=m=> m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
 async function getJSON(u){ const r=await fetch(u,{cache:'no-store'}); if(!r.ok) throw new Error(String(r.status)); return r.json(); }
-function toIntervals(hist, nowISO){
-  const arr=[...hist].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+function toIntervals(points, nowISO){
+  const arr=[...points].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
   const out=[];
   for(let i=0;i<arr.length;i++){
     const from=new Date(arr[i].ts);
     const to=new Date(i<arr.length-1?arr[i+1].ts:(nowISO||new Date().toISOString()));
-    const mins=Math.max(1, Math.round((to-from)/60000));
+    let mins=Math.max(1, Math.round((to-from)/60000));
+    if(mins>30) mins=30;
     out.push({from:arr[i].ts,to:to.toISOString(),ok:arr[i].ok,mins});
   }
   return out;
 }
+const DAY_MS=86400000;
 function sliceSince(intervals, sinceMs){
   return intervals.filter(i=> new Date(i.from).getTime()>=sinceMs || new Date(i.to).getTime()>sinceMs);
 }
 function sumDur(intervals, pred){ return intervals.reduce((a,i)=> a+(pred(i)?i.mins:0), 0); }
 
-/* Live + Steckbrief */
+/* Live + Steckbrief + Spieler jetzt */
 async function loadLive(){
   try{
     const live=await getJSON(API_LIVE+'?t='+Date.now());
@@ -169,15 +180,16 @@ async function loadLive(){
 
     sName.textContent=name;
     sHost.textContent=host;
-    sStatus.innerHTML = ok===true ? '🟢 online' : ok===false ? '🔴 offline' : '⚪ unbekannt';
+    sStatus.innerHTML = ok===true ? '<span class="dot g"></span>online'
+                      : ok===false ? '<span class="dot r"></span>offline'
+                                   : '<span class="dot u"></span>unbekannt';
 
     const cur = live?.players?.online ?? live?.playersOnline ?? live?.online ?? null;
     const max = live?.players?.max    ?? live?.playersMax    ?? live?.max    ?? null;
     pNow.textContent = (cur!=null?cur:'—');
     pMax.textContent = (max!=null?max:'—');
   }catch{
-    sStatus.innerHTML='⚪ unbekannt';
-    // Spieler unbekannt
+    sStatus.innerHTML='<span class="dot u"></span>unbekannt';
     pNow.textContent='—'; pMax.textContent='—';
   }
 }
@@ -220,35 +232,27 @@ async function loadPlayersSpark(){
     const arr = await r.json();
     if(!Array.isArray(arr) || !arr.length) throw new Error('empty');
 
-    // nur letzten 24h
     const since = Date.now()-24*60*60*1000;
     const pts = arr.filter(p=> new Date(p.ts).getTime() >= since)
                    .map(p=> ({t:new Date(p.ts).getTime(), v: Number(p.online||0)}));
     if(!pts.length) throw new Error('no 24h points');
 
-    // Peak / Avg
     const peak = Math.max(...pts.map(p=>p.v));
     const avg  = pts.reduce((a,b)=>a+b.v,0)/pts.length;
     pPeak.textContent = String(peak);
     pAvg.textContent  = String(Math.round(avg));
 
-    // Sparkline zeichnen (plain canvas, keine libs)
     const canvas = spark; const ctx=canvas.getContext('2d');
     canvas.width = canvas.clientWidth || 680;
     const W=canvas.width, H=canvas.height;
     ctx.clearRect(0,0,W,H);
-    // Achsenwerte
     const t0 = since, t1 = Date.now();
     const v0 = 0, v1 = Math.max(peak, 1);
     const x = t=> ( (t - t0) / (t1 - t0) ) * (W-20) + 10;
     const y = v=> H - ( (v - v0) / (v1 - v0) ) * (H-16) - 8;
-
-    // Hintergrund
     ctx.fillStyle = '#0a0f1a'; ctx.fillRect(0,0,W,H);
-    ctx.strokeStyle = '#1b2231'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(10, H-8); ctx.lineTo(W-10, H-8); ctx.stroke();
-
-    // Linie
+    ctx.strokeStyle = '#1b2231'; ctx.lineWidth=1; ctx.beginPath();
+    ctx.moveTo(10,H-8); ctx.lineTo(W-10,H-8); ctx.stroke();
     ctx.strokeStyle = '#93c5fd'; ctx.lineWidth=2; ctx.beginPath();
     pts.forEach((p,i)=>{ const X=x(p.t), Y=y(p.v); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y); });
     ctx.stroke();
@@ -256,14 +260,13 @@ async function loadPlayersSpark(){
     sparkWrap.style.display='none';
     canvas.style.display='block';
   }catch{
-    // Keine Players-Zeitreihe vorhanden – Platzhalter lassen
     sparkWrap.style.display='flex';
     spark.style.display='none';
     pPeak.textContent='n/v'; pAvg.textContent='n/v';
   }
 }
 
-/* Maintenance unten */
+/* Maintenance unten (falls vorhanden) */
 async function loadMaintenance(){
   try{
     const inc = await getJSON(API_INC);
@@ -283,7 +286,6 @@ async function loadMaintenance(){
 /* Init */
 async function init(){
   await Promise.all([loadLive(), loadUptime(), loadPlayersSpark(), loadMaintenance()]);
-  // Refresh jede Minute (Live/Players/Maintenance – History für Uptime alle 5 Min durch Action, hier reicht 60s)
   setInterval(()=>{ loadLive(); loadPlayersSpark(); loadMaintenance(); }, 60_000);
 }
 init();
