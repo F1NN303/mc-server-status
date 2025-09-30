@@ -52,20 +52,6 @@ h1{margin:0;font-size:22px}
 
 /* Bars als Grid + Skeleton */
 .bars-wrap{margin-top:12px;position:relative}
-/* Mobile-Fix: Balken ohne horizontales Scrollen vollständig sichtbar */
-@media (max-width: 480px) {
-  .bars {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    gap: 2px;
-    overflow: hidden;
-  }
-  .bar {
-    min-width: 0;
-    width: auto;
-  }
-}
-
 .bars{
   position:relative; display:grid;
   grid-template-columns: repeat(var(--cols), minmax(3px, 1fr));
@@ -120,14 +106,23 @@ h1{margin:0;font-size:22px}
 .hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
 .hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
 
-/* Mobile */
+/* Mobile – iPhone Fix: alle 24h-Balken ohne Scroll sichtbar */
+@media (max-width:480px){
+  .bars{
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); /* Balken dürfen sehr schmal werden */
+    gap:0;                        /* keine Lücken, sonst Überlauf */
+    padding:8px;
+  }
+  .bars.mode-24h{gap:0}
+  .hoverline{display:none}        /* Hoverline auf Touch aus */
+  .bar{height:68px; min-width:0; width:auto}
+}
+
+/* weitere kleine Mobile-Anpassungen */
 @media (max-width:520px){
   h1{font-size:18px}
   .svc-host,.badge{font-size:11px}
   .seg label{padding:6px 8px}
-  .bars{gap:5px}
-  .bars.mode-24h{gap:5px}
-  .bar{height:68px}
 }
 </style>
 </head>
