@@ -51,15 +51,7 @@ h1{margin:0;font-size:22px}
 .kpi strong{color:var(--fg);font-weight:600}
 
 /* Bars als Grid + Skeleton */
-.bars-wrap{margin-top:12px;position:relative}
-.bars{
-  position:relative; display:grid;
-  grid-template-columns: repeat(var(--cols), minmax(3px, 1fr));
-  gap:6px; align-items:end; min-height:96px;
-  padding:10px; border-radius:12px;
-  background:linear-gradient(180deg,#0a0e19,#0a0d14);
-  overflow:hidden; touch-action: manipulation;
-}
+
 .bars.mode-24h{min-height:80px; gap:4px}
 .bar{
   height:64px;border-radius:8px;background:#2a3242;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
@@ -234,16 +226,7 @@ function setInitialFromParams(){
   autoCtl.checked = !!live;
 }
 
-/* Lazy + Cache */
-const cacheKey=(range)=>`hist:${range}`;
-async function loadHistory(range){
-  const qs=`?range=${encodeURIComponent(range)}`;
-  try{ const d=await fetchJSON(API_HISTORY+qs); localStorage.setItem(cacheKey(range),JSON.stringify({t:Date.now(),d})); return d; }
-  catch(e){
-    try{ const d=await fetchJSON(API_HISTORY); localStorage.setItem(cacheKey(range),JSON.stringify({t:Date.now(),d})); return d; }
-    catch(err){ const raw=localStorage.getItem(cacheKey(range)); if(raw) return JSON.parse(raw).d; throw err; }
-  }
-}
+
 
 /* Intervalls / KPIs / Incidents */
 function toIntervals(points, nowIso){
