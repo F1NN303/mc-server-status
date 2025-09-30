@@ -6,26 +6,28 @@
 <meta name="robots" content="noindex, nofollow"/>
 <title>Minecraft Bedrock – Status</title>
 <meta name="color-scheme" content="dark light"/>
-<link rel="icon" href="/favicon.ico">
 <style>
 :root{
   --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
   --fg:#e6e7eb; --muted:#9aa0a6;
   --g:#19c37d; --r:#ef4444; --o:#f59e0b; --u:#95a3b6;
-  --accent:#93c5fd;
   --radius:12px; --cols:288;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
-a{color:var(--accent);text-decoration:none}
+a{color:#93c5fd;text-decoration:none}
 a:hover{text-decoration:underline}
+
+/* Header */
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 h1{margin:0;font-size:22px}
 .pill{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--panel),#0b0f1a);
   border:1px solid var(--line);padding:8px 12px;border-radius:999px;font-size:13px}
 .dot{width:10px;height:10px;border-radius:50%}
 .dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
+
+/* Toolbar */
 .top-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg input{display:none}
@@ -33,10 +35,11 @@ h1{margin:0;font-size:22px}
 .seg input:checked + label{background:var(--line);color:var(--fg)}
 .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .toggle input{accent-color:#60a5fa}
-.badge,.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a);color:var(--fg)}
-.btn{cursor:pointer}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+.badge-warn{border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b66 inset}
 
+/* Card */
 .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
   border-radius:var(--radius);padding:16px}
 .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -47,8 +50,22 @@ h1{margin:0;font-size:22px}
 .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
 .kpi strong{color:var(--fg);font-weight:600}
 
-/* Bars */
+/* Bars als Grid + Skeleton */
 .bars-wrap{margin-top:12px;position:relative}
+/* Mobile-Fix: Balken ohne horizontales Scrollen vollständig sichtbar */
+@media (max-width: 480px) {
+  .bars {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 2px;
+    overflow: hidden;
+  }
+  .bar {
+    min-width: 0;
+    width: auto;
+  }
+}
+
 .bars{
   position:relative; display:grid;
   grid-template-columns: repeat(var(--cols), minmax(3px, 1fr));
@@ -60,24 +77,40 @@ h1{margin:0;font-size:22px}
 .bars.mode-24h{min-height:80px; gap:4px}
 .bar{
   height:64px;border-radius:8px;background:#2a3242;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
-  position:relative;
+  position:relative; /* größere Hitbox */
 }
-.bar::after{content:""; position:absolute; inset:-8px; border-radius:10px;} /* größere Touch-Fläche */
+.bar::after{ /* unsichtbare, breitere Touch-Fläche */
+  content:""; position:absolute; inset:-6px; border-radius:10px;
+}
 .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.o{background:var(--o)} .bar.u{background:var(--u)}
 .hoverline{position:absolute;top:10px;bottom:10px;width:2px;background:#ffffff40;pointer-events:none;display:none}
-.skeleton{animation:shimmer 1.2s infinite;background:linear-gradient(90deg,#0f1422 0%,#131a2a 50%,#0f1422 100%);background-size:200% 100%}
+
+/* Skeleton */
+.skeleton{animation:shimmer 1.2s infinite; background: linear-gradient(90deg,#0f1422 0%,#131a2a 50%,#0f1422 100%);
+  background-size: 200% 100%;}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
 .footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
+
+/* Legend */
 .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap;margin-top:8px}
 .lg{display:inline-flex;align-items:center;gap:6px}
 .sq{width:10px;height:10px;border-radius:2px}
 .sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.o{background:var(--o)} .sq.u{background:var(--u)}
+
+/* Misc */
 .disclaimer{margin-top:8px;font-size:12px;color:var(--muted)}
 .incidents{margin-top:10px}
 .incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
 .incidents ul{margin:0;padding-left:16px;font-size:12px;color:var(--muted)}
 .incidents li{margin:4px 0}
-.maint{margin-top:10px;font-size:12px;color:#fbbf24} /* Wartung – unten */
+.stale{margin-top:8px;font-size:12px;color:#fbbf24}
+
+/* Tip */
+.tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
+  background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
+  font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px;max-width:90vw}
+.t-line{display:flex;justify-content:space-between;gap:10px}
 
 /* Heatmap */
 .heat{margin-top:18px}
@@ -87,10 +120,6 @@ h1{margin:0;font-size:22px}
 .hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
 .hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
 
-/* News */
-.grid1{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
-.news li{margin:6px 0}
-
 /* Mobile */
 @media (max-width:520px){
   h1{font-size:18px}
@@ -99,7 +128,6 @@ h1{margin:0;font-size:22px}
   .bars{gap:5px}
   .bars.mode-24h{gap:5px}
   .bar{height:68px}
-  .bar::after{inset:-12px} /* noch größere Touch-Zone auf Handy */
 }
 </style>
 </head>
@@ -107,13 +135,9 @@ h1{margin:0;font-size:22px}
 <div class="wrap">
   <header>
     <h1>Minecraft Bedrock – Status</h1>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button id="copyBtn" class="btn" title="IP kopieren">📋 Kopiere IP</button>
-      <button id="themeBtn" class="btn" title="Theme umschalten">🌓 Theme</button>
-      <div class="pill" id="live-pill" aria-live="polite">
-        <span class="dot u" id="live-dot"></span>
-        <span id="live-txt">Lade Live-Status …</span>
-      </div>
+    <div class="pill" id="live-pill" aria-live="polite">
+      <span class="dot u" id="live-dot"></span>
+      <span id="live-txt">Lade Live-Status …</span>
     </div>
   </header>
 
@@ -125,7 +149,7 @@ h1{margin:0;font-size:22px}
     </div>
     <label class="toggle"><input type="checkbox" id="auto" checked/> Live-Refresh (60 s)</label>
     <a href="./ping.html" class="badge" title="Ping &amp; Latenz">🔧 Ping &amp; Latenz</a>
-    <button id="btn-csv" class="badge" title="CSV exportieren" style="cursor:pointer">⬇ CSV</button>
+    <button id="btn-csv" class="badge" title="CSV der aktuellen Ansicht exportieren" style="cursor:pointer">⬇ CSV exportieren</button>
   </div>
 
   <section class="card">
@@ -137,7 +161,6 @@ h1{margin:0;font-size:22px}
       <div class="badges">
         <div class="badge"><span>Uptime</span><strong id="uptime">–</strong></div>
         <div class="badge"><span>Downtime</span><strong id="downtime">–</strong></div>
-        <div class="badge"><span>Players</span><strong id="players">—</strong></div>
       </div>
     </div>
 
@@ -159,24 +182,13 @@ h1{margin:0;font-size:22px}
       <span class="lg"><span class="sq r"></span> offline</span>
       <span class="lg"><span class="sq o"></span> eingeschränkt</span>
       <span class="lg"><span class="sq u"></span> unbekannt</span>
-      <span class="lg">• <span id="legend-interval">1 Balken = 1 Probe (variable Minuten)</span> • <span id="meta-src">Quelle: History</span></span>
+      <span class="lg">• 1 Balken = 5 Min (24 h); 1 Balken = 1 Tag (7 d/30 d) • <span id="meta-src">Quelle: History</span></span>
     </div>
 
     <p class="disclaimer">Diese Daten sind Schätzungen bzw. Pings an den Server und können nicht zu 100&nbsp;% stimmen.</p>
 
-    <div class="grid1">
-      <!-- News -->
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Server News</strong>
-          <a href="./rules.html" class="badge">📜 Regeln</a>
-        </div>
-        <ul id="news" class="news" aria-live="polite"></ul>
-      </div>
-    </div>
-
     <div class="incidents" id="inc"></div>
-    <div class="maint" id="maint" hidden>⚙️ Nächste Wartung: <span id="maintTxt">–</span></div>
+    <div class="stale" id="stale" hidden>Hinweis: History ist älter als 30 Min. Live zeigt den aktuellen Zustand.</div>
 
     <div class="heat">
       <h3>Kalender-Heatmap (letzte 90 Tage)</h3>
@@ -185,37 +197,33 @@ h1{margin:0;font-size:22px}
   </section>
 </div>
 
-<div class="tip" id="tip" style="position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
-  background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
-  font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px;max-width:90vw">
-  <div class="t-line" style="display:flex;justify-content:space-between;gap:10px"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
-  <div class="t-line" style="display:flex;justify-content:space-between;gap:10px"><span id="tip-src">–</span><span id="tip-range">–</span></div>
+<!-- Tooltip -->
+<div class="tip" id="tip">
+  <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
+  <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
 </div>
 
 <script>
-/* === Konfig / Endpoints === */
-const HOST="important-instrumentation.gl.at.ply.gg"; const PORT=18232; const COPY_STR=`${HOST}:${PORT}`;
+/* === Endpunkte / Parameter === */
 const API_HISTORY='/api/history';
 const API_LIVE='/api/bedrock';
-const API_INCIDENTS='/secret-status-bf6a3e31/incidents.json';
-const API_NEWS='/data/news.json';
-const API_PLAYERS='/data/players.json'; // nur Fallback
+const API_INCIDENTS='/incidents.json';
+
 const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
 
-/* DOM refs */
+/* DOM */
 const $=id=>document.getElementById(id);
 const barsEl=$('bars'), hoverLine=$('hoverline'), rangeCtl=$('range'), autoCtl=$('auto');
 const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHost=$('svc-host');
 const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
-const metaSrc=$('meta-src'), incWrap=$('inc'), heatEl=$('heatmap'), newsEl=$('news');
+const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('heatmap');
 const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
-const btnCSV=$('btn-csv'), copyBtn=$('copyBtn'), themeBtn=$('themeBtn');
-const playersEl=$('players'); const maintEl=$('maint'), maintTxt=$('maintTxt');
+const btnCSV = $('btn-csv');
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
 /* Utils */
-const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
-const fmtPct=v=> (isNaN(v)?'—':(v*100).toFixed(2)+'%');
+const fmtPct=v=> (isNaN(v)?'–':(v*100).toFixed(2)+'%');
 const fmtDur=m=> m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
 const localTime=iso=> new Date(iso).toLocaleString();
 const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
@@ -223,32 +231,24 @@ const statusClass = ok => ok===true?'g': ok===false?'r':'u';
 const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
 const startOfDay = d => { const x=new Date(d); x.setHours(0,0,0,0); return x; };
 const endOfDay   = d => { const x=new Date(d); x.setHours(23,59,59,999); return x; };
+
 async function fetchJSON(u, opts={}){ const r=await fetch(u,{cache:'no-store',...opts}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
 function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
-function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'—'}`;}
+function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'–'}`;}
 
-/* Theme Toggle */
-(function(){
-  const key='theme';
-  const apply=t=>{ document.documentElement.style.colorScheme = (t==='light'?'light':'dark'); };
-  let cur=localStorage.getItem(key)||'auto';
-  if(cur==='auto') apply(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'); else apply(cur);
-  themeBtn.addEventListener('click', ()=>{
-    cur = (cur==='dark'?'light': (cur==='light'?'auto':'dark'));
-    localStorage.setItem(key,cur);
-    apply(cur==='auto'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):cur);
-    themeBtn.textContent = '🌓 ' + (cur==='auto'?'Auto':(cur==='light'?'Light':'Dark'));
-  });
-  themeBtn.textContent = '🌓 ' + (cur==='auto'?'Auto':(cur==='light'?'Light':'Dark'));
-})();
+/* URL-Params */
+function getParams(){
+  const p=new URLSearchParams(location.search);
+  return { range: p.get('range')||'24h', live: p.get('live')!=='0' };
+}
+function setInitialFromParams(){
+  const {range, live}=getParams();
+  const id = range==='7d'?'r7':(range==='30d'?'r30':'r24');
+  const el=document.getElementById(id); if(el){el.checked=true;}
+  autoCtl.checked = !!live;
+}
 
-/* Copy IP */
-copyBtn.addEventListener('click', async ()=>{
-  try{ await navigator.clipboard.writeText(COPY_STR); copyBtn.textContent='✅ Kopiert!'; setTimeout(()=>copyBtn.textContent='📋 Kopiere IP',1400); }
-  catch{ prompt('Kopiere diese IP:', COPY_STR); }
-});
-
-/* Caching / Params */
+/* Lazy + Cache */
 const cacheKey=(range)=>`hist:${range}`;
 async function loadHistory(range){
   const qs=`?range=${encodeURIComponent(range)}`;
@@ -258,21 +258,16 @@ async function loadHistory(range){
     catch(err){ const raw=localStorage.getItem(cacheKey(range)); if(raw) return JSON.parse(raw).d; throw err; }
   }
 }
-function getParams(){ const p=new URLSearchParams(location.search); return { range:p.get('range')||'24h', live:p.get('live')!=='0' }; }
-function setInitialFromParams(){
-  const {range, live}=getParams();
-  (document.getElementById(range==='7d'?'r7':(range==='30d'?'r30':'r24'))||{}).checked=true;
-  autoCtl.checked = !!live;
-}
 
-/* Intervals */
+/* Intervalls / KPIs / Incidents */
 function toIntervals(points, nowIso){
   const arr=[...points].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
   const out=[];
   for(let i=0;i<arr.length;i++){
     const from=new Date(arr[i].ts);
     const to=new Date(i<arr.length-1?arr[i+1].ts:(nowIso||new Date().toISOString()));
-    const mins=Math.max(1, Math.round((to-from)/60000));
+    let mins=Math.max(1,Math.round((to-from)/60000));
+    if(mins>30) mins=30; // cap pro Slot
     out.push({from:arr[i].ts,to:to.toISOString(),ok:arr[i].ok,mins});
   }
   return out;
@@ -282,6 +277,8 @@ function kpisFromIntervals(intervals){
   for(const it of intervals){ if(it.ok===true) on+=it.mins; else if(it.ok===false) off+=it.mins; else unk+=it.mins; }
   return {on,off,unk,total:on+off+unk, points: intervals.length};
 }
+
+/* Genau N kalendarische Tage aggregieren (heute inklusive) */
 function aggregateByDays(intervals, n){
   const days=[];
   const today = startOfDay(new Date());
@@ -305,9 +302,191 @@ function aggregateByDays(intervals, n){
 function classifyDay(d){ const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
   if(offPct>=0.5) return 'r'; if(d.off>0 || unkPct>=0.2) return 'o'; return 'g'; }
 
-/* Incidents + Wartung */
+/* Externe Incidents */
 async function loadExternalIncidentReasons(){ try{ return await fetchJSON(API_INCIDENTS); } catch { return []; } }
 function overlap(aFrom,aTo,bFrom,bTo){ return (new Date(aFrom)<=new Date(bTo)) && (new Date(bFrom)<=new Date(aTo)); }
+function overlapMinutes(aFrom,aTo,bFrom,bTo){
+  const s=Math.max(new Date(aFrom).getTime(), new Date(bFrom).getTime());
+  const e=Math.min(new Date(aTo).getTime(),   new Date(bTo).getTime());
+  return Math.max(0, Math.round((e-s)/60000));
+}
+
+/* Render */
+function setCols(n){ barsEl.style.setProperty('--cols', Math.max(1,n)); }
+function renderSkeleton(n=60){
+  clear(barsEl); barsEl.className='bars mode-24h'; setCols(n);
+  const frag=document.createDocumentFragment();
+  for(let i=0;i<n;i++){ const el=document.createElement('div'); el.className='bar skeleton'; frag.appendChild(el); }
+  barsEl.appendChild(frag);
+}
+function render24h(intervals){
+  clear(barsEl); barsEl.className='bars mode-24h'; setCols(intervals.length);
+  const frag=document.createDocumentFragment();
+  intervals.forEach(p=>{
+    const el=document.createElement('div'); el.className='bar '+statusClass(p.ok);
+    const durTxt = p.mins===1?'1 Minute':`${p.mins} Minuten`;
+    const show = ev=>showTip((ev.touches?ev.touches[0]:ev),durTxt,p.ok,p.from,'History');
+    el.addEventListener('mouseenter',show);
+    el.addEventListener('mousemove',show);
+    el.addEventListener('mouseleave',hideTip);
+    el.addEventListener('touchstart',show,{passive:true});
+    frag.appendChild(el);
+  });
+  barsEl.appendChild(frag);
+}
+function renderDays(days,labelLeft){
+  clear(barsEl); barsEl.className='bars '+(labelLeft==='7 days'?'mode-7d':'mode-30d'); setCols(days.length);
+  const frag=document.createDocumentFragment();
+  days.forEach(d=>{
+    const cls=classifyDay(d); const el=document.createElement('div'); el.className='bar '+cls;
+    const on=(d.on/d.total||0)*100, off=(d.off/d.total||0)*100, unk=(d.unk/d.total||0)*100;
+    const state = cls==='r'?false:(cls==='g'?true:null);
+    const srcTxt=`History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`;
+    const show = ev=>showTip((ev.touches?ev.touches[0]:ev),'1 Tag',state,d.from,srcTxt);
+    el.addEventListener('mouseenter',show); el.addEventListener('mousemove',show);
+    el.addEventListener('mouseleave',hideTip); el.addEventListener('touchstart',show,{passive:true});
+    frag.appendChild(el);
+  });
+  barsEl.appendChild(frag);
+}
+
+/* Hoverline – nur Desktop */
+if(!isTouch){
+  barsEl.addEventListener('mousemove',e=>{
+    const rect=barsEl.getBoundingClientRect();
+    const x=clamp(e.clientX-rect.left,0,rect.width);
+    const cols=parseInt(getComputedStyle(barsEl).getPropertyValue('--cols'))||1;
+    const gap=parseFloat(getComputedStyle(barsEl).gap)||0;
+    const cellW=(rect.width - gap*(cols-1))/cols;
+    const idx=Math.round(x / (cellW+gap));
+    const snapped = clamp(idx*(cellW+gap), 0, rect.width);
+    hoverLine.style.left=snapped+'px';
+    hoverLine.style.display='block';
+  });
+  barsEl.addEventListener('mouseleave',()=>{hoverLine.style.display='none'; hideTip();});
+}else{
+  hoverLine.style.display='none';
+}
+
+/* Tooltip */
+function showTip(e,range,ok,ts,src){
+  TIP_ST.textContent=statusText(ok);
+  TIP_TS.textContent=(range==='1 Tag')?localDate(ts):localTime(ts);
+  TIP_SRC.textContent=src||''; TIP_RANGE.textContent=range;
+  TIP.style.display='block';
+  TIP.style.left=clamp(e.clientX,100,window.innerWidth-100)+'px';
+  TIP.style.top =clamp(e.clientY,80,window.innerHeight-40)+'px';
+}
+function hideTip(){ TIP.style.display='none'; }
+document.addEventListener('touchstart', (ev)=>{ if(!ev.target.closest('.bar')) hideTip(); }, {passive:true});
+
+/* Heatmap */
+function renderHeatmap(days){
+  clear(heatEl);
+  const last90 = days.slice(-90);
+  last90.forEach(d=>{
+    const c=document.createElement('div');
+    c.className='cell '+(classifyDay(d));
+    c.title=`${localDate(d.from)} – on ${((d.on/d.total||0)*100).toFixed(1)}%, off ${((d.off/d.total||0)*100).toFixed(1)}%`;
+    heatEl.appendChild(c);
+  });
+  const label=document.createElement('div'); label.className='label';
+  if(last90.length){
+    label.textContent=`Zeitraum: ${localDate(last90[0].from)} – ${localDate(last90[last90.length-1].from)}`;
+  }else{ label.textContent='Keine Daten'; }
+  heatEl.appendChild(label);
+}
+
+/* CSV Export */
+function toCSV(rows){
+  const esc=s=>('"'+String(s).replaceAll('"','""')+'"');
+  return rows.map(r=>r.map(esc).join(',')).join('\n');
+}
+function download(filename, text){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));
+  a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* Main Load */
+let timer=null;
+async function load(range){
+  renderSkeleton(60);
+
+  // Live
+  try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
+
+  // History
+  let data;
+  try{ data=await loadHistory(range); }
+  catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
+         kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='0'; kPoints.textContent='0';
+         incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>'; return; }
+
+  const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
+  const svc=data.service||{}; $('svc-name').textContent=svc.name||'Minecraft Bedrock'; $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
+  const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN; staleEl.hidden=!stale;
+  metaSrc.textContent='Quelle: History ✓';
+
+  const intervals=toIntervals(hist,generated);
+
+  if(range==='24h'){
+    const since=Date.now()-DAY_MS;
+    const last24 = intervals.filter(i=>new Date(i.from).getTime()>=since);
+    render24h(last24);
+
+    const base=kpisFromIntervals(last24);
+    const plannedMin = await plannedOverlapMinutes(last24);
+    const downtimeEff = Math.max(0, base.off - plannedMin);
+    const uptime = base.on / (base.on + downtimeEff || 1);
+
+    uptimeEl.textContent=fmtPct(uptime);
+    dtimeEl.textContent=fmtDur(Math.round(downtimeEff));
+    kOnline.textContent=Math.round(base.on/SLOT_MIN);
+    kOffline.textContent=Math.round(downtimeEff/SLOT_MIN);
+    kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
+    kPoints.textContent=last24.length;
+
+    await renderIncidents(last24);
+  }else{
+    const n = (range==='7d')?7:30;
+    const days = aggregateByDays(intervals, n);
+    renderDays(days, range==='7d'?'7 days':'30 days');
+
+    const base=kpisFromIntervals(days.map(d=>({mins:d.on, ok:true})).concat(days.map(d=>({mins:d.off,ok:false}))).concat(days.map(d=>({mins:d.unk,ok:null}))));
+    // Für Downtime-Abzug geplante Wartungen gegen die originalen Intervalle rechnen:
+    const since = startOfDay(new Date(Date.now() - (n-1)*DAY_MS)).toISOString();
+    const spanIntervals = intervals.filter(i=>new Date(i.to).getTime()>=new Date(since).getTime());
+    const plannedMin = await plannedOverlapMinutes(spanIntervals);
+    const downtimeEff = Math.max(0, base.off - plannedMin);
+    const uptime = base.on / (base.on + downtimeEff || 1);
+
+    uptimeEl.textContent=fmtPct(uptime);
+    dtimeEl.textContent=fmtDur(Math.round(downtimeEff));
+    kOnline.textContent=Math.round(base.on/SLOT_MIN);
+    kOffline.textContent=Math.round(downtimeEff/SLOT_MIN);
+    kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
+    kPoints.textContent=n;
+
+    incWrap.innerHTML=''; // Incidents nur für 24h gelistet
+  }
+
+  // Heatmap (auf Gesamthistory)
+  const allDays = aggregateByDays(intervals, Math.min(90, Math.ceil((Date.now()-new Date(intervals[0]?.from||Date.now()))/DAY_MS)+1));
+  renderHeatmap(allDays);
+}
+
+/* Geplante Wartungen */
+async function plannedOverlapMinutes(intervals){
+  const reasons=await loadExternalIncidentReasons();
+  const planned = reasons.filter(r=>r.planned);
+  if(!planned.length) return 0;
+  let mins=0;
+  for(const it of intervals){
+    if(it.ok!==false) continue;
+    for(const r of planned){ mins += overlapMinutes(it.from,it.to,r.from,r.to); }
+  }
+  return mins;
+}
 async function renderIncidents(intervals){
   const reasons=await loadExternalIncidentReasons();
   const incidents=[];
@@ -315,7 +494,7 @@ async function renderIncidents(intervals){
     if(intervals[i].ok===false){
       let from=intervals[i].from, mins=0, j=i;
       while(j<intervals.length && intervals[j].ok===false){ mins+=intervals[j].mins; j++; }
-      if(mins>=15) incidents.push({from,to:intervals[j-1].to,mins});
+      if(mins>=INCIDENT_MIN) incidents.push({from,to:intervals[j-1].to,mins});
       i=j;
     } else i++;
   }
@@ -330,87 +509,24 @@ async function renderIncidents(intervals){
     ul.appendChild(li);
   });
   incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
-
-  // nächste geplante Wartung (unten)
-  const upcoming = reasons.filter(x=>x.planned && new Date(x.from).getTime() > Date.now()).sort((a,b)=>new Date(a.from)-new Date(b.from))[0];
-  if(upcoming){
-    maintTxt.textContent = `${localDate(upcoming.from)} ${new Date(upcoming.from).toLocaleTimeString()} – ${upcoming.reason}`;
-    maintEl.hidden = false;
-  } else { maintEl.hidden = true; }
 }
 
-/* News */
-async function renderNews(){
-  try{
-    const list = await fetchJSON(API_NEWS);
-    const last = (Array.isArray(list)? list:[]).slice(-6).reverse();
-    if(!last.length){ newsEl.innerHTML = '<li class="muted">Keine News</li>'; return; }
-    newsEl.innerHTML = last.map(n=>`<li>• ${new Date(n.ts).toLocaleString()}: ${n.text}</li>`).join('');
-  }catch{ newsEl.innerHTML='<li class="muted">News nicht verfügbar</li>'; }
+/* Events */
+function onRangeChange(v){
+  barsEl.classList.toggle('mode-24h',v==='24h');
+  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
+  $('foot-right').textContent='Today';
+  const url=new URL(location.href); url.searchParams.set('range',v); history.replaceState(null,'',url.toString());
+  load(v);
 }
-
-/* Hoverline Desktop + Tooltip */
-if(!isTouch){
-  barsEl.addEventListener('mousemove',e=>{
-    const rect=barsEl.getBoundingClientRect();
-    const x=clamp(e.clientX-rect.left,0,rect.width);
-    const cols=parseInt(getComputedStyle(barsEl).getPropertyValue('--cols'))||1;
-    const gap=parseFloat(getComputedStyle(barsEl).gap)||0;
-    const cellW=(rect.width - gap*(cols-1))/cols;
-    const idx=Math.round(x / (cellW+gap));
-    const snapped = clamp(idx*(cellW+gap), 0, rect.width);
-    $('hoverline').style.left=snapped+'px'; $('hoverline').style.display='block';
-  });
-  barsEl.addEventListener('mouseleave',()=>{$('hoverline').style.display='none'; hideTip();});
-}
-function showTip(e,range,ok,ts,src){
-  TIP_ST.textContent=statusText(ok);
-  TIP_TS.textContent=(range==='1 Tag')?localDate(ts):localTime(ts);
-  TIP_SRC.textContent=src||''; TIP_RANGE.textContent=range;
-  TIP.style.display='block';
-  const clientX = e.clientX ?? (e.pageX - window.scrollX);
-  const clientY = e.clientY ?? (e.pageY - window.scrollY);
-  TIP.style.left=clamp(clientX,100,window.innerWidth-100)+'px';
-  TIP.style.top =clamp(clientY,80,window.innerHeight-40)+'px';
-}
-function hideTip(){ TIP.style.display='none'; }
-document.addEventListener('touchstart', (ev)=>{ if(!ev.target.closest('.bar')) hideTip(); }, {passive:true});
-
-/* Rendering Bars */
-function setCols(n){ barsEl.style.setProperty('--cols', Math.max(1,n)); }
-function renderSkeleton(n=60){ clear(barsEl); barsEl.className='bars mode-24h'; setCols(n);
-  const f=document.createDocumentFragment(); for(let i=0;i<n;i++){const el=document.createElement('div'); el.className='bar skeleton'; f.appendChild(el);} barsEl.appendChild(f); }
-function render24h(intervals){
-  clear(barsEl); barsEl.className='bars mode-24h'; setCols(intervals.length);
-  const f=document.createDocumentFragment();
-  intervals.forEach(p=>{
-    const el=document.createElement('div'); el.className='bar '+statusClass(p.ok);
-    const durTxt = p.mins===1?'1 Minute':`${p.mins} Minuten`;
-    const show = ev=>showTip((ev.touches?ev.touches[0]:ev),durTxt,p.ok,p.from,'History');
-    el.addEventListener('mouseenter',show); el.addEventListener('mousemove',show);
-    el.addEventListener('mouseleave',hideTip); el.addEventListener('touchstart',show,{passive:true});
-    f.appendChild(el);
-  }); barsEl.appendChild(f);
-}
-function renderDays(days){
-  clear(barsEl); barsEl.className='bars'; setCols(days.length);
-  const f=document.createDocumentFragment();
-  days.forEach(d=>{
-    const cls=classifyDay(d); const el=document.createElement('div'); el.className='bar '+cls;
-    const on=(d.on/d.total||0)*100, off=(d.off/d.total||0)*100, unk=(d.unk/d.total||0)*100;
-    const state = cls==='r'?false:(cls==='g'?true:null);
-    const srcTxt=`History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`;
-    const show = ev=>showTip((ev.touches?ev.touches[0]:ev),'1 Tag',state,d.from,srcTxt);
-    el.addEventListener('mouseenter',show); el.addEventListener('mousemove',show);
-    el.addEventListener('mouseleave',hideTip); el.addEventListener('touchstart',show,{passive:true});
-    f.appendChild(el);
-  }); barsEl.appendChild(f);
-}
+function startTimer(){ stopTimer(); timer=setInterval(()=>{const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v);},60_000); }
+function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
 
 /* CSV Export */
 btnCSV.addEventListener('click', async ()=>{
   const range = rangeCtl.querySelector('input:checked')?.value||'24h';
-  let data; try{ data=await loadHistory(range); }catch{ alert('Keine History verfügbar'); return; }
+  let data;
+  try{ data=await loadHistory(range); }catch{ alert('Keine History verfügbar'); return; }
   const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
   const intervals=toIntervals(hist,generated);
   let subset=[];
@@ -418,122 +534,10 @@ btnCSV.addEventListener('click', async ()=>{
   else { const n=(range==='7d')?7:30; const since=startOfDay(new Date(Date.now()-(n-1)*DAY_MS)).toISOString();
          subset=intervals.filter(i=>new Date(i.to).getTime()>=new Date(since).getTime()); }
   const rows=[['from','to','ok','minutes']].concat(subset.map(i=>[i.from,i.to, i.ok, i.mins]));
-  const csv = rows.map(r=>r.map(s=>`"${String(s).replaceAll('"','""')}"`).join(',')).join('\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=`status_${range}.csv`; a.click();
+  download(`status_${range}.csv`, toCSV(rows));
 });
 
-/* Haupt-Load */
-async function load(range){
-  renderSkeleton(60);
-
-  // Live & Players
-  try{
-    const live=await fetchJSON(API_LIVE+'?t='+Date.now());
-    setLive(live.ok,live.generated);
-
-    // Spielerzahlen (einfach)
-    let cur=null, max=null;
-    if(live.players){
-      cur = live.players.online ?? live.playersOnline ?? live.online;
-      max = live.players.max ?? live.playersMax ?? live.max;
-    } else {
-      // Fallback: letzte bekannte aus players.json
-      try{
-        const arr = await fetchJSON(API_PLAYERS);
-        const last = Array.isArray(arr)?arr[arr.length-1]:null;
-        if(last){ cur = last.online ?? cur; max = last.max ?? max; }
-      }catch{}
-    }
-    playersEl.textContent = (cur!=null && max!=null) ? `${cur} / ${max}` :
-                            (cur!=null ? `${cur}` : '—');
-  }catch{
-    setLive(null,null);
-    playersEl.textContent='—';
-  }
-
-  // History
-  let data;
-  try{ data=await loadHistory(range); }
-  catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='—'; dtimeEl.textContent='—';
-         kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='0'; kPoints.textContent='0';
-         incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>'; return; }
-
-  const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
-  const svc=data.service||{}; $('svc-name').textContent=svc.name||'Minecraft Bedrock'; $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
-  metaSrc.textContent='Quelle: History ✓';
-
-  const intervals=toIntervals(hist,generated);
-
-  // Uptime / Downtime + Render
-  let uptime=0, downtimeMin=0, k;
-  if(range==='24h'){
-    const since=Date.now()-DAY_MS;
-    const last24 = intervals.filter(i=>new Date(i.from).getTime()>=since);
-    render24h(last24);
-    k=kpisFromIntervals(last24);
-    uptime = k.on / (k.on + k.off || 1);
-    downtimeMin = k.off;
-    await renderIncidents(last24);
-  }else{
-    const n = (range==='7d')?7:30;
-    const days = aggregateByDays(intervals, n);   // exakt N Tage
-    renderDays(days);
-    const totalOn = days.reduce((a,b)=>a+b.on,0);
-    const totalOff= days.reduce((a,b)=>a+b.off,0);
-    const totalUnk= days.reduce((a,b)=>a+b.unk,0);
-    uptime = totalOn / (totalOn + totalOff || 1);
-    downtimeMin = totalOff;
-    k = {on:totalOn, off:totalOff, unk:totalUnk, total:totalOn+totalOff+totalUnk, points:n};
-    // Wartung trotzdem prüfen, auch wenn keine Einzel-Events gelistet sind
-    renderIncidents([]); // nur für Wartungsbadge unten
-  }
-
-  uptimeEl.textContent=fmtPct(uptime);
-  dtimeEl.textContent=fmtDur(Math.round(downtimeMin));
-  kOnline.textContent=Math.round(k.on/SLOT_MIN);
-  kOffline.textContent=Math.round(k.off/SLOT_MIN);
-  kUnknown.textContent=Math.round(k.unk/SLOT_MIN);
-  kPoints.textContent=k.points;
-
-  // Heatmap (Gesamt)
-  if(hist.length){
-    const totalDays = Math.max(1, Math.ceil((Date.now()-new Date(hist[0].ts).getTime())/DAY_MS)+1);
-    const days90 = aggregateByDays(intervals, Math.min(90,totalDays));
-    renderHeatmap(days90);
-  } else {
-    renderHeatmap([]);
-  }
-}
-
-/* Heatmap */
-function renderHeatmap(days){
-  clear(heatEl);
-  const last90 = days.slice(-90);
-  last90.forEach(d=>{
-    const c=document.createElement('div');
-    c.className='cell '+(classifyDay(d));
-    c.title=`${localDate(d.from)} – on ${((d.on/d.total||0)*100).toFixed(1)}%, off ${((d.off/d.total||0)*100).toFixed(1)}%`;
-    heatEl.appendChild(c);
-  });
-  const label=document.createElement('div'); label.className='label';
-  if(last90.length){ label.textContent=`Zeitraum: ${localDate(last90[0].from)} – ${localDate(last90[last90.length-1].from)}`; }
-  else{ label.textContent='Keine Daten'; }
-  heatEl.appendChild(label);
-}
-
-/* Range & Timer */
-function onRangeChange(v){
-  barsEl.classList.toggle('mode-24h',v==='24h');
-  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
-  $('foot-right').textContent='Today';
-  $('legend-interval').textContent = v==='24h' ? '1 Balken = 1 Probe (variable Minuten)' : '1 Balken = 1 Tag';
-  const url=new URL(location.href); url.searchParams.set('range',v); history.replaceState(null,'',url.toString());
-  load(v);
-}
-let timer=null;
-function startTimer(){ stopTimer(); timer=setInterval(()=>{const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v);},60_000); }
-function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
-
+/* Init */
 setInitialFromParams();
 rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
 autoCtl.addEventListener('change', e=>{
@@ -541,13 +545,75 @@ autoCtl.addEventListener('change', e=>{
   e.target.checked?startTimer():stopTimer();
 });
 document.addEventListener('scroll', ()=>{TIP.style.display='none';}, true);
+
+/* Start */
 onRangeChange( (rangeCtl.querySelector('input:checked')?.value)||'24h' );
 if(autoCtl.checked) startTimer();
+</script>
 
-/* Service Worker (harmlos, optional) */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(()=>{});
-}
+<!-- Player-Stats (Bedrock, mcsrvstat.us) -->
+<section id="playerCard" class="card" style="margin:12px 16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <strong>Spieler aktuell</strong>
+    <span id="playerUpdated" class="small" style="color:#9aa0a6">lädt…</span>
+  </div>
+  <div id="playerSummary" class="kpis" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+    <div class="badge">Status: <strong id="srvState">–</strong></div>
+    <div class="badge">Online: <strong id="pOnline">–</strong></div>
+    <div class="badge">Max: <strong id="pMax">–</strong></div>
+    <div class="badge">MOTD: <strong id="motd">–</strong></div>
+  </div>
+  <div id="playerListWrap" style="display:none;height:1px;background:#1b2231;margin:10px 0"></div>
+  <div id="playerList" class="small"></div>
+</section>
+
+<script>
+(function(){
+  const HOST = "important-instrumentation.gl.at.ply.gg";
+  const PORT = 18232;
+  const ENDPOINT = `https://api.mcsrvstat.us/bedrock/3/${HOST}:${PORT}`;
+
+  const $ = s => document.querySelector(s);
+  const elUpd = $("#playerUpdated"), elState = $("#srvState");
+  const elOn = $("#pOnline"), elMax = $("#pMax"), elMotd = $("#motd");
+  const elListWrap = $("#playerListWrap"), elList = $("#playerList");
+
+  async function fetchPlayers(){
+    try{
+      const res = await fetch(ENDPOINT, {cache:"no-store"});
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      const j = await res.json();
+
+      const online = !!j.online;
+      elState.textContent = online ? "online" : "offline";
+      elState.style.color = online ? "#19c37d" : "#ef4444";
+
+      elOn.textContent = (j.players && typeof j.players.online==="number") ? j.players.online : "0";
+      elMax.textContent = (j.players && typeof j.players.max==="number") ? j.players.max : "–";
+      elMotd.textContent = (j.motd && j.motd.clean && j.motd.clean.length) ? j.motd.clean.join(" ") : "–";
+
+      const names = (j.players && Array.isArray(j.players.list)) ? j.players.list : [];
+      if(names.length){
+        elListWrap.style.display = "block";
+        elList.innerHTML = names.map(n => `<span style="display:inline-block;margin:3px 6px;padding:4px 8px;border:1px solid #1b2231;border-radius:999px;background:linear-gradient(180deg,#0c1423,#0a0f1a)">${n}</span>`).join("");
+      }else{
+        elListWrap.style.display = "none";
+        elList.innerHTML = `<span class="small" style="color:#9aa0a6">Keine Namen vom Server geliefert.</span>`;
+      }
+
+      elUpd.textContent = "aktualisiert " + new Date().toLocaleTimeString();
+    }catch(e){
+      elState.textContent = "unbekannt"; elState.style.color = "#f59e0b";
+      elOn.textContent = "–"; elMax.textContent = "–"; elMotd.textContent = "–";
+      elListWrap.style.display = "none"; elList.innerHTML = "";
+      elUpd.textContent = "Fehler beim Laden";
+      console.warn("Player fetch failed:", e);
+    }
+  }
+
+  fetchPlayers();
+  setInterval(fetchPlayers, 60000);
+})();
 </script>
 </body>
 </html>
