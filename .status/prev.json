@@ -1,0 +1,12 @@
+{
+  "online": false,
+  "version": "",
+  "motd": "",
+  "players": {
+    "online": 0,
+    "max": 0,
+    "sample": []
+  },
+  "checked_at_unix": 1759383661,
+  "checked_at_iso": "2025-10-02 05:41:01 UTC"
+}
