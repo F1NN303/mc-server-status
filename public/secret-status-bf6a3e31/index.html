@@ -32,14 +32,13 @@ h1{margin:0;font-size:22px}
 .seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .2s}
 .seg input:checked + label{background:var(--line);color:var(--fg)}
 .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
-.toggle input{accent-color:#60a5fa}
+.toggle input{accent-color:#60a5fa;cursor:pointer}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
   border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a);cursor:pointer;transition:transform .15s}
 .badge:hover{transform:translateY(-1px)}
-.badge-warn{border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b66 inset}
 
 .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
-  border-radius:var(--radius);padding:16px;transition:opacity .3s}
+  border-radius:var(--radius);padding:16px;margin-bottom:12px;transition:opacity .3s}
 .card.loading{opacity:0.5;pointer-events:none}
 .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .svc{display:flex;flex-direction:column;gap:4px;min-width:240px}
@@ -57,7 +56,6 @@ h1{margin:0;font-size:22px}
   padding:10px; border-radius:12px;
   background:linear-gradient(180deg,#0a0e19,#0a0d14);
   overflow:hidden; touch-action: manipulation;
-  transition:opacity .2s;
 }
 .bars.mode-24h{min-height:80px; gap:4px}
 .bar{
@@ -74,7 +72,6 @@ h1{margin:0;font-size:22px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 .footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
-
 .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap;margin-top:8px}
 .lg{display:inline-flex;align-items:center;gap:6px}
 .sq{width:10px;height:10px;border-radius:2px}
@@ -100,19 +97,6 @@ h1{margin:0;font-size:22px}
 .hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
 .hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
 
-@media (max-width:480px){
-  .bars{ grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap:0; padding:8px; }
-  .bars.mode-24h{gap:0}
-  .hoverline{display:none}
-  .bar{height:68px; min-width:0; width:auto}
-  .bar:hover{transform:none}
-}
-@media (max-width:520px){
-  h1{font-size:18px}
-  .svc-host,.badge{font-size:11px}
-  .seg label{padding:6px 8px}
-}
-
 .chart-card{margin-top:16px}
 .chart-grid{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:900px){.chart-grid{grid-template-columns:1.5fr .9fr}}
@@ -125,14 +109,10 @@ h1{margin:0;font-size:22px}
 .sla .t1{font-size:12px;color:var(--muted)}
 .sla .t2{font-weight:700}
 
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--fg);border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
 .comp-tile{background:linear-gradient(180deg,#0c1423,#0a0f1a);border:1px solid var(--line);border-radius:10px;padding:10px}
 .anomaly-item{background:linear-gradient(180deg,#1a1406,#0f0a04);border:1px solid #f59e0b;border-radius:8px;padding:8px 10px;font-size:12px;color:#fde68a}
 .trend-up{color:#19c37d} .trend-down{color:#ef4444} .trend-neutral{color:#9aa0a6}
 
-/* Settings Modal */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal.show{display:flex}
 .modal-content{background:linear-gradient(180deg,#0f1320,#0b0f1a);border:1px solid var(--line);border-radius:16px;
@@ -154,6 +134,19 @@ h1{margin:0;font-size:22px}
   border-radius:8px;cursor:pointer;font-size:12px;transition:transform .15s}
 .btn-danger:hover{transform:translateY(-1px)}
 .webhook-test{margin-top:8px;font-size:12px;color:var(--muted)}
+
+@media (max-width:480px){
+  .bars{ grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap:0; padding:8px; }
+  .bars.mode-24h{gap:0}
+  .hoverline{display:none}
+  .bar{height:68px; min-width:0; width:auto}
+  .bar:hover{transform:none}
+}
+@media (max-width:520px){
+  h1{font-size:18px}
+  .svc-host,.badge{font-size:11px}
+  .seg label{padding:6px 8px}
+}
 </style>
 </head>
 <body>
@@ -179,60 +172,61 @@ h1{margin:0;font-size:22px}
   </div>
 
   <!-- Status-Vergleich Card -->
-  <section class="card" id="comparison-card" style="margin-bottom:12px">
+  <section class="card" id="comparison-card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
       <h3 style="margin:0;font-size:15px;color:#9aa0a6">📊 Status-Vergleich</h3>
-      <span class="small" style="color:#9aa0a6" id="comp-updated">–</span>
+      <span style="color:#9aa0a6;font-size:12px" id="comp-updated">—</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px" id="comparison-grid">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
       <div class="comp-tile">
-        <div class="small" style="color:#9aa0a6">Gestern vs. Heute</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-yesterday">–</div>
+        <div style="font-size:12px;color:#9aa0a6">Gestern vs. Heute</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-yesterday">—</div>
       </div>
       <div class="comp-tile">
-        <div class="small" style="color:#9aa0a6">Letzte Woche vs. Diese Woche</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-week">–</div>
+        <div style="font-size:12px;color:#9aa0a6">Letzte Woche vs. Diese Woche</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-week">—</div>
       </div>
       <div class="comp-tile">
-        <div class="small" style="color:#9aa0a6">Letzter Monat vs. Dieser Monat</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-month">–</div>
+        <div style="font-size:12px;color:#9aa0a6">Letzter Monat vs. Dieser Monat</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-month">—</div>
       </div>
       <div class="comp-tile">
-        <div class="small" style="color:#9aa0a6">Trend (7 Tage)</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-trend">–</div>
+        <div style="font-size:12px;color:#9aa0a6">Trend (7 Tage)</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-trend">—</div>
       </div>
     </div>
   </section>
 
   <!-- Anomaly Detection Card -->
-  <section class="card" id="anomaly-card" style="margin-bottom:12px;display:none;border-left:3px solid #f59e0b">
+  <section class="card" id="anomaly-card" style="display:none;border-left:3px solid #f59e0b">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <span style="font-size:24px">⚠️</span>
       <div>
         <h3 style="margin:0;font-size:15px;color:#fbbf24">Anomalie erkannt</h3>
-        <div class="small" style="color:#9aa0a6;margin-top:2px" id="anomaly-time">–</div>
+        <div style="color:#9aa0a6;margin-top:2px;font-size:12px" id="anomaly-time">—</div>
       </div>
     </div>
     <div id="anomaly-list" style="display:flex;flex-direction:column;gap:6px"></div>
   </section>
 
+  <!-- Haupt-Status Card -->
   <section class="card" id="main-card">
     <div class="row-head">
       <div class="svc">
         <div class="svc-name" id="svc-name">Minecraft Bedrock</div>
-        <div class="svc-host" id="svc-host">–</div>
+        <div class="svc-host" id="svc-host">—</div>
       </div>
       <div class="badges">
-        <div class="badge"><span>Uptime</span><strong id="uptime">–</strong></div>
-        <div class="badge"><span>Downtime</span><strong id="downtime">–</strong></div>
+        <div class="badge"><span>Uptime</span><strong id="uptime">—</strong></div>
+        <div class="badge"><span>Downtime</span><strong id="downtime">—</strong></div>
       </div>
     </div>
 
     <div class="kpi">
-      <div><strong id="kpi-online">–</strong> online</div>
-      <div><strong id="kpi-offline">–</strong> offline</div>
-      <div><strong id="kpi-unknown">–</strong> unknown</div>
-      <div><strong id="kpi-points">–</strong> Punkte</div>
+      <div><strong id="kpi-online">—</strong> online</div>
+      <div><strong id="kpi-offline">—</strong> offline</div>
+      <div><strong id="kpi-unknown">—</strong> unknown</div>
+      <div><strong id="kpi-points">—</strong> Punkte</div>
     </div>
 
     <div class="bars-wrap">
@@ -260,6 +254,23 @@ h1{margin:0;font-size:22px}
     </div>
   </section>
 
+  <!-- Player Stats direkt nach Haupt-Status -->
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <strong>Spieler aktuell</strong>
+      <span id="playerUpdated" style="color:#9aa0a6;font-size:12px">lädt…</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div class="badge">Status: <strong id="srvState">—</strong></div>
+      <div class="badge">Online: <strong id="pOnline">—</strong></div>
+      <div class="badge">Max: <strong id="pMax">—</strong></div>
+      <div class="badge">MOTD: <strong id="motd">—</strong></div>
+    </div>
+    <div id="playerListWrap" style="display:none;height:1px;background:#1b2231;margin:10px 0"></div>
+    <div id="playerList" style="font-size:12px"></div>
+  </section>
+
+  <!-- Charts & SLA -->
   <section class="card chart-card">
     <div class="chart-grid">
       <div>
@@ -267,17 +278,17 @@ h1{margin:0;font-size:22px}
         <div class="chart-viewport">
           <canvas id="chart24" aria-label="Status 24h"></canvas>
         </div>
-        <div id="chart24-note" class="small" style="color:#9aa0a6;margin-top:6px">Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)</div>
+        <div id="chart24-note" style="color:#9aa0a6;margin-top:6px;font-size:12px">Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)</div>
       </div>
       <div>
         <h3 style="margin:0 0 8px;color:#9aa0a6;font-weight:600">SLA / Uptime</h3>
         <div class="sla">
-          <div class="tile"><div class="t1">Uptime 24 h</div><div class="t2" id="sla24">–</div></div>
-          <div class="tile"><div class="t1">Uptime 7 d</div><div class="t2" id="sla7">–</div></div>
-          <div class="tile"><div class="t1">Uptime 30 d</div><div class="t2" id="sla30">–</div></div>
-          <div class="tile"><div class="t1">Längster Ausfall (30 d)</div><div class="t2" id="slaLongest">–</div></div>
-          <div class="tile"><div class="t1">Ausfälle gesamt (30 d)</div><div class="t2" id="slaCount">–</div></div>
-          <div class="tile"><div class="t1">Geplante Wartung (abgezogen)</div><div class="t2" id="slaPlanned">–</div></div>
+          <div class="tile"><div class="t1">Uptime 24 h</div><div class="t2" id="sla24">—</div></div>
+          <div class="tile"><div class="t1">Uptime 7 d</div><div class="t2" id="sla7">—</div></div>
+          <div class="tile"><div class="t1">Uptime 30 d</div><div class="t2" id="sla30">—</div></div>
+          <div class="tile"><div class="t1">Längster Ausfall (30 d)</div><div class="t2" id="slaLongest">—</div></div>
+          <div class="tile"><div class="t1">Ausfälle gesamt (30 d)</div><div class="t2" id="slaCount">—</div></div>
+          <div class="tile"><div class="t1">Geplante Wartung (abgezogen)</div><div class="t2" id="slaPlanned">—</div></div>
         </div>
       </div>
     </div>
@@ -285,8 +296,8 @@ h1{margin:0;font-size:22px}
 </div>
 
 <div class="tip" id="tip">
-  <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
-  <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
+  <div class="t-line"><span id="tip-status">—</span><span id="tip-ts">—</span></div>
+  <div class="t-line"><span id="tip-src">—</span><span id="tip-range">—</span></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
@@ -296,84 +307,41 @@ h1{margin:0;font-size:22px}
 (function(){
 'use strict';
 
-/* === Konfiguration === */
 const CONFIG = {
   API_HISTORY: '/api/history',
   API_LIVE: '/api/bedrock',
   API_INCIDENTS: '/incidents.json',
+  PLAYER_HOST: 'important-instrumentation.gl.at.ply.gg',
+  PLAYER_PORT: 18232,
   SLOT_MIN: 5,
   DAY_MS: 86400000,
   STALE_MIN: 30,
   INCIDENT_MIN: 15,
   AUTO_REFRESH_INTERVAL: 60000,
-  CACHE_PREFIX: 'hist:',
-  // Anomaly Detection Thresholds
-  ANOMALY_DOWNTIME_MULTIPLIER: 2.5, // Alarm wenn Downtime > 2.5× Durchschnitt
-  ANOMALY_INCIDENT_COUNT: 5, // Alarm bei > 5 Incidents pro Tag
-  ANOMALY_UPTIME_DROP: 0.05, // Alarm bei > 5% Uptime-Drop
-  // Discord Webhook (aus localStorage oder leer)
+  ANOMALY_DOWNTIME_MULTIPLIER: 2.5,
+  ANOMALY_INCIDENT_COUNT: 5,
+  ANOMALY_UPTIME_DROP: 0.05,
   DISCORD_WEBHOOK_KEY: 'discord_webhook_url'
 };
 
-/* === DOM-Referenzen === */
 const $ = id => document.getElementById(id);
-const barsEl = $('bars');
-const hoverLine = $('hoverline');
-const rangeCtl = $('range');
-const autoCtl = $('auto');
-const mainCard = $('main-card');
-const liveDot = $('live-dot');
-const liveTxt = $('live-txt');
-const svcName = $('svc-name');
-const svcHost = $('svc-host');
-const uptimeEl = $('uptime');
-const dtimeEl = $('downtime');
-const kOnline = $('kpi-online');
-const kOffline = $('kpi-offline');
-const kUnknown = $('kpi-unknown');
-const kPoints = $('kpi-points');
-const metaSrc = $('meta-src');
-const incWrap = $('inc');
-const staleEl = $('stale');
-const heatEl = $('heatmap');
-const TIP = $('tip');
-const TIP_TS = $('tip-ts');
-const TIP_ST = $('tip-status');
-const TIP_SRC = $('tip-src');
-const TIP_RANGE = $('tip-range');
-const btnCSV = $('btn-csv');
-const chart24Canvas = $('chart24');
-const chart24Note = $('chart24-note');
-const sla24 = $('sla24');
-const sla7 = $('sla7');
-const sla30 = $('sla30');
-const slaLongest = $('slaLongest');
-const slaCount = $('slaCount');
-const slaPlanned = $('slaPlanned');
-const btnSettings = $('btn-settings');
-const compYesterday = $('comp-yesterday');
-const compWeek = $('comp-week');
-const compMonth = $('comp-month');
-const compTrend = $('comp-trend');
-const compUpdated = $('comp-updated');
-const anomalyCard = $('anomaly-card');
-const anomalyList = $('anomaly-list');
-const anomalyTime = $('anomaly-time');
+const escapeHtml = text => {
+  const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+  return text.replace(/[&<>"']/g, m => map[m]);
+};
 
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-/* === State === */
 let timer = null;
 let lastIntervals = null;
 let chart24 = null;
 let lastChartHash = null;
 let lastHeatmapHash = null;
 let lastHistoryGenerated = null;
-let previousDayStats = null; // Für Anomaly Detection
+let previousDayStats = null;
+let lastLiveStatus = null;
 
-/* === Hilfsfunktionen === */
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
-const fmtPct = v => (isNaN(v) ? '–' : (v * 100).toFixed(2) + '%');
+const fmtPct = v => (isNaN(v) ? '—' : (v * 100).toFixed(2) + '%');
 const fmtDur = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
 const localTime = iso => new Date(iso).toLocaleString();
 const localDate = iso => new Date(iso).toLocaleDateString(undefined, {year: 'numeric', month: 'short', day: 'numeric'});
@@ -401,47 +369,30 @@ function clear(el) {
 }
 
 function setLive(ok, ts) {
-  liveDot.className = 'dot ' + statusClass(ok);
-  liveTxt.textContent = `${statusText(ok)} • ${ts ? localTime(ts) : '–'}`;
+  $('live-dot').className = 'dot ' + statusClass(ok);
+  $('live-txt').textContent = `${statusText(ok)} • ${ts ? localTime(ts) : '—'}`;
 }
-
-/* === URL-Parameter === */
-function getParams() {
-  const p = new URLSearchParams(location.search);
-  return {range: p.get('range') || '24h', live: p.get('live') !== '0'};
-}
-
-function setInitialFromParams() {
-  const {range, live} = getParams();
-  const id = range === '7d' ? 'r7' : (range === '30d' ? 'r30' : 'r24');
-  const el = document.getElementById(id);
-  if (el) el.checked = true;
-  autoCtl.checked = !!live;
-}
-
-/* === Cache & Lazy Load === */
-const cacheKey = range => `${CONFIG.CACHE_PREFIX}${range}`;
 
 async function loadHistory(range) {
+  const cacheKey = `hist:${range}`;
   const qs = `?range=${encodeURIComponent(range)}`;
   try {
     const d = await fetchJSON(CONFIG.API_HISTORY + qs);
-    localStorage.setItem(cacheKey(range), JSON.stringify({t: Date.now(), d}));
+    localStorage.setItem(cacheKey, JSON.stringify({t: Date.now(), d}));
     return d;
   } catch (e) {
     try {
       const d = await fetchJSON(CONFIG.API_HISTORY);
-      localStorage.setItem(cacheKey(range), JSON.stringify({t: Date.now(), d}));
+      localStorage.setItem(cacheKey, JSON.stringify({t: Date.now(), d}));
       return d;
     } catch (err) {
-      const raw = localStorage.getItem(cacheKey(range));
+      const raw = localStorage.getItem(cacheKey);
       if (raw) return JSON.parse(raw).d;
       throw err;
     }
   }
 }
 
-/* === Intervalle & KPIs === */
 function toIntervals(points, nowIso) {
   const arr = [...points].sort((a, b) => new Date(a.ts) - new Date(b.ts));
   const out = [];
@@ -465,7 +416,6 @@ function kpisFromIntervals(intervals) {
   return {on, off, unk, total: on + off + unk, points: intervals.length};
 }
 
-/* === Tage-Aggregation === */
 function aggregateByDays(intervals, n) {
   const days = [];
   const today = startOfDayUTC(new Date());
@@ -498,7 +448,6 @@ function classifyDay(d) {
   return 'g';
 }
 
-/* === Externe Incidents === */
 async function loadExternalIncidentReasons() {
   try {
     return await fetchJSON(CONFIG.API_INCIDENTS);
@@ -517,12 +466,12 @@ function overlapMinutes(aFrom, aTo, bFrom, bTo) {
   return Math.max(0, Math.round((e - s) / 60000));
 }
 
-/* === Render-Funktionen === */
 function setCols(n) {
-  barsEl.style.setProperty('--cols', Math.max(1, n));
+  $('bars').style.setProperty('--cols', Math.max(1, n));
 }
 
 function renderSkeleton(n) {
+  const barsEl = $('bars');
   clear(barsEl);
   barsEl.className = 'bars mode-24h';
   setCols(n);
@@ -536,6 +485,7 @@ function renderSkeleton(n) {
 }
 
 function render24h(intervals) {
+  const barsEl = $('bars');
   clear(barsEl);
   barsEl.className = 'bars mode-24h';
   setCols(intervals.length);
@@ -553,6 +503,7 @@ function render24h(intervals) {
 }
 
 function renderDays(days, labelLeft) {
+  const barsEl = $('bars');
   clear(barsEl);
   barsEl.className = 'bars ' + (labelLeft === '7 days' ? 'mode-7d' : 'mode-30d');
   setCols(days.length);
@@ -575,8 +526,8 @@ function renderDays(days, labelLeft) {
   barsEl.appendChild(frag);
 }
 
-/* === Event Delegation für Bars === */
 function setupBarEvents() {
+  const barsEl = $('bars');
   barsEl.addEventListener('mouseenter', e => {
     if (e.target.classList.contains('bar') && e.target.dataset.dur) {
       showTip(e, e.target.dataset.dur, e.target.dataset.ok === 'true' ? true : (e.target.dataset.ok === 'false' ? false : null), e.target.dataset.from, e.target.dataset.src);
@@ -607,8 +558,9 @@ function setupBarEvents() {
   }
 }
 
-/* === Hoverline (nur Desktop) === */
 if (!isTouch) {
+  const barsEl = $('bars');
+  const hoverLine = $('hoverline');
   barsEl.addEventListener('mousemove', e => {
     const rect = barsEl.getBoundingClientRect();
     const x = clamp(e.clientX - rect.left, 0, rect.width);
@@ -624,53 +576,52 @@ if (!isTouch) {
     hoverLine.style.display = 'none';
   });
 } else {
-  hoverLine.style.display = 'none';
+  $('hoverline').style.display = 'none';
 }
 
-/* === Tooltip === */
 function showTip(e, range, ok, ts, src) {
-  TIP_ST.textContent = statusText(ok);
-  TIP_TS.textContent = (range === '1 Tag') ? localDate(ts) : localTime(ts);
-  TIP_SRC.textContent = src || '';
-  TIP_RANGE.textContent = range;
-  TIP.style.display = 'block';
-  TIP.style.left = clamp(e.clientX, 100, window.innerWidth - 100) + 'px';
-  TIP.style.top = clamp(e.clientY, 80, window.innerHeight - 40) + 'px';
+  $('tip-status').textContent = statusText(ok);
+  $('tip-ts').textContent = (range === '1 Tag') ? localDate(ts) : localTime(ts);
+  $('tip-src').textContent = src || '';
+  $('tip-range').textContent = range;
+  const tip = $('tip');
+  tip.style.display = 'block';
+  tip.style.left = clamp(e.clientX, 100, window.innerWidth - 100) + 'px';
+  tip.style.top = clamp(e.clientY, 80, window.innerHeight - 40) + 'px';
 }
 
 function hideTip() {
-  TIP.style.display = 'none';
+  $('tip').style.display = 'none';
 }
 
 document.addEventListener('touchstart', ev => {
   if (!ev.target.closest('.bar')) hideTip();
 }, {passive: true});
 
-/* === Heatmap === */
 function renderHeatmap(days) {
   const hash = days.map(d => `${d.from}:${d.on}:${d.off}`).join('|');
   if (hash === lastHeatmapHash) return;
   lastHeatmapHash = hash;
 
+  const heatEl = $('heatmap');
   clear(heatEl);
   const last90 = days.slice(-90);
   last90.forEach(d => {
     const c = document.createElement('div');
     c.className = 'cell ' + classifyDay(d);
-    c.title = `${localDate(d.from)} – on ${((d.on / d.total || 0) * 100).toFixed(1)}%, off ${((d.off / d.total || 0) * 100).toFixed(1)}%`;
+    c.title = `${localDate(d.from)} — on ${((d.on / d.total || 0) * 100).toFixed(1)}%, off ${((d.off / d.total || 0) * 100).toFixed(1)}%`;
     heatEl.appendChild(c);
   });
   const label = document.createElement('div');
   label.className = 'label';
   if (last90.length) {
-    label.textContent = `Zeitraum: ${localDate(last90[0].from)} – ${localDate(last90[last90.length - 1].from)}`;
+    label.textContent = `Zeitraum: ${localDate(last90[0].from)} — ${localDate(last90[last90.length - 1].from)}`;
   } else {
     label.textContent = 'Keine Daten';
   }
   heatEl.appendChild(label);
 }
 
-/* === CSV Export === */
 function toCSV(rows) {
   const esc = s => ('"' + String(s).replaceAll('"', '""') + '"');
   return rows.map(r => r.map(esc).join(',')).join('\n');
@@ -685,7 +636,6 @@ function download(filename, text) {
   a.remove();
 }
 
-/* === Detail-Chart (24h) === */
 function statusValue(ok) {
   return ok === true ? 1 : (ok === false ? 0 : 0.5);
 }
@@ -710,10 +660,11 @@ function renderChart24(series) {
   if (hash === lastChartHash && chart24) return;
   lastChartHash = hash;
 
+  const chart24Note = $('chart24-note');
   chart24Note.textContent = series.labels.length ? "Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)" : "Keine 24-h-Daten verfügbar.";
 
   if (!chart24) {
-    chart24 = new Chart(chart24Canvas.getContext('2d'), {
+    chart24 = new Chart($('chart24').getContext('2d'), {
       type: 'line',
       data: {
         labels: series.labels,
@@ -763,7 +714,6 @@ function renderChart24(series) {
   if (chart24) chart24.update('none');
 }
 
-/* === SLA-Berechnung === */
 function longestOutage(intervals, sinceMs) {
   let maxMin = 0, count = 0;
   const span = intervals.filter(i => new Date(i.to).getTime() >= sinceMs);
@@ -776,7 +726,6 @@ function longestOutage(intervals, sinceMs) {
   return {maxMin, count};
 }
 
-/* === Geplante Wartungen === */
 async function plannedOverlapMinutes(intervals) {
   const reasons = await loadExternalIncidentReasons();
   const planned = reasons.filter(r => r.planned);
@@ -806,6 +755,7 @@ async function renderIncidents(intervals) {
       i = j;
     } else i++;
   }
+  const incWrap = $('inc');
   if (!incidents.length) {
     incWrap.innerHTML = '';
     return;
@@ -816,39 +766,33 @@ async function renderIncidents(intervals) {
     const match = reasons.find(r => overlap(ev.from, ev.to, r.from, r.to));
     const isPlanned = !!(match && match.planned);
     const li = document.createElement('li');
-    li.textContent = `${isPlanned ? '⚙️ Geplante Wartung' : 'Ausfall'} ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})` + (match ? ` – Grund: ${match.reason}` : '');
+    li.textContent = `${isPlanned ? '⚙️ Geplante Wartung' : 'Ausfall'} ${localTime(ev.from)} — ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})` + (match ? ` — Grund: ${match.reason}` : '');
     ul.appendChild(li);
   });
   incWrap.innerHTML = '<h3>Incidents</h3>';
   incWrap.appendChild(ul);
 }
 
-/* === Status-Vergleich === */
 function calculateComparison(intervals) {
   if (!intervals.length) return null;
 
-  const now = Date.now();
   const days = aggregateByDays(intervals, 30);
 
-  // Gestern vs. Heute
   const today = days[days.length - 1];
   const yesterday = days[days.length - 2];
   const yesterdayDiff = yesterday && today ? 
     ((today.on / today.total || 0) - (yesterday.on / yesterday.total || 0)) * 100 : 0;
 
-  // Diese Woche vs. Letzte Woche
   const thisWeek = days.slice(-7);
   const lastWeek = days.slice(-14, -7);
   const thisWeekUptime = thisWeek.reduce((a, d) => a + d.on, 0) / Math.max(1, thisWeek.reduce((a, d) => a + d.on + d.off, 0));
   const lastWeekUptime = lastWeek.reduce((a, d) => a + d.on, 0) / Math.max(1, lastWeek.reduce((a, d) => a + d.on + d.off, 0));
   const weekDiff = (thisWeekUptime - lastWeekUptime) * 100;
 
-  // Dieser Monat vs. Letzter Monat (vereinfacht: letzte 30 vs. vorherige 30 Tage)
   const thisMonth = days.slice(-30);
   const thisMonthUptime = thisMonth.reduce((a, d) => a + d.on, 0) / Math.max(1, thisMonth.reduce((a, d) => a + d.on + d.off, 0));
-  const monthDiff = 0; // Würde previous 30 days brauchen
+  const monthDiff = 0;
 
-  // Trend (7-Tage Linear Regression)
   const last7 = days.slice(-7);
   const trend = calculateTrend(last7.map((d, i) => ({x: i, y: d.on / d.total || 0})));
 
@@ -870,16 +814,16 @@ function calculateTrend(points) {
   const sumXY = points.reduce((a, p) => a + p.x * p.y, 0);
   const sumX2 = points.reduce((a, p) => a + p.x * p.x, 0);
   const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  return slope * 100; // Als Prozent
+  return slope * 100;
 }
 
 function renderComparison(comp) {
   if (!comp) {
-    compYesterday.textContent = '–';
-    compWeek.textContent = '–';
-    compMonth.textContent = '–';
-    compTrend.textContent = '–';
-    compUpdated.textContent = '–';
+    $('comp-yesterday').textContent = '—';
+    $('comp-week').textContent = '—';
+    $('comp-month').textContent = '—';
+    $('comp-trend').textContent = '—';
+    $('comp-updated').textContent = '—';
     return;
   }
 
@@ -891,27 +835,25 @@ function renderComparison(comp) {
     return `<span class="${color}">${sign}${diff.toFixed(1)}% ${arrow}</span>`;
   };
 
-  compYesterday.innerHTML = formatDiff(comp.yesterdayDiff);
-  compWeek.innerHTML = formatDiff(comp.weekDiff);
-  compMonth.innerHTML = comp.monthDiff === 0 ? '<span class="trend-neutral">–</span>' : formatDiff(comp.monthDiff);
+  $('comp-yesterday').innerHTML = formatDiff(comp.yesterdayDiff);
+  $('comp-week').innerHTML = formatDiff(comp.weekDiff);
+  $('comp-month').innerHTML = comp.monthDiff === 0 ? '<span class="trend-neutral">—</span>' : formatDiff(comp.monthDiff);
   
   if (Math.abs(comp.trend) < 0.1) {
-    compTrend.innerHTML = '<span class="trend-neutral">Stabil →</span>';
+    $('comp-trend').innerHTML = '<span class="trend-neutral">Stabil →</span>';
   } else {
     const arrow = comp.trend > 0 ? '📈 Steigend' : '📉 Fallend';
     const color = comp.trend > 0 ? 'trend-up' : 'trend-down';
-    compTrend.innerHTML = `<span class="${color}">${arrow}</span>`;
+    $('comp-trend').innerHTML = `<span class="${color}">${arrow}</span>`;
   }
 
-  compUpdated.textContent = new Date().toLocaleTimeString();
+  $('comp-updated').textContent = new Date().toLocaleTimeString();
 }
 
-/* === Anomaly Detection === */
 function detectAnomalies(intervals, comparison) {
   const anomalies = [];
 
   if (!intervals.length || !previousDayStats) {
-    // Erste Ausführung: Speichere Stats
     previousDayStats = {
       avgDowntime: 0,
       avgIncidents: 0,
@@ -926,7 +868,6 @@ function detectAnomalies(intervals, comparison) {
   const todayDowntime = today.off;
   const todayUptime = today.on / (today.on + today.off || 1);
 
-  // Anomalie 1: Ungewöhnlich hohe Downtime
   if (todayDowntime > previousDayStats.avgDowntime * CONFIG.ANOMALY_DOWNTIME_MULTIPLIER) {
     anomalies.push({
       type: 'high_downtime',
@@ -935,7 +876,6 @@ function detectAnomalies(intervals, comparison) {
     });
   }
 
-  // Anomalie 2: Starker Uptime-Drop
   const uptimeDrop = previousDayStats.uptime - todayUptime;
   if (uptimeDrop > CONFIG.ANOMALY_UPTIME_DROP) {
     anomalies.push({
@@ -945,7 +885,6 @@ function detectAnomalies(intervals, comparison) {
     });
   }
 
-  // Anomalie 3: Viele Incidents
   const todayIncidents = intervals.filter(i => {
     const ts = new Date(i.from).getTime();
     return ts >= Date.now() - CONFIG.DAY_MS && i.ok === false;
@@ -959,7 +898,6 @@ function detectAnomalies(intervals, comparison) {
     });
   }
 
-  // Anomalie 4: Negativer Trend
   if (comparison && comparison.trend < -2) {
     anomalies.push({
       type: 'negative_trend',
@@ -968,7 +906,6 @@ function detectAnomalies(intervals, comparison) {
     });
   }
 
-  // Update previous stats (Rolling Average über 7 Tage)
   const last7 = aggregateByDays(intervals, 7);
   previousDayStats = {
     avgDowntime: last7.reduce((a, d) => a + d.off, 0) / 7,
@@ -983,28 +920,28 @@ function detectAnomalies(intervals, comparison) {
 }
 
 function renderAnomalies(anomalies) {
+  const anomalyCard = $('anomaly-card');
   if (!anomalies.length) {
     anomalyCard.style.display = 'none';
     return;
   }
 
   anomalyCard.style.display = 'block';
-  anomalyTime.textContent = `Erkannt um ${new Date().toLocaleTimeString()}`;
+  $('anomaly-time').textContent = `Erkannt um ${new Date().toLocaleTimeString()}`;
+  const anomalyList = $('anomaly-list');
   clear(anomalyList);
 
   anomalies.forEach(a => {
     const el = document.createElement('div');
     el.className = 'anomaly-item';
     const icon = a.severity === 'critical' ? '🔴' : (a.severity === 'warning' ? '🟡' : 'ℹ️');
-    el.innerHTML = `${icon} <strong>${a.type.replace(/_/g, ' ').toUpperCase()}:</strong> ${a.message}`;
+    el.innerHTML = `${icon} <strong>${a.type.replace(/_/g, ' ').toUpperCase()}:</strong> ${escapeHtml(a.message)}`;
     anomalyList.appendChild(el);
   });
 
-  // Discord Webhook senden (wenn konfiguriert)
   sendDiscordAlert(anomalies);
 }
 
-/* === Discord Webhook === */
 async function sendDiscordAlert(anomalies) {
   const webhookUrl = localStorage.getItem(CONFIG.DISCORD_WEBHOOK_KEY);
   if (!webhookUrl || !anomalies.length) return;
@@ -1055,41 +992,33 @@ async function sendDiscordStatusChange(wasOnline, isOnline) {
   }
 }
 
-/* === State für Status-Change Detection === */
-let lastLiveStatus = null;
-
-/* === Main Load-Funktion === */
 async function load(range) {
+  const mainCard = $('main-card');
   mainCard.classList.add('loading');
   
   const skeletonCount = range === '24h' ? 288 : (range === '7d' ? 7 : 30);
   renderSkeleton(skeletonCount);
 
   try {
-    // Parallel: Live + History
     const [live, data] = await Promise.all([
       fetchJSON(CONFIG.API_LIVE + '?t=' + Date.now()).catch(() => null),
       loadHistory(range)
     ]);
 
-    // Live Status
     setLive(live?.ok, live?.generated);
 
-    // Status-Change Detection für Discord
     if (lastLiveStatus !== null && lastLiveStatus !== live?.ok) {
       await sendDiscordStatusChange(lastLiveStatus, live?.ok);
     }
     lastLiveStatus = live?.ok;
 
-    // History Validation
     const hist = Array.isArray(data?.history) ? data.history : [];
     const generated = data?.generated || new Date().toISOString();
     const svc = data?.service || {};
     
-    // Prüfen ob Daten neu sind
-    if (generated === lastHistoryGenerated && range === rangeCtl.querySelector('input:checked')?.value) {
+    if (generated === lastHistoryGenerated && range === $('range').querySelector('input:checked')?.value) {
       mainCard.classList.remove('loading');
-      return; // Keine Änderung
+      return;
     }
     lastHistoryGenerated = generated;
 
@@ -1097,8 +1026,8 @@ async function load(range) {
     $('svc-host').textContent = [svc.host, svc.port].filter(Boolean).join(':');
 
     const stale = (Date.now() - new Date(generated).getTime()) / 60000 > CONFIG.STALE_MIN;
-    staleEl.hidden = !stale;
-    metaSrc.textContent = 'Quelle: History ✓';
+    $('stale').hidden = !stale;
+    $('meta-src').textContent = 'Quelle: History ✓';
 
     const intervals = toIntervals(hist, generated);
     lastIntervals = intervals;
@@ -1113,18 +1042,18 @@ async function load(range) {
       const downtimeEff = Math.max(0, base.off - plannedMin);
       const uptime = base.on / (base.on + downtimeEff || 1);
 
-      uptimeEl.textContent = fmtPct(uptime);
-      dtimeEl.textContent = fmtDur(Math.round(downtimeEff));
-      kOnline.textContent = Math.round(base.on / CONFIG.SLOT_MIN);
-      kOffline.textContent = Math.round(downtimeEff / CONFIG.SLOT_MIN);
-      kUnknown.textContent = Math.round(base.unk / CONFIG.SLOT_MIN);
-      kPoints.textContent = last24.length;
+      $('uptime').textContent = fmtPct(uptime);
+      $('downtime').textContent = fmtDur(Math.round(downtimeEff));
+      $('kpi-online').textContent = Math.round(base.on / CONFIG.SLOT_MIN);
+      $('kpi-offline').textContent = Math.round(downtimeEff / CONFIG.SLOT_MIN);
+      $('kpi-unknown').textContent = Math.round(base.unk / CONFIG.SLOT_MIN);
+      $('kpi-points').textContent = last24.length;
 
       await renderIncidents(last24);
 
       const series = build24hSeries(intervals);
       renderChart24(series);
-      sla24.textContent = fmtPct(uptime);
+      $('sla24').textContent = fmtPct(uptime);
 
     } else {
       const n = (range === '7d') ? 7 : 30;
@@ -1143,69 +1072,63 @@ async function load(range) {
       const downtimeEff = Math.max(0, base.off - plannedMin);
       const uptime = base.on / (base.on + downtimeEff || 1);
 
-      uptimeEl.textContent = fmtPct(uptime);
-      dtimeEl.textContent = fmtDur(Math.round(downtimeEff));
-      kOnline.textContent = Math.round(base.on / CONFIG.SLOT_MIN);
-      kOffline.textContent = Math.round(downtimeEff / CONFIG.SLOT_MIN);
-      kUnknown.textContent = Math.round(base.unk / CONFIG.SLOT_MIN);
-      kPoints.textContent = n;
+      $('uptime').textContent = fmtPct(uptime);
+      $('downtime').textContent = fmtDur(Math.round(downtimeEff));
+      $('kpi-online').textContent = Math.round(base.on / CONFIG.SLOT_MIN);
+      $('kpi-offline').textContent = Math.round(downtimeEff / CONFIG.SLOT_MIN);
+      $('kpi-unknown').textContent = Math.round(base.unk / CONFIG.SLOT_MIN);
+      $('kpi-points').textContent = n;
 
-      incWrap.innerHTML = '';
+      $('inc').innerHTML = '';
 
       const series = build24hSeries(intervals);
       renderChart24(series);
     }
 
-    // SLA 7d/30d
     const d7 = aggregateByDays(intervals, 7);
     const d30 = aggregateByDays(intervals, 30);
     const up7 = (d7.reduce((a, d) => a + d.on, 0)) / Math.max(1, d7.reduce((a, d) => a + d.on + d.off, 0));
     const up30 = (d30.reduce((a, d) => a + d.on, 0)) / Math.max(1, d30.reduce((a, d) => a + d.on + d.off, 0));
-    sla7.textContent = fmtPct(up7);
-    sla30.textContent = fmtPct(up30);
+    $('sla7').textContent = fmtPct(up7);
+    $('sla30').textContent = fmtPct(up30);
 
-    // Längster Ausfall / Anzahl (30d)
     const since30 = Date.now() - 30 * CONFIG.DAY_MS;
     const {maxMin, count} = longestOutage(intervals, since30);
-    slaLongest.textContent = maxMin ? fmtDur(maxMin) : '–';
-    slaCount.textContent = String(count);
+    $('slaLongest').textContent = maxMin ? fmtDur(maxMin) : '—';
+    $('slaCount').textContent = String(count);
 
     const span30 = intervals.filter(i => new Date(i.to).getTime() >= since30);
     const planned30 = await plannedOverlapMinutes(span30);
-    slaPlanned.textContent = planned30 ? fmtDur(planned30) : '–';
+    $('slaPlanned').textContent = planned30 ? fmtDur(planned30) : '—';
 
-    // Heatmap
     const firstTs = intervals[0]?.from || new Date().toISOString();
     const daysBack = Math.min(90, Math.ceil((Date.now() - new Date(firstTs)) / CONFIG.DAY_MS) + 1);
     const allDays = aggregateByDays(intervals, daysBack);
     renderHeatmap(allDays);
 
-    // Status-Vergleich
     const comparison = calculateComparison(intervals);
     renderComparison(comparison);
 
-    // Anomaly Detection
     const anomalies = detectAnomalies(intervals, comparison);
     renderAnomalies(anomalies);
 
   } catch (err) {
     console.error('Load error:', err);
-    metaSrc.textContent = 'Quelle: History (Fehler)';
-    uptimeEl.textContent = '–';
-    dtimeEl.textContent = '–';
-    kOnline.textContent = '0';
-    kOffline.textContent = '0';
-    kUnknown.textContent = '0';
-    kPoints.textContent = '0';
-    incWrap.innerHTML = '<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>';
+    $('meta-src').textContent = 'Quelle: History (Fehler)';
+    $('uptime').textContent = '—';
+    $('downtime').textContent = '—';
+    $('kpi-online').textContent = '0';
+    $('kpi-offline').textContent = '0';
+    $('kpi-unknown').textContent = '0';
+    $('kpi-points').textContent = '0';
+    $('inc').innerHTML = '<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>';
   } finally {
     mainCard.classList.remove('loading');
   }
 }
 
-/* === Events === */
 function onRangeChange(v) {
-  barsEl.classList.toggle('mode-24h', v === '24h');
+  $('bars').classList.toggle('mode-24h', v === '24h');
   $('foot-left').textContent = v === '24h' ? '24 hours' : (v === '7d' ? '7 days' : '30 days');
   $('foot-right').textContent = 'Today';
   const url = new URL(location.href);
@@ -1217,7 +1140,7 @@ function onRangeChange(v) {
 function startTimer() {
   stopTimer();
   timer = setInterval(() => {
-    const v = rangeCtl.querySelector('input:checked')?.value || '24h';
+    const v = $('range').querySelector('input:checked')?.value || '24h';
     load(v);
   }, CONFIG.AUTO_REFRESH_INTERVAL);
 }
@@ -1229,9 +1152,8 @@ function stopTimer() {
   }
 }
 
-/* === CSV Export === */
-btnCSV.addEventListener('click', async () => {
-  const range = rangeCtl.querySelector('input:checked')?.value || '24h';
+$('btn-csv').addEventListener('click', async () => {
+  const range = $('range').querySelector('input:checked')?.value || '24h';
   let data;
   try {
     data = await loadHistory(range);
@@ -1255,12 +1177,24 @@ btnCSV.addEventListener('click', async () => {
   download(`status_${range}.csv`, toCSV(rows));
 });
 
-/* === Init === */
-setInitialFromParams();
-setupBarEvents();
+function getParams() {
+  const p = new URLSearchParams(location.search);
+  return {range: p.get('range') || '24h', live: p.get('live') !== '0'};
+}
 
-rangeCtl.addEventListener('change', e => onRangeChange(e.target.value));
-autoCtl.addEventListener('change', e => {
+function setInitialFromParams() {
+  const {range, live} = getParams();
+  const id = range === '7d' ? 'r7' : (range === '30d' ? 'r30' : 'r24');
+  const el = document.getElementById(id);
+  if (el) el.checked = true;
+  $('auto').checked = live;
+}
+
+setupBarEvents();
+setInitialFromParams();
+
+$('range').addEventListener('change', e => onRangeChange(e.target.value));
+$('auto').addEventListener('change', e => {
   const url = new URL(location.href);
   url.searchParams.set('live', e.target.checked ? '1' : '0');
   history.replaceState(null, '', url.toString());
@@ -1268,14 +1202,9 @@ autoCtl.addEventListener('change', e => {
 });
 
 document.addEventListener('scroll', () => {
-  TIP.style.display = 'none';
+  $('tip').style.display = 'none';
 }, true);
 
-/* === Start === */
-onRangeChange((rangeCtl.querySelector('input:checked')?.value) || '24h');
-if (autoCtl.checked) startTimer();
-
-/* === Settings Modal === */
 function createSettingsModal() {
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -1314,10 +1243,8 @@ function createSettingsModal() {
   const clearBtn = modal.querySelector('#clear-webhook');
   const closeBtn = modal.querySelector('#modal-close');
 
-  // Load existing webhook
   webhookInput.value = localStorage.getItem(CONFIG.DISCORD_WEBHOOK_KEY) || '';
 
-  // Save
   saveBtn.addEventListener('click', () => {
     const url = webhookInput.value.trim();
     if (url && !url.startsWith('https://discord.com/api/webhooks/')) {
@@ -1330,7 +1257,6 @@ function createSettingsModal() {
     }
   });
 
-  // Test
   testBtn.addEventListener('click', async () => {
     const url = webhookInput.value.trim();
     if (!url) {
@@ -1356,7 +1282,6 @@ function createSettingsModal() {
     }
   });
 
-  // Clear
   clearBtn.addEventListener('click', () => {
     if (confirm('Webhook wirklich löschen?')) {
       localStorage.removeItem(CONFIG.DISCORD_WEBHOOK_KEY);
@@ -1365,7 +1290,6 @@ function createSettingsModal() {
     }
   });
 
-  // Close
   closeBtn.addEventListener('click', () => modal.classList.remove('show'));
   modal.addEventListener('click', (e) => {
     if (e.target === modal) modal.classList.remove('show');
@@ -1375,75 +1299,54 @@ function createSettingsModal() {
 }
 
 const settingsModal = createSettingsModal();
-btnSettings.addEventListener('click', () => {
+$('btn-settings').addEventListener('click', () => {
   settingsModal.classList.add('show');
 });
 
-})();
-</script>
+onRangeChange(($('range').querySelector('input:checked')?.value) || '24h');
+if ($('auto').checked) startTimer();
 
-<!-- Player-Stats (Bedrock, mcsrvstat.us) -->
-<section id="playerCard" class="card" style="margin:12px 16px">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-    <strong>Spieler aktuell</strong>
-    <span id="playerUpdated" class="small" style="color:#9aa0a6">lädt…</span>
-  </div>
-  <div id="playerSummary" class="kpis" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-    <div class="badge">Status: <strong id="srvState">–</strong></div>
-    <div class="badge">Online: <strong id="pOnline">–</strong></div>
-    <div class="badge">Max: <strong id="pMax">–</strong></div>
-    <div class="badge">MOTD: <strong id="motd">–</strong></div>
-  </div>
-  <div id="playerListWrap" style="display:none;height:1px;background:#1b2231;margin:10px 0"></div>
-  <div id="playerList" class="small"></div>
-</section>
+async function fetchPlayers(){
+  const ENDPOINT = `https://api.mcsrvstat.us/bedrock/3/${CONFIG.PLAYER_HOST}:${CONFIG.PLAYER_PORT}`;
+  try{
+    const res = await fetch(ENDPOINT, {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const j = await res.json();
 
-<script>
-(function(){
-  const HOST = "important-instrumentation.gl.at.ply.gg";
-  const PORT = 18232;
-  const ENDPOINT = `https://api.mcsrvstat.us/bedrock/3/${HOST}:${PORT}`;
+    const online = !!j.online;
+    $('srvState').textContent = online ? "online" : "offline";
+    $('srvState').style.color = online ? "#19c37d" : "#ef4444";
 
-  const $ = s => document.querySelector(s);
-  const elUpd = $("#playerUpdated"), elState = $("#srvState");
-  const elOn = $("#pOnline"), elMax = $("#pMax"), elMotd = $("#motd");
-  const elListWrap = $("#playerListWrap"), elList = $("#playerList");
+    $('pOnline').textContent = (j.players && typeof j.players.online==="number") ? j.players.online : "0";
+    $('pMax').textContent = (j.players && typeof j.players.max==="number") ? j.players.max : "—";
+    $('motd').textContent = (j.motd && j.motd.clean && j.motd.clean.length) ? j.motd.clean.join(" ") : "—";
 
-  async function fetchPlayers(){
-    try{
-      const res = await fetch(ENDPOINT, {cache:"no-store"});
-      if(!res.ok) throw new Error("HTTP "+res.status);
-      const j = await res.json();
-
-      const online = !!j.online;
-      elState.textContent = online ? "online" : "offline";
-      elState.style.color = online ? "#19c37d" : "#ef4444";
-
-      elOn.textContent = (j.players && typeof j.players.online==="number") ? j.players.online : "0";
-      elMax.textContent = (j.players && typeof j.players.max==="number") ? j.players.max : "–";
-      elMotd.textContent = (j.motd && j.motd.clean && j.motd.clean.length) ? j.motd.clean.join(" ") : "–";
-
-      const names = (j.players && Array.isArray(j.players.list)) ? j.players.list : [];
-      if(names.length){
-        elListWrap.style.display = "block";
-        elList.innerHTML = names.map(n => `<span style="display:inline-block;margin:3px 6px;padding:4px 8px;border:1px solid #1b2231;border-radius:999px;background:linear-gradient(180deg,#0c1423,#0a0f1a)">${n}</span>`).join("");
-      }else{
-        elListWrap.style.display = "none";
-        elList.innerHTML = `<span class="small" style="color:#9aa0a6">Keine Namen vom Server geliefert.</span>`;
-      }
-
-      elUpd.textContent = "aktualisiert " + new Date().toLocaleTimeString();
-    }catch(e){
-      elState.textContent = "unbekannt"; elState.style.color = "#f59e0b";
-      elOn.textContent = "–"; elMax.textContent = "–"; elMotd.textContent = "–";
-      elListWrap.style.display = "none"; elList.innerHTML = "";
-      elUpd.textContent = "Fehler beim Laden";
-      console.warn("Player fetch failed:", e);
+    const names = (j.players && Array.isArray(j.players.list)) ? j.players.list : [];
+    if(names.length){
+      $('playerListWrap').style.display = "block";
+      $('playerList').innerHTML = names.map(n => `<span style="display:inline-block;margin:3px 6px;padding:4px 8px;border:1px solid #1b2231;border-radius:999px;background:linear-gradient(180deg,#0c1423,#0a0f1a)">${escapeHtml(n)}</span>`).join("");
+    }else{
+      $('playerListWrap').style.display = "none";
+      $('playerList').innerHTML = `<span style="color:#9aa0a6">Keine Namen vom Server geliefert.</span>`;
     }
-  }
 
-  fetchPlayers();
-  setInterval(fetchPlayers, 60000);
+    $('playerUpdated').textContent = "aktualisiert " + new Date().toLocaleTimeString();
+  }catch(e){
+    $('srvState').textContent = "unbekannt"; 
+    $('srvState').style.color = "#f59e0b";
+    $('pOnline').textContent = "—"; 
+    $('pMax').textContent = "—"; 
+    $('motd').textContent = "—";
+    $('playerListWrap').style.display = "none"; 
+    $('playerList').innerHTML = "";
+    $('playerUpdated').textContent = "Fehler beim Laden";
+    console.warn("Player fetch failed:", e);
+  }
+}
+
+fetchPlayers();
+setInterval(fetchPlayers, 60000);
+
 })();
 </script>
 </body>
