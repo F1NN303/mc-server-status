@@ -19,7 +19,6 @@ html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-a
 a{color:#93c5fd;text-decoration:none}
 a:hover{text-decoration:underline}
 
-/* Header */
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 h1{margin:0;font-size:22px}
 .pill{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(180deg,var(--panel),#0b0f1a);
@@ -27,21 +26,21 @@ h1{margin:0;font-size:22px}
 .dot{width:10px;height:10px;border-radius:50%}
 .dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.u{background:var(--u)}
 
-/* Toolbar */
 .top-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg input{display:none}
-.seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer}
+.seg label{padding:6px 10px;font-size:12px;color:var(--muted);cursor:pointer;transition:all .2s}
 .seg input:checked + label{background:var(--line);color:var(--fg)}
 .toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .toggle input{accent-color:#60a5fa}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a)}
+  border:1px solid var(--line);font-size:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a);cursor:pointer;transition:transform .15s}
+.badge:hover{transform:translateY(-1px)}
 .badge-warn{border-color:#f59e0b; box-shadow:0 0 0 1px #f59e0b66 inset}
 
-/* Card */
 .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);
-  border-radius:var(--radius);padding:16px}
+  border-radius:var(--radius);padding:16px;transition:opacity .3s}
+.card.loading{opacity:0.5;pointer-events:none}
 .row-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .svc{display:flex;flex-direction:column;gap:4px;min-width:240px}
 .svc-name{font-weight:700}
@@ -50,7 +49,6 @@ h1{margin:0;font-size:22px}
 .kpi{display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
 .kpi strong{color:var(--fg);font-weight:600}
 
-/* Bars als Grid + Skeleton */
 .bars-wrap{margin-top:12px;position:relative}
 .bars{
   position:relative; display:grid;
@@ -59,30 +57,29 @@ h1{margin:0;font-size:22px}
   padding:10px; border-radius:12px;
   background:linear-gradient(180deg,#0a0e19,#0a0d14);
   overflow:hidden; touch-action: manipulation;
+  transition:opacity .2s;
 }
 .bars.mode-24h{min-height:80px; gap:4px}
 .bar{
   height:64px;border-radius:8px;background:#2a3242;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);
-  position:relative;
+  position:relative;cursor:pointer;transition:transform .1s;
 }
+.bar:hover{transform:scaleY(1.05)}
 .bar::after{content:""; position:absolute; inset:-6px; border-radius:10px;}
 .bar.g{background:var(--g)} .bar.r{background:var(--r)} .bar.o{background:var(--o)} .bar.u{background:var(--u)}
 .hoverline{position:absolute;top:10px;bottom:10px;width:2px;background:#ffffff40;pointer-events:none;display:none}
 
-/* Skeleton */
 .skeleton{animation:shimmer 1.2s infinite; background: linear-gradient(90deg,#0f1422 0%,#131a2a 50%,#0f1422 100%);
   background-size: 200% 100%;}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 .footline{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin:6px 4px 0}
 
-/* Legend */
 .legend{display:flex;gap:14px;color:var(--muted);font-size:12px;flex-wrap:wrap;margin-top:8px}
 .lg{display:inline-flex;align-items:center;gap:6px}
 .sq{width:10px;height:10px;border-radius:2px}
 .sq.g{background:var(--g)} .sq.r{background:var(--r)} .sq.o{background:var(--o)} .sq.u{background:var(--u)}
 
-/* Misc */
 .disclaimer{margin-top:8px;font-size:12px;color:var(--muted)}
 .incidents{margin-top:10px}
 .incidents h3{margin:8px 0 6px;font-size:13px;color:var(--muted);font-weight:600}
@@ -90,26 +87,25 @@ h1{margin:0;font-size:22px}
 .incidents li{margin:4px 0}
 .stale{margin-top:8px;font-size:12px;color:#fbbf24}
 
-/* Tip */
 .tip{position:fixed;pointer-events:none;z-index:70;transform:translate(-50%,-120%);
   background:#0b0f18;border:1px solid var(--line);padding:8px 10px;border-radius:8px;
   font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.45);display:none;min-width:220px;max-width:90vw}
 .t-line{display:flex;justify-content:space-between;gap:10px}
 
-/* Heatmap */
 .heat{margin-top:18px}
 .heat h3{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
 .hm{display:grid;grid-template-columns:repeat(13,1fr);gap:4px}
-.hm .cell{height:12px;border-radius:3px;background:#2a3242}
+.hm .cell{height:12px;border-radius:3px;background:#2a3242;cursor:pointer;transition:transform .1s}
+.hm .cell:hover{transform:scale(1.1)}
 .hm .g{background:var(--g)} .hm .o{background:var(--o)} .hm .r{background:var(--r)} .hm .u{background:var(--u)}
 .hm .label{grid-column:span 13;font-size:11px;color:var(--muted);margin-top:6px}
 
-/* Mobile – iPhone Fix: alle 24h-Balken ohne Scroll sichtbar */
 @media (max-width:480px){
   .bars{ grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap:0; padding:8px; }
   .bars.mode-24h{gap:0}
   .hoverline{display:none}
   .bar{height:68px; min-width:0; width:auto}
+  .bar:hover{transform:none}
 }
 @media (max-width:520px){
   h1{font-size:18px}
@@ -117,11 +113,9 @@ h1{margin:0;font-size:22px}
   .seg label{padding:6px 8px}
 }
 
-/* Detail-Charts + SLA */
 .chart-card{margin-top:16px}
 .chart-grid{display:grid;grid-template-columns:1fr;gap:12px}
 @media(min-width:900px){.chart-grid{grid-template-columns:1.5fr .9fr}}
-/* >>> Fix gegen „endlos nach unten“: */
 .chart-viewport{height:200px; position:relative}
 .chart-viewport canvas{width:100% !important; height:100% !important; display:block}
 
@@ -130,6 +124,9 @@ h1{margin:0;font-size:22px}
 .sla .tile{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#0c1423,#0a0f1a);padding:12px}
 .sla .t1{font-size:12px;color:var(--muted)}
 .sla .t2{font-weight:700}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--fg);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -150,10 +147,10 @@ h1{margin:0;font-size:22px}
     </div>
     <label class="toggle"><input type="checkbox" id="auto" checked/> Live-Refresh (60 s)</label>
     <a href="./ping.html" class="badge" title="Ping &amp; Latenz">🔧 Ping &amp; Latenz</a>
-    <button id="btn-csv" class="badge" title="CSV der aktuellen Ansicht exportieren" style="cursor:pointer">⬇ CSV exportieren</button>
+    <button id="btn-csv" class="badge" title="CSV der aktuellen Ansicht exportieren">⬇ CSV exportieren</button>
   </div>
 
-  <section class="card">
+  <section class="card" id="main-card">
     <div class="row-head">
       <div class="svc">
         <div class="svc-name" id="svc-name">Minecraft Bedrock</div>
@@ -197,7 +194,6 @@ h1{margin:0;font-size:22px}
     </div>
   </section>
 
-  <!-- Detail-Charts + SLA -->
   <section class="card chart-card">
     <div class="chart-grid">
       <div>
@@ -222,455 +218,733 @@ h1{margin:0;font-size:22px}
   </section>
 </div>
 
-<!-- Tooltip -->
 <div class="tip" id="tip">
   <div class="t-line"><span id="tip-status">–</span><span id="tip-ts">–</span></div>
   <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
 </div>
 
-<!-- Chart.js + Zeit-Adapter -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
 <script>
-/* === Endpunkte / Parameter === */
-const API_HISTORY='/api/history';
-const API_LIVE='/api/bedrock';
-const API_INCIDENTS='/incidents.json';
+(function(){
+'use strict';
 
-const SLOT_MIN=5, DAY_MS=86400000, STALE_MIN=30, INCIDENT_MIN=15;
+/* === Konfiguration === */
+const CONFIG = {
+  API_HISTORY: '/api/history',
+  API_LIVE: '/api/bedrock',
+  API_INCIDENTS: '/incidents.json',
+  SLOT_MIN: 5,
+  DAY_MS: 86400000,
+  STALE_MIN: 30,
+  INCIDENT_MIN: 15,
+  AUTO_REFRESH_INTERVAL: 60000,
+  CACHE_PREFIX: 'hist:'
+};
 
-/* DOM */
-const $=id=>document.getElementById(id);
-const barsEl=$('bars'), hoverLine=$('hoverline'), rangeCtl=$('range'), autoCtl=$('auto');
-const liveDot=$('live-dot'), liveTxt=$('live-txt'), svcName=$('svc-name'), svcHost=$('svc-host');
-const uptimeEl=$('uptime'), dtimeEl=$('downtime'), kOnline=$('kpi-online'), kOffline=$('kpi-offline'), kUnknown=$('kpi-unknown'), kPoints=$('kpi-points');
-const metaSrc=$('meta-src'), incWrap=$('inc'), staleEl=$('stale'), heatEl=$('heatmap');
-const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-src'), TIP_RANGE=$('tip-range');
+/* === DOM-Referenzen === */
+const $ = id => document.getElementById(id);
+const barsEl = $('bars');
+const hoverLine = $('hoverline');
+const rangeCtl = $('range');
+const autoCtl = $('auto');
+const mainCard = $('main-card');
+const liveDot = $('live-dot');
+const liveTxt = $('live-txt');
+const svcName = $('svc-name');
+const svcHost = $('svc-host');
+const uptimeEl = $('uptime');
+const dtimeEl = $('downtime');
+const kOnline = $('kpi-online');
+const kOffline = $('kpi-offline');
+const kUnknown = $('kpi-unknown');
+const kPoints = $('kpi-points');
+const metaSrc = $('meta-src');
+const incWrap = $('inc');
+const staleEl = $('stale');
+const heatEl = $('heatmap');
+const TIP = $('tip');
+const TIP_TS = $('tip-ts');
+const TIP_ST = $('tip-status');
+const TIP_SRC = $('tip-src');
+const TIP_RANGE = $('tip-range');
 const btnCSV = $('btn-csv');
-const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
+const chart24Canvas = $('chart24');
+const chart24Note = $('chart24-note');
+const sla24 = $('sla24');
+const sla7 = $('sla7');
+const sla30 = $('sla30');
+const slaLongest = $('slaLongest');
+const slaCount = $('slaCount');
+const slaPlanned = $('slaPlanned');
 
-/* Chart + SLA */
-const chart24Canvas = $('chart24'), chart24Note = $('chart24-note');
-const sla24=$('sla24'), sla7=$('sla7'), sla30=$('sla30'), slaLongest=$('slaLongest'), slaCount=$('slaCount'), slaPlanned=$('slaPlanned');
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-/* Utils */
-const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
-const fmtPct=v=> (isNaN(v)?'–':(v*100).toFixed(2)+'%');
-const fmtDur=m=> m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;
-const localTime=iso=> new Date(iso).toLocaleString();
-const localDate=iso=> new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-const statusClass = ok => ok===true?'g': ok===false?'r':'u';
-const statusText  = ok => ok===true?'online': ok===false?'offline':'unbekannt';
-const startOfDay = d => { const x=new Date(d); x.setHours(0,0,0,0); return x; };
-const endOfDay   = d => { const x=new Date(d); x.setHours(23,59,59,999); return x; };
+/* === State === */
+let timer = null;
+let lastIntervals = null;
+let chart24 = null;
+let lastChartHash = null;
+let lastHeatmapHash = null;
+let lastHistoryGenerated = null;
 
-async function fetchJSON(u, opts={}){ const r=await fetch(u,{cache:'no-store',...opts}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
-function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
-function setLive(ok,ts){liveDot.className='dot '+statusClass(ok); liveTxt.textContent=`${statusText(ok)} • ${ts?localTime(ts):'–'}`;}
+/* === Hilfsfunktionen === */
+const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
+const fmtPct = v => (isNaN(v) ? '–' : (v * 100).toFixed(2) + '%');
+const fmtDur = m => m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+const localTime = iso => new Date(iso).toLocaleString();
+const localDate = iso => new Date(iso).toLocaleDateString(undefined, {year: 'numeric', month: 'short', day: 'numeric'});
+const statusClass = ok => ok === true ? 'g' : ok === false ? 'r' : 'u';
+const statusText = ok => ok === true ? 'online' : ok === false ? 'offline' : 'unbekannt';
 
-/* URL-Params */
-function getParams(){
-  const p=new URLSearchParams(location.search);
-  return { range: p.get('range')||'24h', live: p.get('live')!=='0' };
+const startOfDayUTC = d => {
+  const x = new Date(d);
+  return new Date(Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate(), 0, 0, 0, 0));
+};
+
+const endOfDayUTC = d => {
+  const x = new Date(d);
+  return new Date(Date.UTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate(), 23, 59, 59, 999));
+};
+
+async function fetchJSON(u, opts = {}) {
+  const r = await fetch(u, {cache: 'no-store', ...opts});
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
 }
-function setInitialFromParams(){
-  const {range, live}=getParams();
-  const id = range==='7d'?'r7':(range==='30d'?'r30':'r24');
-  const el=document.getElementById(id); if(el){el.checked=true;}
+
+function clear(el) {
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+function setLive(ok, ts) {
+  liveDot.className = 'dot ' + statusClass(ok);
+  liveTxt.textContent = `${statusText(ok)} • ${ts ? localTime(ts) : '–'}`;
+}
+
+/* === URL-Parameter === */
+function getParams() {
+  const p = new URLSearchParams(location.search);
+  return {range: p.get('range') || '24h', live: p.get('live') !== '0'};
+}
+
+function setInitialFromParams() {
+  const {range, live} = getParams();
+  const id = range === '7d' ? 'r7' : (range === '30d' ? 'r30' : 'r24');
+  const el = document.getElementById(id);
+  if (el) el.checked = true;
   autoCtl.checked = !!live;
 }
 
-/* Lazy + Cache */
-const cacheKey=(range)=>`hist:${range}`;
-async function loadHistory(range){
-  const qs=`?range=${encodeURIComponent(range)}`;
-  try{ const d=await fetchJSON(API_HISTORY+qs); localStorage.setItem(cacheKey(range),JSON.stringify({t:Date.now(),d})); return d; }
-  catch(e){
-    try{ const d=await fetchJSON(API_HISTORY); localStorage.setItem(cacheKey(range),JSON.stringify({t:Date.now(),d})); return d; }
-    catch(err){ const raw=localStorage.getItem(cacheKey(range)); if(raw) return JSON.parse(raw).d; throw err; }
+/* === Cache & Lazy Load === */
+const cacheKey = range => `${CONFIG.CACHE_PREFIX}${range}`;
+
+async function loadHistory(range) {
+  const qs = `?range=${encodeURIComponent(range)}`;
+  try {
+    const d = await fetchJSON(CONFIG.API_HISTORY + qs);
+    localStorage.setItem(cacheKey(range), JSON.stringify({t: Date.now(), d}));
+    return d;
+  } catch (e) {
+    try {
+      const d = await fetchJSON(CONFIG.API_HISTORY);
+      localStorage.setItem(cacheKey(range), JSON.stringify({t: Date.now(), d}));
+      return d;
+    } catch (err) {
+      const raw = localStorage.getItem(cacheKey(range));
+      if (raw) return JSON.parse(raw).d;
+      throw err;
+    }
   }
 }
 
-/* Intervalls / KPIs / Incidents */
-function toIntervals(points, nowIso){
-  const arr=[...points].sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-  const out=[];
-  for(let i=0;i<arr.length;i++){
-    const from=new Date(arr[i].ts);
-    const to=new Date(i<arr.length-1?arr[i+1].ts:(nowIso||new Date().toISOString()));
-    let mins=Math.max(1,Math.round((to-from)/60000));
-    if(mins>30) mins=30;
-    out.push({from:arr[i].ts,to:to.toISOString(),ok:arr[i].ok,mins});
+/* === Intervalle & KPIs === */
+function toIntervals(points, nowIso) {
+  const arr = [...points].sort((a, b) => new Date(a.ts) - new Date(b.ts));
+  const out = [];
+  for (let i = 0; i < arr.length; i++) {
+    const from = new Date(arr[i].ts);
+    const to = new Date(i < arr.length - 1 ? arr[i + 1].ts : (nowIso || new Date().toISOString()));
+    let mins = Math.max(1, Math.round((to - from) / 60000));
+    if (mins > 30) mins = 30;
+    out.push({from: arr[i].ts, to: to.toISOString(), ok: arr[i].ok, mins});
   }
   return out;
 }
-function kpisFromIntervals(intervals){
-  let on=0,off=0,unk=0;
-  for(const it of intervals){ if(it.ok===true) on+=it.mins; else if(it.ok===false) off+=it.mins; else unk+=it.mins; }
-  return {on,off,unk,total:on+off+unk, points: intervals.length};
+
+function kpisFromIntervals(intervals) {
+  let on = 0, off = 0, unk = 0;
+  for (const it of intervals) {
+    if (it.ok === true) on += it.mins;
+    else if (it.ok === false) off += it.mins;
+    else unk += it.mins;
+  }
+  return {on, off, unk, total: on + off + unk, points: intervals.length};
 }
 
-/* Genau N tageweise Buckets (heute inkl.) */
-function aggregateByDays(intervals, n){
-  const days=[];
-  const today = startOfDay(new Date());
-  for(let i=n-1;i>=0;i--){
-    const dStart = new Date(today.getTime() - i*DAY_MS);
-    const dEnd   = endOfDay(dStart);
-    const bucket = {from:dStart.toISOString(),on:0,off:0,unk:0,total:0};
-    for(const it of intervals){
-      const s=Math.max(new Date(it.from).getTime(), dStart.getTime());
-      const e=Math.min(new Date(it.to).getTime(),   dEnd.getTime());
-      const mins = Math.max(0, Math.round((e-s)/60000));
-      if(mins>0){
-        if(it.ok===true) bucket.on+=mins; else if(it.ok===false) bucket.off+=mins; else bucket.unk+=mins;
-        bucket.total+=mins;
+/* === Tage-Aggregation === */
+function aggregateByDays(intervals, n) {
+  const days = [];
+  const today = startOfDayUTC(new Date());
+  for (let i = n - 1; i >= 0; i--) {
+    const dStart = new Date(today.getTime() - i * CONFIG.DAY_MS);
+    const dEnd = endOfDayUTC(dStart);
+    const bucket = {from: dStart.toISOString(), on: 0, off: 0, unk: 0, total: 0};
+    for (const it of intervals) {
+      const s = Math.max(new Date(it.from).getTime(), dStart.getTime());
+      const e = Math.min(new Date(it.to).getTime(), dEnd.getTime());
+      const mins = Math.max(0, Math.round((e - s) / 60000));
+      if (mins > 0) {
+        if (it.ok === true) bucket.on += mins;
+        else if (it.ok === false) bucket.off += mins;
+        else bucket.unk += mins;
+        bucket.total += mins;
       }
     }
     days.push(bucket);
   }
   return days;
 }
-function classifyDay(d){ const total=d.total||1, offPct=d.off/total, unkPct=d.unk/total;
-  if(offPct>=0.5) return 'r'; if(d.off>0 || unkPct>=0.2) return 'o'; return 'g'; }
 
-/* Externe Incidents */
-async function loadExternalIncidentReasons(){ try{ return await fetchJSON(API_INCIDENTS); } catch { return []; } }
-function overlap(aFrom,aTo,bFrom,bTo){ return (new Date(aFrom)<=new Date(bTo)) && (new Date(bFrom)<=new Date(aTo)); }
-function overlapMinutes(aFrom,aTo,bFrom,bTo){
-  const s=Math.max(new Date(aFrom).getTime(), new Date(bFrom).getTime());
-  const e=Math.min(new Date(aTo).getTime(),   new Date(bTo).getTime());
-  return Math.max(0, Math.round((e-s)/60000));
+function classifyDay(d) {
+  const total = d.total || 1;
+  const offPct = d.off / total;
+  const unkPct = d.unk / total;
+  if (offPct >= 0.5) return 'r';
+  if (d.off > 0 || unkPct >= 0.2) return 'o';
+  return 'g';
 }
 
-/* Render */
-function setCols(n){ barsEl.style.setProperty('--cols', Math.max(1,n)); }
-function renderSkeleton(n=60){
-  clear(barsEl); barsEl.className='bars mode-24h'; setCols(n);
-  const frag=document.createDocumentFragment();
-  for(let i=0;i<n;i++){ const el=document.createElement('div'); el.className='bar skeleton'; frag.appendChild(el); }
+/* === Externe Incidents === */
+async function loadExternalIncidentReasons() {
+  try {
+    return await fetchJSON(CONFIG.API_INCIDENTS);
+  } catch {
+    return [];
+  }
+}
+
+function overlap(aFrom, aTo, bFrom, bTo) {
+  return (new Date(aFrom) <= new Date(bTo)) && (new Date(bFrom) <= new Date(aTo));
+}
+
+function overlapMinutes(aFrom, aTo, bFrom, bTo) {
+  const s = Math.max(new Date(aFrom).getTime(), new Date(bFrom).getTime());
+  const e = Math.min(new Date(aTo).getTime(), new Date(bTo).getTime());
+  return Math.max(0, Math.round((e - s) / 60000));
+}
+
+/* === Render-Funktionen === */
+function setCols(n) {
+  barsEl.style.setProperty('--cols', Math.max(1, n));
+}
+
+function renderSkeleton(n) {
+  clear(barsEl);
+  barsEl.className = 'bars mode-24h';
+  setCols(n);
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement('div');
+    el.className = 'bar skeleton';
+    frag.appendChild(el);
+  }
   barsEl.appendChild(frag);
 }
-function render24h(intervals){
-  clear(barsEl); barsEl.className='bars mode-24h'; setCols(intervals.length);
-  const frag=document.createDocumentFragment();
-  intervals.forEach(p=>{
-    const el=document.createElement('div'); el.className='bar '+statusClass(p.ok);
-    const durTxt = p.mins===1?'1 Minute':`${p.mins} Minuten`;
-    const show = ev=>showTip((ev.touches?ev.touches[0]:ev),durTxt,p.ok,p.from,'History');
-    el.addEventListener('mouseenter',show);
-    el.addEventListener('mousemove',show);
-    el.addEventListener('mouseleave',hideTip);
-    el.addEventListener('touchstart',show,{passive:true});
+
+function render24h(intervals) {
+  clear(barsEl);
+  barsEl.className = 'bars mode-24h';
+  setCols(intervals.length);
+  const frag = document.createDocumentFragment();
+  intervals.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'bar ' + statusClass(p.ok);
+    el.dataset.dur = p.mins === 1 ? '1 Minute' : `${p.mins} Minuten`;
+    el.dataset.ok = String(p.ok);
+    el.dataset.from = p.from;
+    el.dataset.src = 'History';
     frag.appendChild(el);
   });
   barsEl.appendChild(frag);
 }
-function renderDays(days,labelLeft){
-  clear(barsEl); barsEl.className='bars '+(labelLeft==='7 days'?'mode-7d':'mode-30d'); setCols(days.length);
-  const frag=document.createDocumentFragment();
-  days.forEach(d=>{
-    const cls=classifyDay(d); const el=document.createElement('div'); el.className='bar '+cls;
-    const on=(d.on/d.total||0)*100, off=(d.off/d.total||0)*100, unk=(d.unk/d.total||0)*100;
-    const state = cls==='r'?false:(cls==='g'?true:null);
-    const srcTxt=`History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`;
-    const show = ev=>showTip((ev.touches?ev.touches[0]:ev),'1 Tag',state,d.from,srcTxt);
-    el.addEventListener('mouseenter',show); el.addEventListener('mousemove',show);
-    el.addEventListener('mouseleave',hideTip); el.addEventListener('touchstart',show,{passive:true});
+
+function renderDays(days, labelLeft) {
+  clear(barsEl);
+  barsEl.className = 'bars ' + (labelLeft === '7 days' ? 'mode-7d' : 'mode-30d');
+  setCols(days.length);
+  const frag = document.createDocumentFragment();
+  days.forEach(d => {
+    const cls = classifyDay(d);
+    const el = document.createElement('div');
+    el.className = 'bar ' + cls;
+    const on = (d.on / d.total || 0) * 100;
+    const off = (d.off / d.total || 0) * 100;
+    const unk = (d.unk / d.total || 0) * 100;
+    const state = cls === 'r' ? false : (cls === 'g' ? true : null);
+    const srcTxt = `History • on ${on.toFixed(1)}% • off ${off.toFixed(1)}% • unknown ${unk.toFixed(1)}%`;
+    el.dataset.dur = '1 Tag';
+    el.dataset.ok = String(state);
+    el.dataset.from = d.from;
+    el.dataset.src = srcTxt;
     frag.appendChild(el);
   });
   barsEl.appendChild(frag);
 }
 
-/* Hoverline – nur Desktop */
-if(!isTouch){
-  barsEl.addEventListener('mousemove',e=>{
-    const rect=barsEl.getBoundingClientRect();
-    const x=clamp(e.clientX-rect.left,0,rect.width);
-    const cols=parseInt(getComputedStyle(barsEl).getPropertyValue('--cols'))||1;
-    const gap=parseFloat(getComputedStyle(barsEl).gap)||0;
-    const cellW=(rect.width - gap*(cols-1))/cols;
-    const idx=Math.round(x / (cellW+gap));
-    const snapped = clamp(idx*(cellW+gap), 0, rect.width);
-    hoverLine.style.left=snapped+'px';
-    hoverLine.style.display='block';
+/* === Event Delegation für Bars === */
+function setupBarEvents() {
+  barsEl.addEventListener('mouseenter', e => {
+    if (e.target.classList.contains('bar') && e.target.dataset.dur) {
+      showTip(e, e.target.dataset.dur, e.target.dataset.ok === 'true' ? true : (e.target.dataset.ok === 'false' ? false : null), e.target.dataset.from, e.target.dataset.src);
+    }
+  }, true);
+
+  barsEl.addEventListener('mousemove', e => {
+    if (e.target.classList.contains('bar') && e.target.dataset.dur) {
+      showTip(e, e.target.dataset.dur, e.target.dataset.ok === 'true' ? true : (e.target.dataset.ok === 'false' ? false : null), e.target.dataset.from, e.target.dataset.src);
+    }
+  }, true);
+
+  barsEl.addEventListener('mouseleave', e => {
+    if (!e.relatedTarget || !e.relatedTarget.classList || !e.relatedTarget.classList.contains('bar')) {
+      hideTip();
+    }
+  }, true);
+
+  if (isTouch) {
+    let touchTimeout;
+    barsEl.addEventListener('touchstart', e => {
+      if (e.target.classList.contains('bar') && e.target.dataset.dur) {
+        showTip(e.touches[0], e.target.dataset.dur, e.target.dataset.ok === 'true' ? true : (e.target.dataset.ok === 'false' ? false : null), e.target.dataset.from, e.target.dataset.src);
+        clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(hideTip, 3000);
+      }
+    }, {passive: true});
+  }
+}
+
+/* === Hoverline (nur Desktop) === */
+if (!isTouch) {
+  barsEl.addEventListener('mousemove', e => {
+    const rect = barsEl.getBoundingClientRect();
+    const x = clamp(e.clientX - rect.left, 0, rect.width);
+    const cols = parseInt(getComputedStyle(barsEl).getPropertyValue('--cols')) || 1;
+    const gap = parseFloat(getComputedStyle(barsEl).gap) || 0;
+    const cellW = (rect.width - gap * (cols - 1)) / cols;
+    const idx = Math.round(x / (cellW + gap));
+    const snapped = clamp(idx * (cellW + gap), 0, rect.width);
+    hoverLine.style.left = snapped + 'px';
+    hoverLine.style.display = 'block';
   });
-  barsEl.addEventListener('mouseleave',()=>{hoverLine.style.display='none'; hideTip();});
-}else{
-  hoverLine.style.display='none';
+  barsEl.addEventListener('mouseleave', () => {
+    hoverLine.style.display = 'none';
+  });
+} else {
+  hoverLine.style.display = 'none';
 }
 
-/* Tooltip */
-function showTip(e,range,ok,ts,src){
-  TIP_ST.textContent=statusText(ok);
-  TIP_TS.textContent=(range==='1 Tag')?localDate(ts):localTime(ts);
-  TIP_SRC.textContent=src||''; TIP_RANGE.textContent=range;
-  TIP.style.display='block';
-  TIP.style.left=clamp(e.clientX,100,window.innerWidth-100)+'px';
-  TIP.style.top =clamp(e.clientY,80,window.innerHeight-40)+'px';
+/* === Tooltip === */
+function showTip(e, range, ok, ts, src) {
+  TIP_ST.textContent = statusText(ok);
+  TIP_TS.textContent = (range === '1 Tag') ? localDate(ts) : localTime(ts);
+  TIP_SRC.textContent = src || '';
+  TIP_RANGE.textContent = range;
+  TIP.style.display = 'block';
+  TIP.style.left = clamp(e.clientX, 100, window.innerWidth - 100) + 'px';
+  TIP.style.top = clamp(e.clientY, 80, window.innerHeight - 40) + 'px';
 }
-function hideTip(){ TIP.style.display='none'; }
-document.addEventListener('touchstart', (ev)=>{ if(!ev.target.closest('.bar')) hideTip(); }, {passive:true});
 
-/* Heatmap */
-function renderHeatmap(days){
+function hideTip() {
+  TIP.style.display = 'none';
+}
+
+document.addEventListener('touchstart', ev => {
+  if (!ev.target.closest('.bar')) hideTip();
+}, {passive: true});
+
+/* === Heatmap === */
+function renderHeatmap(days) {
+  const hash = days.map(d => `${d.from}:${d.on}:${d.off}`).join('|');
+  if (hash === lastHeatmapHash) return;
+  lastHeatmapHash = hash;
+
   clear(heatEl);
   const last90 = days.slice(-90);
-  last90.forEach(d=>{
-    const c=document.createElement('div');
-    c.className='cell '+(classifyDay(d));
-    c.title=`${localDate(d.from)} – on ${((d.on/d.total||0)*100).toFixed(1)}%, off ${((d.off/d.total||0)*100).toFixed(1)}%`;
+  last90.forEach(d => {
+    const c = document.createElement('div');
+    c.className = 'cell ' + classifyDay(d);
+    c.title = `${localDate(d.from)} – on ${((d.on / d.total || 0) * 100).toFixed(1)}%, off ${((d.off / d.total || 0) * 100).toFixed(1)}%`;
     heatEl.appendChild(c);
   });
-  const label=document.createElement('div'); label.className='label';
-  if(last90.length){
-    label.textContent=`Zeitraum: ${localDate(last90[0].from)} – ${localDate(last90[last90.length-1].from)}`;
-  }else{ label.textContent='Keine Daten'; }
+  const label = document.createElement('div');
+  label.className = 'label';
+  if (last90.length) {
+    label.textContent = `Zeitraum: ${localDate(last90[0].from)} – ${localDate(last90[last90.length - 1].from)}`;
+  } else {
+    label.textContent = 'Keine Daten';
+  }
   heatEl.appendChild(label);
 }
 
-/* CSV Export */
-function toCSV(rows){
-  const esc=s=>('"'+String(s).replaceAll('"','""')+'"');
-  return rows.map(r=>r.map(esc).join(',')).join('\n');
-}
-function download(filename, text){
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'}));
-  a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+/* === CSV Export === */
+function toCSV(rows) {
+  const esc = s => ('"' + String(s).replaceAll('"', '""') + '"');
+  return rows.map(r => r.map(esc).join(',')).join('\n');
 }
 
-/* ---------- Detail-Chart (24h) ---------- */
-let chart24;
-function statusValue(ok){ return ok===true?1 : (ok===false?0 : 0.5); }
-function build24hSeries(intervals){
-  const since = Date.now()-DAY_MS;
-  const pts = intervals.filter(i=> new Date(i.from).getTime()>=since);
-  const labels=[], values=[];
-  pts.forEach(p=>{
+function download(filename, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'}));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* === Detail-Chart (24h) === */
+function statusValue(ok) {
+  return ok === true ? 1 : (ok === false ? 0 : 0.5);
+}
+
+function build24hSeries(intervals) {
+  const since = Date.now() - CONFIG.DAY_MS;
+  const pts = intervals.filter(i => new Date(i.from).getTime() >= since);
+  const labels = [], values = [];
+  pts.forEach(p => {
     labels.push(new Date(p.from));
     values.push(statusValue(p.ok));
   });
-  if(pts.length){
+  if (pts.length) {
     labels.push(new Date());
-    values.push(values[values.length-1]);
+    values.push(values[values.length - 1]);
   }
   return {labels, values};
 }
-function renderChart24(series){
-  chart24Note.textContent = series.labels.length ? "Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)"
-                                                : "Keine 24-h-Daten verfügbar.";
-  if(!chart24){
+
+function renderChart24(series) {
+  const hash = JSON.stringify(series.values.slice(-20));
+  if (hash === lastChartHash && chart24) return;
+  lastChartHash = hash;
+
+  chart24Note.textContent = series.labels.length ? "Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)" : "Keine 24-h-Daten verfügbar.";
+
+  if (!chart24) {
     chart24 = new Chart(chart24Canvas.getContext('2d'), {
-      type:'line',
-      data:{ labels: series.labels, datasets:[{
-        label:'Status',
-        data: series.values,
-        stepped:true,
-        borderWidth:2,
-        pointRadius:0
-      }]},
-      options:{
-        responsive:true,
-        /* maintainAspectRatio TRUE + feste Höhe im CSS-Wrapper verhindert endlosen Grow */
-        maintainAspectRatio:true,
-        scales:{
-          x:{ type:'time', time:{ unit:'hour', tooltipFormat:'dd.MM.yyyy HH:mm' }, grid:{color:'#1b2231'} , ticks:{color:'#9aa0a6'} },
-          y:{ min:0, max:1, ticks:{
-                callback:(v)=> v===1?'online': (v===0.5?'eingeschr.': (v===0?'offline':v)),
-                color:'#9aa0a6'
-              }, grid:{color:'#1b2231'} }
+      type: 'line',
+      data: {
+        labels: series.labels,
+        datasets: [{
+          label: 'Status',
+          data: series.values,
+          stepped: true,
+          borderWidth: 2,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: true,
+        scales: {
+          x: {
+            type: 'time',
+            time: {unit: 'hour', tooltipFormat: 'dd.MM.yyyy HH:mm'},
+            grid: {color: '#1b2231'},
+            ticks: {color: '#9aa0a6'}
+          },
+          y: {
+            min: 0,
+            max: 1,
+            ticks: {
+              callback: v => v === 1 ? 'online' : (v === 0.5 ? 'eingeschr.' : (v === 0 ? 'offline' : v)),
+              color: '#9aa0a6'
+            },
+            grid: {color: '#1b2231'}
+          }
         },
-        plugins:{ legend:{ display:false } },
-        animation:false
+        plugins: {legend: {display: false}},
+        interaction: {mode: 'index', intersect: false}
       }
     });
-  }else{
+  } else {
     chart24.data.labels = series.labels;
     chart24.data.datasets[0].data = series.values;
-    chart24.update();
+    chart24.update('none');
   }
+
+  const okVals = series.values.filter(v => !isNaN(v) && v !== 0.5);
+  const avg = okVals.length ? okVals.reduce((a, b) => a + b, 0) / okVals.length : 0;
+  let color = avg >= 0.8 ? '#19c37d' : (avg >= 0.5 ? '#f59e0b' : '#ef4444');
+  chart24.data.datasets[0].borderColor = color;
+  if (chart24) chart24.update('none');
 }
 
-/* ---------- SLA-Panel ---------- */
-function longestOutage(intervals, sinceMs){
-  let maxMin=0,count=0;
-  const span = intervals.filter(i=> new Date(i.to).getTime()>=sinceMs);
-  for(const it of span){ if(it.ok===false){ count++; if(it.mins>maxMin) maxMin=it.mins; } }
+/* === SLA-Berechnung === */
+function longestOutage(intervals, sinceMs) {
+  let maxMin = 0, count = 0;
+  const span = intervals.filter(i => new Date(i.to).getTime() >= sinceMs);
+  for (const it of span) {
+    if (it.ok === false) {
+      count++;
+      if (it.mins > maxMin) maxMin = it.mins;
+    }
+  }
   return {maxMin, count};
 }
 
-/* Main Load */
-let timer=null, lastIntervals=null;
-async function load(range){
-  renderSkeleton(60);
-
-  // Live
-  try{ const live=await fetchJSON(API_LIVE+'?t='+Date.now()); setLive(live.ok,live.generated); }catch{ setLive(null,null); }
-
-  // History
-  let data;
-  try{ data=await loadHistory(range); }
-  catch{ metaSrc.textContent='Quelle: History (Fehler)'; uptimeEl.textContent='–'; dtimeEl.textContent='–';
-         kOnline.textContent='0'; kOffline.textContent='0'; kUnknown.textContent='0'; kPoints.textContent='0';
-         incWrap.innerHTML='<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>'; return; }
-
-  const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
-  const svc=data.service||{}; $('svc-name').textContent=svc.name||'Minecraft Bedrock'; $('svc-host').textContent=[svc.host,svc.port].filter(Boolean).join(':');
-  const stale=(Date.now()-new Date(generated).getTime())/60000 > STALE_MIN; staleEl.hidden=!stale;
-  metaSrc.textContent='Quelle: History ✓';
-
-  const intervals=toIntervals(hist,generated);
-  lastIntervals = intervals;
-
-  if(range==='24h'){
-    const since=Date.now()-DAY_MS;
-    const last24 = intervals.filter(i=>new Date(i.from).getTime()>=since);
-    render24h(last24);
-
-    const base=kpisFromIntervals(last24);
-    const plannedMin = await plannedOverlapMinutes(last24);
-    const downtimeEff = Math.max(0, base.off - plannedMin);
-    const uptime = base.on / (base.on + downtimeEff || 1);
-
-    uptimeEl.textContent=fmtPct(uptime);
-    dtimeEl.textContent=fmtDur(Math.round(downtimeEff));
-    kOnline.textContent=Math.round(base.on/SLOT_MIN);
-    kOffline.textContent=Math.round(downtimeEff/SLOT_MIN);
-    kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
-    kPoints.textContent=last24.length;
-
-    await renderIncidents(last24);
-
-    const series = build24hSeries(intervals);
-    renderChart24(series);
-    sla24.textContent = fmtPct(uptime);
-
-  }else{
-    const n = (range==='7d')?7:30;
-    const days = aggregateByDays(intervals, n);
-    renderDays(days, range==='7d'?'7 days':'30 days');
-
-    const base=kpisFromIntervals(days.map(d=>({mins:d.on, ok:true})).concat(days.map(d=>({mins:d.off,ok:false}))).concat(days.map(d=>({mins:d.unk,ok:null}))));
-    const since = startOfDay(new Date(Date.now() - (n-1)*DAY_MS)).toISOString();
-    const spanIntervals = intervals.filter(i=>new Date(i.to).getTime()>=new Date(since).getTime());
-    const plannedMin = await plannedOverlapMinutes(spanIntervals);
-    const downtimeEff = Math.max(0, base.off - plannedMin);
-    const uptime = base.on / (base.on + downtimeEff || 1);
-
-    uptimeEl.textContent=fmtPct(uptime);
-    dtimeEl.textContent=fmtDur(Math.round(downtimeEff));
-    kOnline.textContent=Math.round(base.on/SLOT_MIN);
-    kOffline.textContent=Math.round(downtimeEff/SLOT_MIN);
-    kUnknown.textContent=Math.round(base.unk/SLOT_MIN);
-    kPoints.textContent=n;
-
-    incWrap.innerHTML='';
-
-    const series = build24hSeries(intervals);
-    renderChart24(series);
-  }
-
-  // SLA 7d/30d
-  const d7  = aggregateByDays(intervals, 7);
-  const d30 = aggregateByDays(intervals, 30);
-  const up7  = (d7.reduce((a,d)=>a+d.on,0)) / Math.max(1, d7.reduce((a,d)=>a+d.on+d.off,0));
-  const up30 = (d30.reduce((a,d)=>a+d.on,0)) / Math.max(1, d30.reduce((a,d)=>a+d.on+d.off,0));
-  sla7.textContent  = fmtPct(up7);
-  sla30.textContent = fmtPct(up30);
-
-  // längster Ausfall / Anzahl (30d) + geplante Minuten (abgezogen)
-  const since30 = Date.now() - 30*DAY_MS;
-  const {maxMin, count} = longestOutage(intervals, since30);
-  slaLongest.textContent = maxMin ? fmtDur(maxMin) : '–';
-  slaCount.textContent   = String(count);
-  {
-    const span30 = intervals.filter(i=> new Date(i.to).getTime()>=since30);
-    const planned30 = await plannedOverlapMinutes(span30);
-    slaPlanned.textContent = planned30 ? fmtDur(planned30) : '–';
-  }
-
-  // Heatmap
-  const firstTs = intervals[0]?.from || new Date().toISOString();
-  const daysBack = Math.min(90, Math.ceil((Date.now()-new Date(firstTs))/DAY_MS)+1);
-  const allDays = aggregateByDays(intervals, daysBack);
-  renderHeatmap(allDays);
-}
-
-/* Geplante Wartungen */
-async function plannedOverlapMinutes(intervals){
-  const reasons=await loadExternalIncidentReasons();
-  const planned = reasons.filter(r=>r.planned);
-  if(!planned.length) return 0;
-  let mins=0;
-  for(const it of intervals){
-    if(it.ok!==false) continue;
-    for(const r of planned){ mins += overlapMinutes(it.from,it.to,r.from,r.to); }
+/* === Geplante Wartungen === */
+async function plannedOverlapMinutes(intervals) {
+  const reasons = await loadExternalIncidentReasons();
+  const planned = reasons.filter(r => r.planned);
+  if (!planned.length) return 0;
+  let mins = 0;
+  for (const it of intervals) {
+    if (it.ok !== false) continue;
+    for (const r of planned) {
+      mins += overlapMinutes(it.from, it.to, r.from, r.to);
+    }
   }
   return mins;
 }
-async function renderIncidents(intervals){
-  const reasons=await loadExternalIncidentReasons();
-  const incidents=[];
-  let i=0; while(i<intervals.length){
-    if(intervals[i].ok===false){
-      let from=intervals[i].from, mins=0, j=i;
-      while(j<intervals.length && intervals[j].ok===false){ mins+=intervals[j].mins; j++; }
-      if(mins>=INCIDENT_MIN) incidents.push({from,to:intervals[j-1].to,mins});
-      i=j;
+
+async function renderIncidents(intervals) {
+  const reasons = await loadExternalIncidentReasons();
+  const incidents = [];
+  let i = 0;
+  while (i < intervals.length) {
+    if (intervals[i].ok === false) {
+      let from = intervals[i].from, mins = 0, j = i;
+      while (j < intervals.length && intervals[j].ok === false) {
+        mins += intervals[j].mins;
+        j++;
+      }
+      if (mins >= CONFIG.INCIDENT_MIN) incidents.push({from, to: intervals[j - 1].to, mins});
+      i = j;
     } else i++;
   }
-  if(!incidents.length){ incWrap.innerHTML=''; return; }
+  if (!incidents.length) {
+    incWrap.innerHTML = '';
+    return;
+  }
 
-  const ul=document.createElement('ul');
-  incidents.forEach(ev=>{
-    const match=reasons.find(r=>overlap(ev.from,ev.to,r.from,r.to));
+  const ul = document.createElement('ul');
+  incidents.forEach(ev => {
+    const match = reasons.find(r => overlap(ev.from, ev.to, r.from, r.to));
     const isPlanned = !!(match && match.planned);
-    const li=document.createElement('li');
-    li.textContent = `${isPlanned?'⚙️ Geplante Wartung':'Ausfall'} ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})` + (match?` – Grund: ${match.reason}`:'');
+    const li = document.createElement('li');
+    li.textContent = `${isPlanned ? '⚙️ Geplante Wartung' : 'Ausfall'} ${localTime(ev.from)} – ${localTime(ev.to)} (${fmtDur(Math.round(ev.mins))})` + (match ? ` – Grund: ${match.reason}` : '');
     ul.appendChild(li);
   });
-  incWrap.innerHTML='<h3>Incidents</h3>'; incWrap.appendChild(ul);
+  incWrap.innerHTML = '<h3>Incidents</h3>';
+  incWrap.appendChild(ul);
 }
 
-/* Events */
-function onRangeChange(v){
-  barsEl.classList.toggle('mode-24h',v==='24h');
-  $('foot-left').textContent = v==='24h'?'24 hours':(v==='7d'?'7 days':'30 days');
-  $('foot-right').textContent='Today';
-  const url=new URL(location.href); url.searchParams.set('range',v); history.replaceState(null,'',url.toString());
+/* === Main Load-Funktion === */
+async function load(range) {
+  mainCard.classList.add('loading');
+  
+  const skeletonCount = range === '24h' ? 288 : (range === '7d' ? 7 : 30);
+  renderSkeleton(skeletonCount);
+
+  try {
+    // Parallel: Live + History
+    const [live, data] = await Promise.all([
+      fetchJSON(CONFIG.API_LIVE + '?t=' + Date.now()).catch(() => null),
+      loadHistory(range)
+    ]);
+
+    // Live Status
+    setLive(live?.ok, live?.generated);
+
+    // History Validation
+    const hist = Array.isArray(data?.history) ? data.history : [];
+    const generated = data?.generated || new Date().toISOString();
+    const svc = data?.service || {};
+    
+    // Prüfen ob Daten neu sind
+    if (generated === lastHistoryGenerated && range === rangeCtl.querySelector('input:checked')?.value) {
+      mainCard.classList.remove('loading');
+      return; // Keine Änderung
+    }
+    lastHistoryGenerated = generated;
+
+    $('svc-name').textContent = svc.name || 'Minecraft Bedrock';
+    $('svc-host').textContent = [svc.host, svc.port].filter(Boolean).join(':');
+
+    const stale = (Date.now() - new Date(generated).getTime()) / 60000 > CONFIG.STALE_MIN;
+    staleEl.hidden = !stale;
+    metaSrc.textContent = 'Quelle: History ✓';
+
+    const intervals = toIntervals(hist, generated);
+    lastIntervals = intervals;
+
+    if (range === '24h') {
+      const since = Date.now() - CONFIG.DAY_MS;
+      const last24 = intervals.filter(i => new Date(i.from).getTime() >= since);
+      render24h(last24);
+
+      const base = kpisFromIntervals(last24);
+      const plannedMin = await plannedOverlapMinutes(last24);
+      const downtimeEff = Math.max(0, base.off - plannedMin);
+      const uptime = base.on / (base.on + downtimeEff || 1);
+
+      uptimeEl.textContent = fmtPct(uptime);
+      dtimeEl.textContent = fmtDur(Math.round(downtimeEff));
+      kOnline.textContent = Math.round(base.on / CONFIG.SLOT_MIN);
+      kOffline.textContent = Math.round(downtimeEff / CONFIG.SLOT_MIN);
+      kUnknown.textContent = Math.round(base.unk / CONFIG.SLOT_MIN);
+      kPoints.textContent = last24.length;
+
+      await renderIncidents(last24);
+
+      const series = build24hSeries(intervals);
+      renderChart24(series);
+      sla24.textContent = fmtPct(uptime);
+
+    } else {
+      const n = (range === '7d') ? 7 : 30;
+      const days = aggregateByDays(intervals, n);
+      renderDays(days, range === '7d' ? '7 days' : '30 days');
+
+      const base = kpisFromIntervals(days.flatMap(d => [
+        {mins: d.on, ok: true},
+        {mins: d.off, ok: false},
+        {mins: d.unk, ok: null}
+      ]));
+
+      const since = startOfDayUTC(new Date(Date.now() - (n - 1) * CONFIG.DAY_MS)).toISOString();
+      const spanIntervals = intervals.filter(i => new Date(i.to).getTime() >= new Date(since).getTime());
+      const plannedMin = await plannedOverlapMinutes(spanIntervals);
+      const downtimeEff = Math.max(0, base.off - plannedMin);
+      const uptime = base.on / (base.on + downtimeEff || 1);
+
+      uptimeEl.textContent = fmtPct(uptime);
+      dtimeEl.textContent = fmtDur(Math.round(downtimeEff));
+      kOnline.textContent = Math.round(base.on / CONFIG.SLOT_MIN);
+      kOffline.textContent = Math.round(downtimeEff / CONFIG.SLOT_MIN);
+      kUnknown.textContent = Math.round(base.unk / CONFIG.SLOT_MIN);
+      kPoints.textContent = n;
+
+      incWrap.innerHTML = '';
+
+      const series = build24hSeries(intervals);
+      renderChart24(series);
+    }
+
+    // SLA 7d/30d
+    const d7 = aggregateByDays(intervals, 7);
+    const d30 = aggregateByDays(intervals, 30);
+    const up7 = (d7.reduce((a, d) => a + d.on, 0)) / Math.max(1, d7.reduce((a, d) => a + d.on + d.off, 0));
+    const up30 = (d30.reduce((a, d) => a + d.on, 0)) / Math.max(1, d30.reduce((a, d) => a + d.on + d.off, 0));
+    sla7.textContent = fmtPct(up7);
+    sla30.textContent = fmtPct(up30);
+
+    // Längster Ausfall / Anzahl (30d)
+    const since30 = Date.now() - 30 * CONFIG.DAY_MS;
+    const {maxMin, count} = longestOutage(intervals, since30);
+    slaLongest.textContent = maxMin ? fmtDur(maxMin) : '–';
+    slaCount.textContent = String(count);
+
+    const span30 = intervals.filter(i => new Date(i.to).getTime() >= since30);
+    const planned30 = await plannedOverlapMinutes(span30);
+    slaPlanned.textContent = planned30 ? fmtDur(planned30) : '–';
+
+    // Heatmap
+    const firstTs = intervals[0]?.from || new Date().toISOString();
+    const daysBack = Math.min(90, Math.ceil((Date.now() - new Date(firstTs)) / CONFIG.DAY_MS) + 1);
+    const allDays = aggregateByDays(intervals, daysBack);
+    renderHeatmap(allDays);
+
+  } catch (err) {
+    console.error('Load error:', err);
+    metaSrc.textContent = 'Quelle: History (Fehler)';
+    uptimeEl.textContent = '–';
+    dtimeEl.textContent = '–';
+    kOnline.textContent = '0';
+    kOffline.textContent = '0';
+    kUnknown.textContent = '0';
+    kPoints.textContent = '0';
+    incWrap.innerHTML = '<h3>Incidents</h3><ul><li>History nicht erreichbar</li></ul>';
+  } finally {
+    mainCard.classList.remove('loading');
+  }
+}
+
+/* === Events === */
+function onRangeChange(v) {
+  barsEl.classList.toggle('mode-24h', v === '24h');
+  $('foot-left').textContent = v === '24h' ? '24 hours' : (v === '7d' ? '7 days' : '30 days');
+  $('foot-right').textContent = 'Today';
+  const url = new URL(location.href);
+  url.searchParams.set('range', v);
+  history.replaceState(null, '', url.toString());
   load(v);
 }
-function startTimer(){ stopTimer(); timer=setInterval(()=>{const v=rangeCtl.querySelector('input:checked')?.value||'24h'; load(v);},60_000); }
-function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
 
-/* CSV Export */
-btnCSV.addEventListener('click', async ()=>{
-  const range = rangeCtl.querySelector('input:checked')?.value||'24h';
+function startTimer() {
+  stopTimer();
+  timer = setInterval(() => {
+    const v = rangeCtl.querySelector('input:checked')?.value || '24h';
+    load(v);
+  }, CONFIG.AUTO_REFRESH_INTERVAL);
+}
+
+function stopTimer() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+/* === CSV Export === */
+btnCSV.addEventListener('click', async () => {
+  const range = rangeCtl.querySelector('input:checked')?.value || '24h';
   let data;
-  try{ data=await loadHistory(range); }catch{ alert('Keine History verfügbar'); return; }
-  const hist=Array.isArray(data.history)?data.history:[]; const generated=data.generated||new Date().toISOString();
-  const intervals=toIntervals(hist,generated);
-  let subset=[];
-  if(range==='24h'){ const since=Date.now()-DAY_MS; subset=intervals.filter(i=>new Date(i.from).getTime()>=since); }
-  else { const n=(range==='7d')?7:30; const since=startOfDay(new Date(Date.now()-(n-1)*DAY_MS)).toISOString();
-         subset=intervals.filter(i=>new Date(i.to).getTime()>=new Date(since).getTime()); }
-  const rows=[['from','to','ok','minutes']].concat(subset.map(i=>[i.from,i.to, i.ok, i.mins]));
+  try {
+    data = await loadHistory(range);
+  } catch {
+    alert('Keine History verfügbar');
+    return;
+  }
+  const hist = Array.isArray(data.history) ? data.history : [];
+  const generated = data.generated || new Date().toISOString();
+  const intervals = toIntervals(hist, generated);
+  let subset = [];
+  if (range === '24h') {
+    const since = Date.now() - CONFIG.DAY_MS;
+    subset = intervals.filter(i => new Date(i.from).getTime() >= since);
+  } else {
+    const n = (range === '7d') ? 7 : 30;
+    const since = startOfDayUTC(new Date(Date.now() - (n - 1) * CONFIG.DAY_MS)).toISOString();
+    subset = intervals.filter(i => new Date(i.to).getTime() >= new Date(since).getTime());
+  }
+  const rows = [['from', 'to', 'ok', 'minutes']].concat(subset.map(i => [i.from, i.to, i.ok, i.mins]));
   download(`status_${range}.csv`, toCSV(rows));
 });
 
-/* Init */
+/* === Init === */
 setInitialFromParams();
-rangeCtl.addEventListener('change', e=> onRangeChange(e.target.value));
-autoCtl.addEventListener('change', e=>{
-  const url=new URL(location.href); url.searchParams.set('live', e.target.checked?'1':'0'); history.replaceState(null,'',url.toString());
-  e.target.checked?startTimer():stopTimer();
-});
-document.addEventListener('scroll', ()=>{TIP.style.display='none';}, true);
+setupBarEvents();
 
-/* Start */
-onRangeChange( (rangeCtl.querySelector('input:checked')?.value)||'24h' );
-if(autoCtl.checked) startTimer();
+rangeCtl.addEventListener('change', e => onRangeChange(e.target.value));
+autoCtl.addEventListener('change', e => {
+  const url = new URL(location.href);
+  url.searchParams.set('live', e.target.checked ? '1' : '0');
+  history.replaceState(null, '', url.toString());
+  e.target.checked ? startTimer() : stopTimer();
+});
+
+document.addEventListener('scroll', () => {
+  TIP.style.display = 'none';
+}, true);
+
+/* === Start === */
+onRangeChange((rangeCtl.querySelector('input:checked')?.value) || '24h');
+if (autoCtl.checked) startTimer();
+
+})();
 </script>
 
 <!-- Player-Stats (Bedrock, mcsrvstat.us) -->
