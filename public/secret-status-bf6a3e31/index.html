@@ -202,13 +202,13 @@ canvas{max-width:100%}
     </div>
   </section>
 
-  <!-- NEU: Detail-Charts + SLA -->
+  <!-- Detail-Charts + SLA -->
   <section class="card chart-card">
     <div class="chart-grid">
       <div>
         <h3 style="margin:0 0 8px;color:#9aa0a6;font-weight:600">Detail-Chart (24 h)</h3>
         <canvas id="chart24" height="140" aria-label="Status 24h"></canvas>
-        <div class="small" style="color:#9aa0a6;margin-top:6px">Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)</div>
+        <div id="chart24-note" class="small" style="color:#9aa0a6;margin-top:6px">Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)</div>
       </div>
       <div>
         <h3 style="margin:0 0 8px;color:#9aa0a6;font-weight:600">SLA / Uptime</h3>
@@ -231,8 +231,9 @@ canvas{max-width:100%}
   <div class="t-line"><span id="tip-src">–</span><span id="tip-range">–</span></div>
 </div>
 
-<!-- Chart.js (CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js + Zeit-Adapter (wichtig!) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 
 <script>
 /* === Endpunkte / Parameter === */
@@ -252,8 +253,8 @@ const TIP=$('tip'), TIP_TS=$('tip-ts'), TIP_ST=$('tip-status'), TIP_SRC=$('tip-s
 const btnCSV = $('btn-csv');
 const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints>0;
 
-/* NEU: Chart + SLA Dom */
-const chart24Canvas = $('chart24');
+/* Chart + SLA */
+const chart24Canvas = $('chart24'), chart24Note = $('chart24-note');
 const sla24=$('sla24'), sla7=$('sla7'), sla30=$('sla30'), slaLongest=$('slaLongest'), slaCount=$('slaCount'), slaPlanned=$('slaPlanned');
 
 /* Utils */
@@ -442,11 +443,10 @@ function download(filename, text){
   a.download=filename; document.body.appendChild(a); a.click(); a.remove();
 }
 
-/* ---------- NEU: Detail-Chart (24h) ---------- */
+/* ---------- Detail-Chart (24h) ---------- */
 let chart24;
 function statusValue(ok){ return ok===true?1 : (ok===false?0 : 0.5); }
 function build24hSeries(intervals){
-  // Erzeuge Step-Line: (Zeit, Wert) für Beginn jedes Intervalls (letzte 24h)
   const since = Date.now()-DAY_MS;
   const pts = intervals.filter(i=> new Date(i.from).getTime()>=since);
   const labels=[], values=[];
@@ -454,7 +454,6 @@ function build24hSeries(intervals){
     labels.push(new Date(p.from));
     values.push(statusValue(p.ok));
   });
-  // Sicherstellen, dass letzter Punkt bis jetzt anliegt
   if(pts.length){
     labels.push(new Date());
     values.push(values[values.length-1]);
@@ -462,6 +461,9 @@ function build24hSeries(intervals){
   return {labels, values};
 }
 function renderChart24(series){
+  // Fallback-Hinweis bei leeren Daten
+  chart24Note.textContent = series.labels.length ? "Grün=online (1.0), Orange=eingeschränkt (0.5), Rot=offline (0.0)"
+                                                : "Keine 24-h-Daten verfügbar.";
   if(!chart24){
     chart24 = new Chart(chart24Canvas.getContext('2d'), {
       type:'line',
@@ -475,7 +477,7 @@ function renderChart24(series){
       options:{
         responsive:true, maintainAspectRatio:false, aspectRatio:2.6,
         scales:{
-          x:{ type:'time', time:{ tooltipFormat:'dd.MM.yyyy HH:mm' }, grid:{color:'#1b2231'} , ticks:{color:'#9aa0a6'} },
+          x:{ type:'time', time:{ unit:'hour', tooltipFormat:'dd.MM.yyyy HH:mm' }, grid:{color:'#1b2231'} , ticks:{color:'#9aa0a6'} },
           y:{ min:0, max:1, ticks:{
                 callback:(v)=> v===1?'online': (v===0.5?'eingeschr.': (v===0?'offline':v)),
                 color:'#9aa0a6'
@@ -492,11 +494,10 @@ function renderChart24(series){
   }
 }
 
-/* ---------- NEU: SLA-Panel ---------- */
+/* ---------- SLA-Panel ---------- */
 function longestOutage(intervals, sinceMs){
-  let maxMin=0,count=0,plannedMin=0;
+  let maxMin=0,count=0;
   const span = intervals.filter(i=> new Date(i.to).getTime()>=sinceMs);
-  // Count outages + longest
   for(const it of span){ if(it.ok===false){ count++; if(it.mins>maxMin) maxMin=it.mins; } }
   return {maxMin, count};
 }
@@ -543,7 +544,6 @@ async function load(range){
 
     await renderIncidents(last24);
 
-    // NEU: Chart 24h + SLA24
     const series = build24hSeries(intervals);
     renderChart24(series);
     sla24.textContent = fmtPct(uptime);
@@ -569,12 +569,11 @@ async function load(range){
 
     incWrap.innerHTML='';
 
-    // NEU: Chart 24h bleibt bestehen (nur Daten aktualisieren, wenn vorhanden)
     const series = build24hSeries(intervals);
     renderChart24(series);
   }
 
-  // NEU: SLA 7d/30d (unabhängig von aktuell gewählter Ansicht)
+  // SLA 7d/30d
   const d7  = aggregateByDays(intervals, 7);
   const d30 = aggregateByDays(intervals, 30);
   const up7  = (d7.reduce((a,d)=>a+d.on,0)) / Math.max(1, d7.reduce((a,d)=>a+d.on+d.off,0));
@@ -593,7 +592,7 @@ async function load(range){
     slaPlanned.textContent = planned30 ? fmtDur(planned30) : '–';
   }
 
-  // Heatmap (auf Gesamthistory)
+  // Heatmap
   const firstTs = intervals[0]?.from || new Date().toISOString();
   const daysBack = Math.min(90, Math.ceil((Date.now()-new Date(firstTs))/DAY_MS)+1);
   const allDays = aggregateByDays(intervals, daysBack);
