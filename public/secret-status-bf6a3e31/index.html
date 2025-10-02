@@ -168,46 +168,7 @@ h1{margin:0;font-size:22px}
     <label class="toggle"><input type="checkbox" id="auto" checked/> Live-Refresh (60 s)</label>
     <a href="./ping.html" class="badge" title="Ping &amp; Latenz">🔧 Ping &amp; Latenz</a>
     <button id="btn-csv" class="badge" title="CSV der aktuellen Ansicht exportieren">⬇ CSV exportieren</button>
-    <button id="btn-settings" class="badge" title="Einstellungen">⚙️ Einstellungen</button>
   </div>
-
-  <!-- Status-Vergleich Card -->
-  <section class="card" id="comparison-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-      <h3 style="margin:0;font-size:15px;color:#9aa0a6">📊 Status-Vergleich</h3>
-      <span style="color:#9aa0a6;font-size:12px" id="comp-updated">—</span>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
-      <div class="comp-tile">
-        <div style="font-size:12px;color:#9aa0a6">Gestern vs. Heute</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-yesterday">—</div>
-      </div>
-      <div class="comp-tile">
-        <div style="font-size:12px;color:#9aa0a6">Letzte Woche vs. Diese Woche</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-week">—</div>
-      </div>
-      <div class="comp-tile">
-        <div style="font-size:12px;color:#9aa0a6">Letzter Monat vs. Dieser Monat</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-month">—</div>
-      </div>
-      <div class="comp-tile">
-        <div style="font-size:12px;color:#9aa0a6">Trend (7 Tage)</div>
-        <div style="font-weight:700;margin-top:4px" id="comp-trend">—</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Anomaly Detection Card -->
-  <section class="card" id="anomaly-card" style="display:none;border-left:3px solid #f59e0b">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <span style="font-size:24px">⚠️</span>
-      <div>
-        <h3 style="margin:0;font-size:15px;color:#fbbf24">Anomalie erkannt</h3>
-        <div style="color:#9aa0a6;margin-top:2px;font-size:12px" id="anomaly-time">—</div>
-      </div>
-    </div>
-    <div id="anomaly-list" style="display:flex;flex-direction:column;gap:6px"></div>
-  </section>
 
   <!-- Haupt-Status Card -->
   <section class="card" id="main-card">
@@ -268,6 +229,44 @@ h1{margin:0;font-size:22px}
     </div>
     <div id="playerListWrap" style="display:none;height:1px;background:#1b2231;margin:10px 0"></div>
     <div id="playerList" style="font-size:12px"></div>
+  </section>
+
+  <!-- Status-Vergleich Card -->
+  <section class="card" id="comparison-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <h3 style="margin:0;font-size:15px;color:#9aa0a6">📊 Status-Vergleich</h3>
+      <span style="color:#9aa0a6;font-size:12px" id="comp-updated">—</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+      <div class="comp-tile">
+        <div style="font-size:12px;color:#9aa0a6">Gestern vs. Heute</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-yesterday">—</div>
+      </div>
+      <div class="comp-tile">
+        <div style="font-size:12px;color:#9aa0a6">Letzte Woche vs. Diese Woche</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-week">—</div>
+      </div>
+      <div class="comp-tile">
+        <div style="font-size:12px;color:#9aa0a6">Letzter Monat vs. Dieser Monat</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-month">—</div>
+      </div>
+      <div class="comp-tile">
+        <div style="font-size:12px;color:#9aa0a6">Trend (7 Tage)</div>
+        <div style="font-weight:700;margin-top:4px" id="comp-trend">—</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Anomaly Detection Card -->
+  <section class="card" id="anomaly-card" style="display:none;border-left:3px solid #f59e0b">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:24px">⚠️</span>
+      <div>
+        <h3 style="margin:0;font-size:15px;color:#fbbf24">Anomalie erkannt</h3>
+        <div style="color:#9aa0a6;margin-top:2px;font-size:12px" id="anomaly-time">—</div>
+      </div>
+    </div>
+    <div id="anomaly-list" style="display:flex;flex-direction:column;gap:6px"></div>
   </section>
 
   <!-- Charts & SLA -->
@@ -938,58 +937,6 @@ function renderAnomalies(anomalies) {
     el.innerHTML = `${icon} <strong>${a.type.replace(/_/g, ' ').toUpperCase()}:</strong> ${escapeHtml(a.message)}`;
     anomalyList.appendChild(el);
   });
-
-  sendDiscordAlert(anomalies);
-}
-
-async function sendDiscordAlert(anomalies) {
-  const webhookUrl = localStorage.getItem(CONFIG.DISCORD_WEBHOOK_KEY);
-  if (!webhookUrl || !anomalies.length) return;
-
-  try {
-    const embed = {
-      title: '⚠️ Anomalie erkannt',
-      description: anomalies.map(a => `**${a.type.toUpperCase()}**: ${a.message}`).join('\n'),
-      color: anomalies.some(a => a.severity === 'critical') ? 0xef4444 : 0xf59e0b,
-      timestamp: new Date().toISOString(),
-      footer: {text: 'Minecraft Bedrock Status Monitor'}
-    };
-
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({embeds: [embed]})
-    });
-
-    console.log('Discord alert sent:', anomalies.length, 'anomalies');
-  } catch (err) {
-    console.warn('Discord webhook failed:', err);
-  }
-}
-
-async function sendDiscordStatusChange(wasOnline, isOnline) {
-  const webhookUrl = localStorage.getItem(CONFIG.DISCORD_WEBHOOK_KEY);
-  if (!webhookUrl) return;
-
-  try {
-    const embed = {
-      title: isOnline ? '✅ Server ist ONLINE' : '🔴 Server ist OFFLINE',
-      description: isOnline 
-        ? 'Der Minecraft Bedrock Server ist wieder erreichbar.' 
-        : 'Der Minecraft Bedrock Server ist nicht erreichbar.',
-      color: isOnline ? 0x19c37d : 0xef4444,
-      timestamp: new Date().toISOString(),
-      footer: {text: 'Minecraft Bedrock Status Monitor'}
-    };
-
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({embeds: [embed]})
-    });
-  } catch (err) {
-    console.warn('Discord webhook failed:', err);
-  }
 }
 
 async function load(range) {
@@ -1006,11 +953,6 @@ async function load(range) {
     ]);
 
     setLive(live?.ok, live?.generated);
-
-    if (lastLiveStatus !== null && lastLiveStatus !== live?.ok) {
-      await sendDiscordStatusChange(lastLiveStatus, live?.ok);
-    }
-    lastLiveStatus = live?.ok;
 
     const hist = Array.isArray(data?.history) ? data.history : [];
     const generated = data?.generated || new Date().toISOString();
@@ -1204,104 +1146,6 @@ $('auto').addEventListener('change', e => {
 document.addEventListener('scroll', () => {
   $('tip').style.display = 'none';
 }, true);
-
-function createSettingsModal() {
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.id = 'settings-modal';
-  modal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 style="margin:0;font-size:16px">⚙️ Einstellungen</h2>
-        <button class="modal-close" id="modal-close">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Discord Webhook URL</label>
-          <input type="url" id="webhook-input" placeholder="https://discord.com/api/webhooks/..." />
-          <div class="webhook-test">
-            Aktiviert Benachrichtigungen bei:
-            <ul style="margin:4px 0;padding-left:18px">
-              <li>Server geht online/offline</li>
-              <li>Anomalien werden erkannt</li>
-            </ul>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button class="btn-primary" id="save-webhook">💾 Speichern</button>
-          <button class="btn-danger" id="test-webhook">🧪 Test senden</button>
-          <button class="btn-danger" id="clear-webhook">🗑️ Löschen</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  const webhookInput = modal.querySelector('#webhook-input');
-  const saveBtn = modal.querySelector('#save-webhook');
-  const testBtn = modal.querySelector('#test-webhook');
-  const clearBtn = modal.querySelector('#clear-webhook');
-  const closeBtn = modal.querySelector('#modal-close');
-
-  webhookInput.value = localStorage.getItem(CONFIG.DISCORD_WEBHOOK_KEY) || '';
-
-  saveBtn.addEventListener('click', () => {
-    const url = webhookInput.value.trim();
-    if (url && !url.startsWith('https://discord.com/api/webhooks/')) {
-      alert('Ungültige Discord Webhook URL');
-      return;
-    }
-    if (url) {
-      localStorage.setItem(CONFIG.DISCORD_WEBHOOK_KEY, url);
-      alert('✅ Webhook gespeichert!');
-    }
-  });
-
-  testBtn.addEventListener('click', async () => {
-    const url = webhookInput.value.trim();
-    if (!url) {
-      alert('Bitte Webhook URL eingeben');
-      return;
-    }
-    try {
-      await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          embeds: [{
-            title: '🧪 Test-Nachricht',
-            description: 'Webhook funktioniert! Du erhältst jetzt Benachrichtigungen.',
-            color: 0x19c37d,
-            timestamp: new Date().toISOString()
-          }]
-        })
-      });
-      alert('✅ Test-Nachricht gesendet! Prüfe Discord.');
-    } catch (err) {
-      alert('❌ Fehler: ' + err.message);
-    }
-  });
-
-  clearBtn.addEventListener('click', () => {
-    if (confirm('Webhook wirklich löschen?')) {
-      localStorage.removeItem(CONFIG.DISCORD_WEBHOOK_KEY);
-      webhookInput.value = '';
-      alert('🗑️ Webhook gelöscht');
-    }
-  });
-
-  closeBtn.addEventListener('click', () => modal.classList.remove('show'));
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('show');
-  });
-
-  return modal;
-}
-
-const settingsModal = createSettingsModal();
-$('btn-settings').addEventListener('click', () => {
-  settingsModal.classList.add('show');
-});
 
 onRangeChange(($('range').querySelector('input:checked')?.value) || '24h');
 if ($('auto').checked) startTimer();
