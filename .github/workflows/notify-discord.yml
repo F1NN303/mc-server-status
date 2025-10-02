@@ -2,7 +2,7 @@ name: Notify Discord on status change
 
 on:
   schedule:
-    # alle 10 Minuten prüfen (beliebig ändern)
+    # alle 10 Minuten prüfen (anpassen, wenn du willst)
     - cron: "*/10 * * * *"
   workflow_dispatch: {}
 
@@ -30,7 +30,7 @@ jobs:
       - name: Install jq & curl
         run: sudo apt-get update && sudo apt-get install -y jq curl
 
-      - name: Create cache dir (if missing)
+      - name: Ensure cache dir
         run: mkdir -p "$(dirname '${{ env.CACHE_FILE }}')"
 
       - name: Fetch live status
@@ -42,17 +42,17 @@ jobs:
           set -euo pipefail
           echo "GET ${API_URL}"
           if ! curl --fail --show-error --silent --max-time 12 --retry 2 --retry-delay 2 "$API_URL" -o live_raw.json; then
-            echo "curl failed → fallback offline"
+            echo "curl failed → treat as offline"
             echo '{"ok":false,"generated":null,"service":{}}' > live_raw.json
           fi
 
-          # generated → ISO, ok → boolean, Fallbacks
+          # Normalize: ok(bool), generated(ISO)
           live_ok=$(jq -r 'if has("ok") and (.ok|type=="boolean") then .ok else false end' live_raw.json)
           live_ts=$(jq -r '.generated // now|todate' live_raw.json)
 
           echo "ok=$live_ok"           >> "$GITHUB_OUTPUT"
           echo "ts=$live_ts"           >> "$GITHUB_OUTPUT"
-          echo "json=$(cat live_raw.json | jq -c '.') " >> "$GITHUB_OUTPUT"
+          echo "json=$(jq -c '.' live_raw.json)" >> "$GITHUB_OUTPUT"
 
       - name: Load previous status (if any)
         id: prev
@@ -73,71 +73,78 @@ jobs:
           echo "ok=$prev_ok"  >> "$GITHUB_OUTPUT"
           echo "ts=$prev_ts"  >> "$GITHUB_OUTPUT"
 
-      - name: Check change and notify
-        if: ${{ secrets.DISCORD_WEBHOOK != '' }}
+      - name: Check change and (optionally) notify Discord
         shell: bash
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
           set -euo pipefail
 
+          # Inputs from previous steps
           live_ok='${{ steps.live.outputs.ok }}'
           live_ts='${{ steps.live.outputs.ts }}'
           prev_ok='${{ steps.prev.outputs.ok }}'
 
-          # Status-Text + Farbe + Emoji
-          if [ "$live_ok" = "true" ]; then
-            status_txt="online"
-            color=3066993        # grün
-            emoji="🟢"
-          else
-            status_txt="offline"
-            color=15158332       # rot
-            emoji="🔴"
-          fi
-
-          # Hat sich der Status geändert?
+          # Decide change
           change="no"
-          if [ -z "${prev_ok}" ] || [ "$prev_ok" != "$live_ok" ]; then
+          if [ -z "${prev_ok}" ] || [ "${prev_ok}" != "${live_ok}" ]; then
             change="yes"
           fi
 
-          title="Minecraft Bedrock ist ${status_txt}"
-          # Zeitstempel in RFC3339
+          # Status styling
+          if [ "${live_ok}" = "true" ]; then
+            status_txt="online"
+            color=3066993        # green
+            emoji="🟢"
+          else
+            status_txt="offline"
+            color=15158332       # red
+            emoji="🔴"
+          fi
+
+          # Build RFC3339 timestamp
           live_epoch=$(date -u -d "${live_ts}" +%s 2>/dev/null || date -u +%s)
           ts_rfc3339=$(date -u -d "@${live_epoch}" +'%Y-%m-%dT%H:%M:%SZ')
 
-          if [ "$change" = "yes" ]; then
-            echo "Status change detected → sending Discord notification."
-
-            # Beschreibung
+          # Only notify when:
+          #   - a webhook exists, AND
+          #   - status changed
+          if [ -n "${DISCORD_WEBHOOK:-}" ] && [ "${change}" = "yes" ]; then
+            title="Minecraft Bedrock ist ${status_txt}"
             desc="Zeitpunkt: ${ts_rfc3339}"
 
-            # Payload robust mit jq -n bauen (kein Here-Doc, keine YAML-Fallen)
-            payload=$(jq -n \
-              --arg username "MC Status" \
-              --arg title "${emoji} ${title}" \
-              --arg description "${desc}" \
-              --arg footer "mc-server-status" \
-              --arg timestamp "${ts_rfc3339}" \
-              --argjson color ${color} \
-              '{
-                username: $username,
-                embeds: [{
-                  title: $title,
-                  description: $description,
-                  color: $color,
-                  footer: { text: $footer },
-                  timestamp: $timestamp
-                }]
-              }')
+            # Build JSON payload robustly with jq -n
+            payload=$(
+              jq -n \
+                --arg username "MC Status" \
+                --arg title "${emoji} ${title}" \
+                --arg description "${desc}" \
+                --arg footer "mc-server-status" \
+                --arg timestamp "${ts_rfc3339}" \
+                --argjson color ${color} \
+                '{
+                  username: $username,
+                  embeds: [{
+                    title: $title,
+                    description: $description,
+                    color: $color,
+                    footer: { text: $footer },
+                    timestamp: $timestamp
+                  }]
+                }'
+            )
 
-            curl -sS -X POST "$DISCORD_WEBHOOK" \
+            echo "Posting to Discord…"
+            curl -sS -X POST "${DISCORD_WEBHOOK}" \
               -H "Content-Type: application/json" \
-              -d "$payload" \
+              -d "${payload}" \
               || echo "WARN: Discord webhook request failed (non-fatal)."
           else
-            echo "No status change → no Discord post."
+            if [ -z "${DISCORD_WEBHOOK:-}" ]; then
+              echo "No DISCORD_WEBHOOK secret set → skipping Discord post."
+            else
+              echo "No status change → skipping Discord post."
+            fi
           fi
 
       - name: Update cache file (commit only if changed)
