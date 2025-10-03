@@ -1,209 +1,250 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Server-Infos</title>
   <meta name="color-scheme" content="dark light"/>
   <style>
     :root{
-      --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
-      --fg:#e6e7eb; --muted:#9aa0a6; --green:#2ecc71; --red:#e74c3c; --amber:#f39c12; --blue:#3498db;
+      --bg:#0b0d11; --panel:#101522; --muted:#9aa0a6; --fg:#e6e7eb;
+      --line:#1b2231; --g:#19c37d; --y:#ffb528; --r:#ef4444; --u:#95a3b6;
       --radius:12px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue","Noto Sans",Arial;line-height:1.35}
+    html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     .wrap{max-width:1000px;margin:28px auto;padding:0 16px}
     a{color:#93c5fd;text-decoration:none} a:hover{text-decoration:underline}
-    h1{margin:0 0 18px;font-size:28px}
-    .nav{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#0b0f1a)}
-    .btn:focus,.btn:hover{outline:0;box-shadow:0 0 0 2px rgba(147,197,253,.35) inset}
-    .card{background:linear-gradient(180deg,var(--panel),#0c111b);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:18px 0}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    @media (max-width:740px){.row{grid-template-columns:1fr}}
-    .kpis{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
-    .kpi{background:#0e1421;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:140px}
-    .kpi small{display:block;color:var(--muted);margin-bottom:6px}
-    .ok{color:var(--green)} .bad{color:var(--red)} .warn{color:var(--amber)}
+
+    /* Header + Nav */
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+    h1{margin:0;font-size:26px}
+    .btn{display:inline-flex;align-items:center;gap:.6rem;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#0b0f1a);color:var(--fg);cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    /* Cards */
+    .card{background:linear-gradient(180deg,var(--panel),#0c111b);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:18px}
+    .card h2{margin:0 0 12px 0;font-size:20px}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
+    .kpi{border:1px solid var(--line);border-radius:10px;padding:12px;background:#0e1422}
+    .kpi strong{font-weight:700}
     .muted{color:var(--muted)}
-    .tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted);margin-left:6px}
-    .list{background:#0e1421;border:1px solid var(--line);border-radius:10px;padding:10px;min-height:40px}
-    .list span{display:inline-block;background:#11192a;border:1px solid #1a2436;border-radius:7px;padding:4px 8px;margin:4px}
-    .err{color:#fda4af}
-    canvas{width:100%;height:220px;display:block}
-    footer{margin-top:8px;font-size:12px;color:var(--muted)}
+    .ok{color:var(--g)} .warn{color:var(--y)} .err{color:var(--r)}
+
+    /* Tag */
+    .tag{display:inline-flex;align-items:center;gap:.4rem;padding:.25rem .6rem;border-radius:999px;border:1px solid var(--line);background:#0f1420;font-size:.85rem;color:var(--muted)}
+
+    /* Sparkline */
+    .spark{width:100%;height:120px;display:block}
+    .legend{font-size:.9rem;color:var(--muted);margin-top:6px}
+
+    /* Player list */
+    .list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f1523}
+
+    footer{margin:18px 0 10px;color:var(--muted);font-size:.9rem}
+    code{background:#0e1422;border:1px solid var(--line);border-radius:6px;padding:0 .35rem}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Server-Infos</h1>
 
-    <div class="nav">
-      <a class="btn" href="./index.html">Statusseite</a>
-      <a class="btn" href="./ping.html">Ping &amp; Latenz</a>
-      <a class="btn" href="./rules.html">Regeln</a>
+    <!-- Header / Nav -->
+    <div class="header">
+      <h1>Server-Informationen</h1>
+      <div class="nav">
+        <a class="btn" href="./index.html">Statusseite</a>
+        <a class="btn" href="./ping.html">Ping & Latenz</a>
+        <a class="btn" href="./rules.html">Regeln</a>
+      </div>
     </div>
 
-    <div class="card" id="live">
-      <h2 style="margin:0 0 10px">Live-Status
-        <span id="liveSource" class="tag">Quelle: data/players.json</span>
-      </h2>
+    <!-- Live -->
+    <div class="card" id="liveCard">
+      <h2>Live-Status <span class="tag">Quelle: <code>/data/players.json</code></span></h2>
       <div class="kpis">
-        <div class="kpi"><small>Status</small><b id="live-status">–</b></div>
-        <div class="kpi"><small>Online</small><b id="live-online">–</b></div>
-        <div class="kpi"><small>Max</small><b id="live-max">–</b></div>
-        <div class="kpi"><small>MOTD</small><b id="live-motd">–</b></div>
-        <div class="kpi"><small>Zuletzt</small><b id="live-ts">–</b></div>
+        <div class="kpi"><div class="muted">Status</div><div id="live-status"><em class="muted">—</em></div></div>
+        <div class="kpi"><div class="muted">Online</div><div id="live-online"><em class="muted">—</em></div></div>
+        <div class="kpi"><div class="muted">Max</div><div id="live-max"><em class="muted">—</em></div></div>
+        <div class="kpi"><div class="muted">MOTD</div><div id="live-motd"><em class="muted">—</em></div></div>
+        <div class="kpi"><div class="muted">Zuletzt</div><div id="live-upd"><em class="muted">—</em></div></div>
       </div>
-      <div>
-        <small class="muted">Spieler (letzter Stand)</small>
-        <div id="live-names" class="list"></div>
-        <div id="live-msg" class="muted" style="margin-top:8px"></div>
-      </div>
+      <div class="muted" style="margin-top:10px">Spieler (letzter Stand):</div>
+      <div id="live-names" class="list"><span class="muted">Keine Namen vom Server geliefert.</span></div>
+      <div id="live-error" class="err" style="margin-top:10px;display:none"></div>
     </div>
 
-    <div class="card" id="chart">
-      <h2 style="margin:0 0 10px">Spieler-Verlauf (24 h)
-        <span class="tag">Quelle: data/players.json (nur wenn History vorhanden)</span>
-      </h2>
-      <canvas id="players24"></canvas>
-      <div class="row">
-        <div class="kpi"><small>Ø 24 h</small><b id="avg24">–</b></div>
-        <div class="kpi"><small>Peak 24 h</small><b id="peak24">–</b></div>
-      </div>
-      <footer>Falls kein Verlauf in <code>data/players.json</code> gespeichert wird, bleibt dieser Chart leer.</footer>
+    <!-- Verlauf 24h -->
+    <div class="card">
+      <h2>Spieler-Verlauf (24 h)</h2>
+      <svg class="spark" viewBox="0 0 600 120" preserveAspectRatio="none" id="spark"></svg>
+      <div class="legend">Ø 24 h: <strong id="avg24">—</strong> • Peak 24 h: <strong id="peak24">—</strong></div>
+      <footer>Quelle: <code>/data/players.json</code> (nur wenn History im JSON vorhanden ist).</footer>
     </div>
 
-    <div class="card" id="svc">
-      <h2 style="margin:0 0 10px">Server</h2>
+    <!-- Server -->
+    <div class="card">
+      <h2>Server</h2>
       <div class="kpis">
-        <div class="kpi"><small>Name</small><b id="svc-name">–</b></div>
-        <div class="kpi"><small>Host:Port</small><b id="svc-host">–</b></div>
-        <div class="kpi"><small>Zuletzt Status</small><b id="svc-last">–</b></div>
+        <div class="kpi"><div class="muted">Name</div><div id="svc-name"><em class="muted">—</em></div></div>
+        <div class="kpi"><div class="muted">Host:Port</div><div id="svc-host"><em class="muted">—</em></div></div>
+        <div class="kpi"><div class="muted">Zuletzt Status</div><div id="svc-gen"><em class="muted">—</em></div></div>
       </div>
-      <footer>Quelle: <code>data/status.json</code> • Aktualisierung alle 5 Min.</footer>
+      <footer>Quelle: <code>/data/status.json</code> • Aktualisierung alle 5 Min.</footer>
     </div>
 
-    <footer style="margin-top:18px">Stand: <span id="stamp">–</span></footer>
   </div>
 
-<script>
-const PLAYERS_URL = '/data/players.json';   // <- hier liegt deine Datei
-const STATUS_URL  = '/data/status.json';
+  <script>
+    // ---- helpers -----------------------------------------------------------
+    const $ = sel => document.querySelector(sel);
+    const fmtTime = iso => {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        if (isNaN(d)) return iso;
+        const pad = n => String(n).padStart(2,'0');
+        return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} `+
+               `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      } catch { return iso; }
+    };
 
-// Helfer
-const $ = (id) => document.getElementById(id);
-const fmt = (d) => new Date(d).toLocaleString('de-DE');
+    // robust parsing (unterstützt verschiedene JSON-Formen)
+    function parsePlayers(json){
+      const j = json || {};
+      const online = (j.online ?? j.ok ?? j.status?.online ?? false) ? true : false;
+      const playersOnline = j.players?.online ?? j.player_count ?? j.playersOnline ?? 0;
+      const max = j.players?.max ?? j.max_players ?? j.max ?? null;
+      const motd = j.motd?.raw ?? j.motd?.clean ?? j.motd?.text ?? j.motd ?? '';
+      const last = j.last_updated ?? j.generated ?? j.timestamp ?? '';
 
-// Minimal-Canvas-Linie zeichnen
-function drawLine(canvas, series, color='#5dade2'){
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width = canvas.clientWidth * devicePixelRatio;
-  const h = canvas.height = 220 * devicePixelRatio;
-  ctx.scale(devicePixelRatio, devicePixelRatio);
-  ctx.clearRect(0,0,canvas.clientWidth,220);
-  if (!series || !series.length){ return; }
-  const xs = series.map(p=>p.t), ys = series.map(p=>p.v);
-  const tMin = Math.min(...xs), tMax = Math.max(...xs);
-  const yMin = 0, yMax = Math.max(1, Math.max(...ys));
-  const X = t => ( (t - tMin) / (tMax - tMin || 1) ) * canvas.clientWidth;
-  const Y = v => 220 - ( (v - yMin) / (yMax - yMin || 1) ) * 200 - 10;
-  ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.beginPath();
-  series.forEach((p,i)=>{ const x=X(p.t), y=Y(p.v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
-  ctx.stroke();
-}
+      // Namen
+      let names = [];
+      if (Array.isArray(j.players?.list)) names = j.players.list.map(n => typeof n === 'string' ? n : (n?.name ?? ''));
+      else if (Array.isArray(j.players?.sample)) names = j.players.sample.map(n => typeof n === 'string' ? n : (n?.name ?? ''));
+      else if (Array.isArray(j.sample)) names = j.sample.map(n => typeof n === 'string' ? n : (n?.name ?? ''));
 
-async function loadJSON(url){
-  try{
-    const r = await fetch(url, {cache:'no-store'});
-    if(!r.ok) throw new Error(r.status+' '+r.statusText);
-    return await r.json();
-  }catch(e){
-    console.error('Fetch failed', url, e);
-    return { __error: e.message };
-  }
-}
+      // Verlauf
+      let hist = j.history ?? j.playerHistory ?? null;
+      if (Array.isArray(hist)){
+        hist = hist
+          .map(p => {
+            const t = p.ts ?? p.time ?? p.t ?? p.timestamp;
+            const v = (p.players?.online ?? p.online ?? p.count ?? p.v ?? p.value ?? 0);
+            const dd = t ? new Date(t) : null;
+            return (!t || !dd || isNaN(dd)) ? null : { t: dd, v: Number(v)||0 };
+          })
+          .filter(Boolean)
+          .sort((a,b)=>a.t-b.t);
+        // Auf letzte 24h begrenzen
+        const now = Date.now();
+        hist = hist.filter(p => (now - p.t.getTime()) <= 24*60*60*1000);
+      } else {
+        hist = [];
+      }
+      return { online, playersOnline, max, motd, last, names, hist };
+    }
 
-function renderLive(players){
-  const msg = $('live-msg'), names = $('live-names');
-  if (players.__error){
-    $('live-status').textContent = 'Fehler';
-    $('live-status').className = 'bad';
-    msg.textContent = 'Fehler beim Laden: '+players.__error;
-    return;
-  }
-  if (!players || Object.keys(players).length===0){
-    $('live-status').textContent = '–';
-    msg.textContent = 'Keine Daten (players.json fehlt oder leer).';
-    return;
-  }
-  const online = !!players.ok || players.online === 0 || players.online > 0;
-  $('live-status').textContent = online ? 'online' : 'offline';
-  $('live-status').className = online ? 'ok' : 'bad';
-  $('live-online').textContent = Number(players.online ?? 0);
-  $('live-max').textContent = Number(players.max ?? players.capacity ?? 0);
-  $('live-motd').textContent = players.motd || players.MOTD || '–';
-  $('live-ts').textContent = players.generated ? fmt(players.generated) : '–';
+    function drawSpark(data){
+      const svg = $('#spark');
+      svg.innerHTML = '';
+      if (!data.length){ return; }
 
-  // Namen
-  names.innerHTML = '';
-  const arr = Array.isArray(players.players) ? players.players : [];
-  if(arr.length===0){
-    names.innerHTML = '<span class="muted">Keine Spielernamen geliefert.</span>';
-  }else{
-    arr.slice(0,64).forEach(n=>{
-      const s = document.createElement('span'); s.textContent = n; names.appendChild(s);
-    });
-  }
+      const W = 600, H = 120, padL=6, padR=6, padT=8, padB=20;
+      const xs = data.map(d => d.t.getTime());
+      const ys = data.map(d => d.v);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = 0, maxY = Math.max(1, ...ys);
+      const x = t => padL + ( (t-minX) / (maxX-minX || 1) ) * (W-padL-padR);
+      const y = v => H-padB - ( (v-minY) / (maxY-minY || 1) ) * (H-padT-padB);
 
-  // Verlauf (optional, falls vorhanden): players.history: [{ts, online}]
-  const hist = Array.isArray(players.history) ? players.history : [];
-  const since = Date.now() - 24*60*60*1000;
-  const s24 = hist.filter(p => new Date(p.ts).getTime() >= since)
-                  .map(p => ({t:new Date(p.ts).getTime(), v:Number(p.online||0)}));
-  drawLine($('players24'), s24, '#4aa3ff');
-  if (s24.length){
-    const vals = s24.map(p=>p.v);
-    const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
-    const peak = Math.max(...vals);
-    $('avg24').textContent = avg;
-    $('peak24').textContent = peak;
-  }else{
-    $('avg24').textContent = '–';
-    $('peak24').textContent = '–';
-  }
-}
+      let d = '';
+      data.forEach((p,i)=>{
+        const xx = x(p.t.getTime()), yy = y(p.v);
+        d += (i? ' L':'M') + xx + ' ' + yy;
+      });
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke','#3ba9ff');
+      path.setAttribute('stroke-width','2');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.appendChild(path);
+    }
 
-function renderService(status){
-  if (status.__error){
-    $('svc-name').textContent = 'Fehler';
-    $('svc-host').textContent = '–';
-    $('svc-last').innerHTML = '<span class="err">Status konnte nicht geladen werden.</span>';
-    return;
-  }
-  const name = status?.service?.name || 'Minecraft Bedrock';
-  const host = status?.service?.host || '';
-  const port = status?.service?.port || '';
-  const ts   = status?.generated || (status?.history?.length ? status.history.at(-1).ts : null);
+    // ---- fetch + render ----------------------------------------------------
+    async function loadPlayers(){
+      const elErr = $('#live-error');
+      elErr.style.display = 'none';
+      try{
+        const res = await fetch('/data/players.json', {cache:'no-store'});
+        if(!res.ok) throw new Error(String(res.status));
+        const raw = await res.json();
+        const p = parsePlayers(raw);
 
-  $('svc-name').textContent = name;
-  $('svc-host').textContent = host ? (port? `${host}:${port}` : host) : '–';
-  $('svc-last').textContent = ts ? fmt(ts) : '–';
-  $('stamp').textContent = (new Date()).toLocaleString('de-DE');
-}
+        // KPIs
+        $('#live-status').innerHTML = p.online ? '<span class="ok">online</span>' : '<span class="err">offline</span>';
+        $('#live-online').textContent = p.playersOnline ?? '—';
+        $('#live-max').textContent = (p.max ?? '—');
+        $('#live-motd').textContent = p.motd || '—';
+        $('#live-upd').textContent = fmtTime(p.last);
 
-async function boot(){
-  const [players, status] = await Promise.all([
-    loadJSON(PLAYERS_URL),
-    loadJSON(STATUS_URL),
-  ]);
-  renderLive(players);
-  renderService(status);
-}
-boot();
-// Auto-Refresh alle 5 Minuten (wie auf der Hauptseite)
-setInterval(boot, 5*60*1000);
-</script>
+        // Namen
+        const list = $('#live-names');
+        list.innerHTML = '';
+        if (p.names && p.names.length){
+          p.names.slice(0,40).forEach(n=>{
+            const span = document.createElement('span');
+            span.className = 'pill';
+            span.textContent = n || 'Spieler';
+            list.appendChild(span);
+          });
+        } else {
+          const span = document.createElement('span');
+          span.className = 'muted';
+          span.textContent = 'Keine Namen vom Server geliefert.';
+          list.appendChild(span);
+        }
+
+        // Verlauf
+        if (p.hist.length){
+          drawSpark(p.hist);
+          const sum = p.hist.reduce((a,b)=>a+b.v,0);
+          const avg = sum / p.hist.length;
+          const peak = Math.max(...p.hist.map(h=>h.v));
+          $('#avg24').textContent = avg.toFixed(2);
+          $('#peak24').textContent = peak.toString();
+        } else {
+          $('#avg24').textContent = '—';
+          $('#peak24').textContent = '—';
+        }
+      }catch(e){
+        elErr.textContent = 'Fehler beim Laden: ' + e.message;
+        elErr.style.display = 'block';
+      }
+    }
+
+    async function loadStatus(){
+      try{
+        const res = await fetch('/data/status.json', {cache:'no-store'});
+        if(!res.ok) throw new Error(String(res.status));
+        const j = await res.json();
+        $('#svc-name').textContent = j?.service?.name || '—';
+        const host = j?.service?.host || '';
+        const port = j?.service?.port ?? '';
+        $('#svc-host').textContent = host ? (port? `${host}:${port}`: host) : '—';
+        $('#svc-gen').textContent = fmtTime(j?.generated);
+      }catch(e){
+        $('#svc-name').innerHTML = '<span class="err">Fehler</span>';
+        $('#svc-host').textContent = '—';
+        $('#svc-gen').textContent = '—';
+      }
+    }
+
+    // initial + Intervall
+    loadPlayers(); loadStatus();
+    setInterval(loadPlayers, 60*1000);
+    setInterval(loadStatus, 60*1000);
+  </script>
 </body>
 </html>
