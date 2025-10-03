@@ -1,0 +1,120 @@
+name: Scan Bedrock Players (external)
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bedrock-player-scan
+  cancel-in-progress: true
+
+env:
+  # === HIER deinen öffentlichen Host + Query-Port eintragen ===
+  BEDROCK_HOST: "important-instrumentation.gl.at.ply.gg"
+  BEDROCK_PORT: "18232"   # Dein öffentlicher UDP-Query-Port (bei Bedarf 19132)
+  OUT_LIVE: "public/players.json"
+  OUT_HISTORY: "public/player-count-history.json"
+  KEEP_SAMPLES: "2016"    # 7 Tage à 5-Minuten-Slots
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Random jitter (0–45s)
+        run: sleep $(( RANDOM % 46 ))
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Query Bedrock via gamedig
+        shell: bash
+        run: |
+          set -euo pipefail
+          HOST="${BEDROCK_HOST}"
+          PORT="${BEDROCK_PORT}"
+
+          echo "Querying ${HOST}:${PORT} (minecraftbedrock, UDP)…"
+
+          # gamedig CLI: gibt JSON aus; bei Fehler -> leeres Objekt
+          if ! npx -y gamedig@4 --type minecraftbedrock --host "$HOST" --port "$PORT" > live_raw.json 2>/dev/null; then
+            echo '{}' > live_raw.json
+          fi
+
+          echo "---- gamedig response (truncated) ----"
+          head -c 1000 live_raw.json || true
+          echo
+          echo "--------------------------------------"
+
+          # Normalisieren -> players.json
+          # Felder aus gamedig:
+          #  - name (MOTD), maxplayers, players[] {name}, connect, ping, queryPort
+          date_iso="$(date -u +%FT%TZ)"
+
+          jq --arg ts "$date_iso" \
+             --arg host "$HOST" \
+             --argjson port ${PORT:-0} '
+              def arrnames: if (.players|type)=="array" then (.players|map(.name)|unique) else [] end;
+              def count:    if (.players|type)=="array" then (.players|length) else 0 end;
+              {
+                generated: $ts,
+                service: { name: "Minecraft Bedrock", host: $host, port: $port },
+                online: (has("players") and (count > 0 or .name? != null)),
+                motd: (.name // ""),
+                connect: (.connect // ""),
+                playerCount: (count),
+                max: (.maxplayers // 0),
+                players: (arrnames)
+              }
+             ' live_raw.json > players_norm.json
+
+          mkdir -p "$(dirname "$OUT_LIVE")" "$(dirname "$OUT_HISTORY")"
+
+          # Schreibe players.json (nur wenn es sich geändert hat)
+          if [ -s "$OUT_LIVE" ] && diff -q "$OUT_LIVE" players_norm.json >/dev/null 2>&1; then
+            echo "No change in $OUT_LIVE"
+          else
+            cp players_norm.json "$OUT_LIVE"
+            echo "Wrote $OUT_LIVE"
+          fi
+
+          # History-Datei initialisieren, falls fehlt/leer/kein Array
+          if ! [ -s "$OUT_HISTORY" ] || ! jq -e 'type=="array"' "$OUT_HISTORY" >/dev/null 2>&1; then
+            echo "[]" > "$OUT_HISTORY"
+          fi
+
+          # Neuen Sample anhängen und auf KEEP_SAMPLES trimmen
+          jq --arg ts "$date_iso" \
+             --argjson c "$(jq -r '.playerCount' players_norm.json)" \
+             --argjson keep ${KEEP_SAMPLES:-2016} '
+               . + [{ts:$ts, count:$c}] | .[-($keep|tonumber):]
+             ' "$OUT_HISTORY" > "$OUT_HISTORY.tmp" && mv "$OUT_HISTORY.tmp" "$OUT_HISTORY"
+
+      - name: Commit & push if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- public/players.json public/player-count-history.json; then
+            echo "No changes → nothing to commit."
+          else
+            git config user.name  "${{ github.actor }}"
+            git config user.email "${{ github.actor }}@users.noreply.github.com"
+            git add public/players.json public/player-count-history.json
+            git commit -m "players: $(date -u +%FT%TZ) [auto]"
+            git push origin main
+            echo "Pushed updates."
+          fi
