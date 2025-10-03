@@ -2,184 +2,208 @@
 <html lang="de">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="robots" content="noindex, nofollow"/>
-  <title>Server Info & Spieler</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Server-Infos</title>
   <meta name="color-scheme" content="dark light"/>
   <style>
     :root{
-      --bg:#0b0d11;--panel:#0f1320;--line:#1b2231;
-      --fg:#e6e7eb;--muted:#9aa0a6;--g:#19c37d;--r:#ef4444;--o:#f59e0b;--u:#95a3b6;
-      --radius:12px
+      --bg:#0b0d11; --panel:#0f1320; --line:#1b2231;
+      --fg:#e6e7eb; --muted:#9aa0a6; --green:#2ecc71; --red:#e74c3c; --amber:#f39c12; --blue:#3498db;
+      --radius:12px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial}
-    .wrap{max-width:1100px;margin:28px auto;padding:0 16px}
-    a{color:#93c5fd;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    h1{margin:0;font-size:28px}
+    html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue","Noto Sans",Arial;line-height:1.35}
+    .wrap{max-width:1000px;margin:28px auto;padding:0 16px}
+    a{color:#93c5fd;text-decoration:none} a:hover{text-decoration:underline}
+    h1{margin:0 0 18px;font-size:28px}
+    .nav{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#0b0f1a)}
-    .btn:hover{background:linear-gradient(180deg,#0e1524,#0b0f1a)}
-    .card{background:linear-gradient(180deg,var(--panel),#0e111c);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
-    .kpi{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
-    .kpi strong{color:var(--fg);font-weight:600}
-    .grid{display:grid;gap:12px}
-    @media (min-width:900px){.grid{grid-template-columns:1.4fr .9fr}}
-    .pill{display:inline-flex;gap:8px;align-items:center;border-radius:999px;padding:6px 10px;background:#0b121d;border:1px solid var(--line)}
-    .dot{width:10px;height:10px;border-radius:50%}
-    .dot.g{background:var(--g)} .dot.r{background:var(--r)} .dot.o{background:var(--o)} .dot.u{background:var(--u)}
-    .list{display:flex;flex-wrap:wrap;gap:6px}
-    .chip{padding:4px 8px;border-radius:999px;background:#0d1420;border:1px solid var(--line);font-size:12px}
+    .btn:focus,.btn:hover{outline:0;box-shadow:0 0 0 2px rgba(147,197,253,.35) inset}
+    .card{background:linear-gradient(180deg,var(--panel),#0c111b);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin:18px 0}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:740px){.row{grid-template-columns:1fr}}
+    .kpis{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+    .kpi{background:#0e1421;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:140px}
+    .kpi small{display:block;color:var(--muted);margin-bottom:6px}
+    .ok{color:var(--green)} .bad{color:var(--red)} .warn{color:var(--amber)}
+    .muted{color:var(--muted)}
+    .tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:12px;color:var(--muted);margin-left:6px}
+    .list{background:#0e1421;border:1px solid var(--line);border-radius:10px;padding:10px;min-height:40px}
+    .list span{display:inline-block;background:#11192a;border:1px solid #1a2436;border-radius:7px;padding:4px 8px;margin:4px}
+    .err{color:#fda4af}
     canvas{width:100%;height:220px;display:block}
-    .footer{margin-top:22px;color:var(--muted);font-size:12px}
+    footer{margin-top:8px;font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="header">
-      <h1>Server-Infos & Spieler</h1>
-      <div class="list">
-        <a class="btn" href="./secret-status-bf6a3e31/index.html">Statusseite</a>
-        <a class="btn" href="./secret-status-bf6a3e31/ping.html">Ping & Latenz</a>
-        <a class="btn" href="./rules.html">Regeln</a>
+    <h1>Server-Infos</h1>
+
+    <div class="nav">
+      <a class="btn" href="./index.html">Statusseite</a>
+      <a class="btn" href="./ping.html">Ping &amp; Latenz</a>
+      <a class="btn" href="./rules.html">Regeln</a>
+    </div>
+
+    <div class="card" id="live">
+      <h2 style="margin:0 0 10px">Live-Status
+        <span id="liveSource" class="tag">Quelle: data/players.json</span>
+      </h2>
+      <div class="kpis">
+        <div class="kpi"><small>Status</small><b id="live-status">–</b></div>
+        <div class="kpi"><small>Online</small><b id="live-online">–</b></div>
+        <div class="kpi"><small>Max</small><b id="live-max">–</b></div>
+        <div class="kpi"><small>MOTD</small><b id="live-motd">–</b></div>
+        <div class="kpi"><small>Zuletzt</small><b id="live-ts">–</b></div>
+      </div>
+      <div>
+        <small class="muted">Spieler (letzter Stand)</small>
+        <div id="live-names" class="list"></div>
+        <div id="live-msg" class="muted" style="margin-top:8px"></div>
       </div>
     </div>
 
-    <div class="grid" style="margin-top:16px">
-      <!-- Linke Spalte: Live -->
-      <section class="card">
-        <h2 style="margin:0 0 6px 0;font-size:20px">Live-Status</h2>
-        <div id="svc" class="kpi">lädt…</div>
-
-        <div class="kpi" id="livekpi" style="margin-top:12px">
-          <span class="pill"><span class="dot g"></span><strong id="livecount">–</strong>&nbsp;online</span>
-          <span class="pill">Max:&nbsp;<strong id="livemax">–</strong></span>
-          <span class="pill">MOTD:&nbsp;<strong id="livemotd">–</strong></span>
-          <span class="pill">Zuletzt:&nbsp;<strong id="livets">–</strong></span>
-        </div>
-
-        <div style="margin-top:12px">
-          <div style="color:var(--muted);margin-bottom:6px;font-size:12px">Spieler (letzter Stand)</div>
-          <div id="playerlist" class="list"></div>
-        </div>
-      </section>
-
-      <!-- Rechte Spalte: 24h Chart -->
-      <section class="card">
-        <h2 style="margin:0 0 6px 0;font-size:20px">Spieler-Verlauf (24 h)</h2>
-        <canvas id="chart24"></canvas>
-        <div class="kpi">
-          <span>Ø 24 h: <strong id="avg24">–</strong></span>
-          <span>Peak 24 h: <strong id="peak24">–</strong></span>
-        </div>
-      </section>
+    <div class="card" id="chart">
+      <h2 style="margin:0 0 10px">Spieler-Verlauf (24 h)
+        <span class="tag">Quelle: data/players.json (nur wenn History vorhanden)</span>
+      </h2>
+      <canvas id="players24"></canvas>
+      <div class="row">
+        <div class="kpi"><small>Ø 24 h</small><b id="avg24">–</b></div>
+        <div class="kpi"><small>Peak 24 h</small><b id="peak24">–</b></div>
+      </div>
+      <footer>Falls kein Verlauf in <code>data/players.json</code> gespeichert wird, bleibt dieser Chart leer.</footer>
     </div>
 
-    <div class="footer">Quelle: <code>public/players.json</code>, <code>public/player-count-history.json</code> • Aktualisierung alle 5 Min.</div>
+    <div class="card" id="svc">
+      <h2 style="margin:0 0 10px">Server</h2>
+      <div class="kpis">
+        <div class="kpi"><small>Name</small><b id="svc-name">–</b></div>
+        <div class="kpi"><small>Host:Port</small><b id="svc-host">–</b></div>
+        <div class="kpi"><small>Zuletzt Status</small><b id="svc-last">–</b></div>
+      </div>
+      <footer>Quelle: <code>data/status.json</code> • Aktualisierung alle 5 Min.</footer>
+    </div>
+
+    <footer style="margin-top:18px">Stand: <span id="stamp">–</span></footer>
   </div>
 
 <script>
-(async function(){
-  const $ = s=>document.querySelector(s);
-  const fmt = d=>new Date(d).toLocaleString('de-DE',{hour12:false});
+const PLAYERS_URL = '/data/players.json';   // <- hier liegt deine Datei
+const STATUS_URL  = '/data/status.json';
 
-  // Pfade – werden von der Action erzeugt
-  const LIVE_URL = '../players.json'; // relativ zu /public/info.html
-  const HIST_URL = '../player-count-history.json';
+// Helfer
+const $ = (id) => document.getElementById(id);
+const fmt = (d) => new Date(d).toLocaleString('de-DE');
 
-  // Live laden
-  let live;
-  try {
-    const r = await fetch(LIVE_URL,{cache:'no-store'});
-    live = await r.json();
-  } catch(e) { live = null; }
+// Minimal-Canvas-Linie zeichnen
+function drawLine(canvas, series, color='#5dade2'){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.clientWidth * devicePixelRatio;
+  const h = canvas.height = 220 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.clearRect(0,0,canvas.clientWidth,220);
+  if (!series || !series.length){ return; }
+  const xs = series.map(p=>p.t), ys = series.map(p=>p.v);
+  const tMin = Math.min(...xs), tMax = Math.max(...xs);
+  const yMin = 0, yMax = Math.max(1, Math.max(...ys));
+  const X = t => ( (t - tMin) / (tMax - tMin || 1) ) * canvas.clientWidth;
+  const Y = v => 220 - ( (v - yMin) / (yMax - yMin || 1) ) * 200 - 10;
+  ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.beginPath();
+  series.forEach((p,i)=>{ const x=X(p.t), y=Y(p.v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.stroke();
+}
 
-  if(!live || !live.generated){
-    $('#svc').textContent = 'Keine Daten (players.json fehlt oder leer).';
-  }else{
-    $('#svc').innerHTML = `
-      <div><strong>${live.service?.name || 'Minecraft Bedrock'}</strong></div>
-      <div class="kpi">
-        Host:&nbsp;<strong>${live.service?.host || '-'}</strong>&nbsp;•&nbsp;
-        Port:&nbsp;<strong>${live.service?.port ?? '-'}</strong>
-      </div>`;
-    $('#livecount').textContent = live.playerCount ?? 0;
-    $('#livemax').textContent = live.max ?? 0;
-    $('#livemotd').textContent = (live.motd || '').toString().slice(0,80) || '–';
-    $('#livets').textContent = fmt(live.generated);
-
-    const box = $('#playerlist');
-    box.innerHTML = '';
-    const names = Array.isArray(live.players) ? live.players : [];
-    if(names.length === 0){
-      const span = document.createElement('span'); span.className='chip'; span.textContent='(keine Namen gemeldet)';
-      box.appendChild(span);
-    }else{
-      names.slice(0,60).forEach(n=>{
-        const s=document.createElement('span'); s.className='chip'; s.textContent=n||'(unbekannt)'; box.appendChild(s);
-      });
-      if(names.length>60){
-        const s=document.createElement('span'); s.className='chip'; s.textContent=`+${names.length-60} weitere`; box.appendChild(s);
-      }
-    }
-  }
-
-  // History laden
-  let hist=[];
+async function loadJSON(url){
   try{
-    const r = await fetch(HIST_URL,{cache:'no-store'});
-    hist = await r.json();
-    if(!Array.isArray(hist)) hist=[];
-  }catch(e){ hist=[]; }
-
-  // 24h Fenster filtern
-  const now = Date.now();
-  const dayAgo = now - 24*60*60*1000;
-  const h24 = hist.filter(s => new Date(s.ts).getTime() >= dayAgo);
-
-  // Kennzahlen
-  const avg = (arr)=> arr.length ? (arr.reduce((a,b)=>a+b.count,0)/arr.length) : 0;
-  const pk  = (arr)=> arr.length ? Math.max(...arr.map(s=>s.count)) : 0;
-  $('#avg24').textContent  = avg(h24).toFixed(2).replace('.',',');
-  $('#peak24').textContent = pk(h24);
-
-  // Mini-Canvas-Chart ohne Lib
-  const cvs = document.getElementById('chart24');
-  const ctx = cvs.getContext('2d');
-  function drawChart(data){
-    const W = cvs.clientWidth, H = cvs.clientHeight;
-    cvs.width = Math.floor(W*devicePixelRatio); cvs.height = Math.floor(H*devicePixelRatio);
-    ctx.scale(devicePixelRatio, devicePixelRatio);
-    ctx.clearRect(0,0,W,H);
-
-    // Achsen
-    ctx.strokeStyle = '#1b2231'; ctx.lineWidth = 1;
-    for(let i=0;i<=4;i++){
-      const y = 10 + (H-20)*i/4;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-    }
-
-    if(data.length<2) return;
-
-    const t0 = new Date(data[0].ts).getTime();
-    const t1 = new Date(data[data.length-1].ts).getTime();
-    const dt = Math.max(1, t1 - t0);
-    const cmax = Math.max(1, Math.max(...data.map(d=>d.count)));
-
-    // Linie
-    ctx.beginPath();
-    ctx.lineWidth = 2; ctx.strokeStyle = '#93c5fd';
-    data.forEach((d,i)=>{
-      const x = ( (new Date(d.ts).getTime() - t0) / dt ) * (W-20) + 10;
-      const y = (1 - (d.count/cmax)) * (H-20) + 10;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    });
-    ctx.stroke();
+    const r = await fetch(url, {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status+' '+r.statusText);
+    return await r.json();
+  }catch(e){
+    console.error('Fetch failed', url, e);
+    return { __error: e.message };
   }
-  drawChart(h24);
-  addEventListener('resize',()=>drawChart(h24),{passive:true});
-})();
+}
+
+function renderLive(players){
+  const msg = $('live-msg'), names = $('live-names');
+  if (players.__error){
+    $('live-status').textContent = 'Fehler';
+    $('live-status').className = 'bad';
+    msg.textContent = 'Fehler beim Laden: '+players.__error;
+    return;
+  }
+  if (!players || Object.keys(players).length===0){
+    $('live-status').textContent = '–';
+    msg.textContent = 'Keine Daten (players.json fehlt oder leer).';
+    return;
+  }
+  const online = !!players.ok || players.online === 0 || players.online > 0;
+  $('live-status').textContent = online ? 'online' : 'offline';
+  $('live-status').className = online ? 'ok' : 'bad';
+  $('live-online').textContent = Number(players.online ?? 0);
+  $('live-max').textContent = Number(players.max ?? players.capacity ?? 0);
+  $('live-motd').textContent = players.motd || players.MOTD || '–';
+  $('live-ts').textContent = players.generated ? fmt(players.generated) : '–';
+
+  // Namen
+  names.innerHTML = '';
+  const arr = Array.isArray(players.players) ? players.players : [];
+  if(arr.length===0){
+    names.innerHTML = '<span class="muted">Keine Spielernamen geliefert.</span>';
+  }else{
+    arr.slice(0,64).forEach(n=>{
+      const s = document.createElement('span'); s.textContent = n; names.appendChild(s);
+    });
+  }
+
+  // Verlauf (optional, falls vorhanden): players.history: [{ts, online}]
+  const hist = Array.isArray(players.history) ? players.history : [];
+  const since = Date.now() - 24*60*60*1000;
+  const s24 = hist.filter(p => new Date(p.ts).getTime() >= since)
+                  .map(p => ({t:new Date(p.ts).getTime(), v:Number(p.online||0)}));
+  drawLine($('players24'), s24, '#4aa3ff');
+  if (s24.length){
+    const vals = s24.map(p=>p.v);
+    const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+    const peak = Math.max(...vals);
+    $('avg24').textContent = avg;
+    $('peak24').textContent = peak;
+  }else{
+    $('avg24').textContent = '–';
+    $('peak24').textContent = '–';
+  }
+}
+
+function renderService(status){
+  if (status.__error){
+    $('svc-name').textContent = 'Fehler';
+    $('svc-host').textContent = '–';
+    $('svc-last').innerHTML = '<span class="err">Status konnte nicht geladen werden.</span>';
+    return;
+  }
+  const name = status?.service?.name || 'Minecraft Bedrock';
+  const host = status?.service?.host || '';
+  const port = status?.service?.port || '';
+  const ts   = status?.generated || (status?.history?.length ? status.history.at(-1).ts : null);
+
+  $('svc-name').textContent = name;
+  $('svc-host').textContent = host ? (port? `${host}:${port}` : host) : '–';
+  $('svc-last').textContent = ts ? fmt(ts) : '–';
+  $('stamp').textContent = (new Date()).toLocaleString('de-DE');
+}
+
+async function boot(){
+  const [players, status] = await Promise.all([
+    loadJSON(PLAYERS_URL),
+    loadJSON(STATUS_URL),
+  ]);
+  renderLive(players);
+  renderService(status);
+}
+boot();
+// Auto-Refresh alle 5 Minuten (wie auf der Hauptseite)
+setInterval(boot, 5*60*1000);
 </script>
 </body>
 </html>
