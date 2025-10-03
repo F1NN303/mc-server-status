@@ -9,9 +9,10 @@ on:
 permissions:
   contents: write
 
+# Wichtig: NICHT mehr abbrechen – stattdessen in die Queue stellen.
 concurrency:
   group: bedrock-status
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   FILEPATH: "data/status.json"
@@ -22,8 +23,8 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - name: Random jitter (0–45s) to avoid thundering herd
-        run: sleep $(( RANDOM % 46 ))
+      - name: Random jitter (0–15s) to avoid thundering herd
+        run: sleep $(( RANDOM % 16 ))
 
       - name: Checkout main
         uses: actions/checkout@v4
@@ -64,17 +65,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          API_URL="${API_URL:?API_URL not set}"
-          echo "GET ${API_URL}"
-
+          : "${API_URL:?API_URL not set}"
+          echo "GET $API_URL"
           # 3 Versuche, kleiner Timeout
-          if ! curl --fail --show-error --silent --max-time 12 --retry 2 --retry-delay 2 "${API_URL}" -o resp.json; then
+          if ! curl --fail --show-error --silent --max-time 12 --retry 2 --retry-delay 2 "$API_URL" -o resp.json; then
             echo "curl failed → treat as offline"
             echo '{"ok":false,"generated":null,"service":{}}' > resp.json
           fi
 
           # .ok muss bool sein – sonst offline
-          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json >/dev/null; then
+          if ! jq -e 'has("ok") and (.ok|type=="boolean")' resp.json > /dev/null; then
+            echo "response has no boolean .ok → force offline"
             jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
           fi
 
@@ -83,10 +84,12 @@ jobs:
           echo "------------------------"
 
           # Outputs für nachfolgende Steps
-          echo "ok=$(jq -r '.ok' resp.json)"                          >> "$GITHUB_OUTPUT"
-          echo "ts=$(jq -r '.generated // (now|todate)' resp.json)"   >> "$GITHUB_OUTPUT"
-          echo "host=$(jq -r '.service.host // empty' resp.json)"     >> "$GITHUB_OUTPUT"
-          echo "port=$(jq -r '.service.port // empty' resp.json)"     >> "$GITHUB_OUTPUT"
+          {
+            printf 'ok=%s\n'    "$(jq -r '.ok' resp.json)"
+            printf 'ts=%s\n'    "$(jq -r '.generated // (now|todate)' resp.json)"
+            printf 'host=%s\n'  "$(jq -r '.service.host // empty' resp.json)"
+            printf 'port=%s\n'  "$(jq -r '.service.port // empty' resp.json)"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Append + trim history (only keep latest window)
         shell: bash
