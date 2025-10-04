@@ -9,10 +9,10 @@ on:
 permissions:
   contents: write
 
-# Wichtig: NICHT mehr abbrechen – stattdessen in die Queue stellen.
+# FIX: cancel-in-progress wieder auf true
 concurrency:
   group: bedrock-status
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   FILEPATH: "data/status.json"
@@ -22,9 +22,11 @@ env:
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # Neu: Max 5 Min pro Run
+    
     steps:
-      - name: Random jitter (0–15s) to avoid thundering herd
-        run: sleep $(( RANDOM % 16 ))
+      - name: Random jitter (0–45s) to avoid thundering herd
+        run: sleep $(( RANDOM % 46 ))
 
       - name: Checkout main
         uses: actions/checkout@v4
@@ -57,8 +59,6 @@ jobs:
           else
             echo "Found $FILEPATH"
           fi
-          echo "HEAD of $FILEPATH:"
-          head -n 30 "$FILEPATH" || true
 
       - name: Pull latest from API (retry, robust)
         id: ping
@@ -67,8 +67,9 @@ jobs:
           set -euo pipefail
           : "${API_URL:?API_URL not set}"
           echo "GET $API_URL"
-          # 3 Versuche, kleiner Timeout
-          if ! curl --fail --show-error --silent --max-time 12 --retry 2 --retry-delay 2 "$API_URL" -o resp.json; then
+          
+          # 3 Versuche mit kürzerem Timeout
+          if ! curl --fail --show-error --silent --max-time 10 --retry 2 --retry-delay 1 "$API_URL" -o resp.json; then
             echo "curl failed → treat as offline"
             echo '{"ok":false,"generated":null,"service":{}}' > resp.json
           fi
@@ -78,10 +79,6 @@ jobs:
             echo "response has no boolean .ok → force offline"
             jq '.ok=false' resp.json > resp.fixed.json && mv resp.fixed.json resp.json
           fi
-
-          echo "----- API response -----"
-          cat resp.json || true
-          echo "------------------------"
 
           # Outputs für nachfolgende Steps
           {
@@ -117,9 +114,6 @@ jobs:
             ' "$FILEPATH" > "$FILEPATH.tmp"
 
           mv "$FILEPATH.tmp" "$FILEPATH"
-
-          echo "TAIL of $FILEPATH:"
-          tail -n 20 "$FILEPATH" || true
 
       - name: Commit & push if changed
         shell: bash
