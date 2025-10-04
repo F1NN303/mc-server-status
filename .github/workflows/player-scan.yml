@@ -15,18 +15,17 @@ concurrency:
 env:
   BEDROCK_HOST: "important-instrumentation.gl.at.ply.gg"
   BEDROCK_PORT: "18232"
-  # FIX: Schreibe nach data/ statt public/ (konsistent mit status.json)
   OUT_LIVE: "data/players.json"
   OUT_HISTORY: "data/player-count-history.json"
-  KEEP_SAMPLES: "2016"    # 7 Tage à 5-Minuten-Slots
+  KEEP_SAMPLES: "2016"
 
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 5  # Neu: Max 5 Min pro Run
+    timeout-minutes: 5
     
     steps:
-      - name: Random jitter (0–45s)
+      - name: Random jitter
         run: sleep $(( RANDOM % 46 ))
 
       - name: Checkout main
@@ -43,7 +42,7 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Query Bedrock via API (Fallback: gamedig)
+      - name: Query Bedrock via API
         shell: bash
         run: |
           set -euo pipefail
@@ -53,102 +52,81 @@ jobs:
 
           echo "Querying ${HOST}:${PORT}..."
 
-          # Methode 1: API (schneller, zuverlässiger)
           if curl -fsSL --max-time 8 "https://api.mcsrvstat.us/bedrock/3/${HOST}:${PORT}" -o api_raw.json 2>/dev/null; then
-            echo "✅ API-Abfrage erfolgreich"
+            echo "API query successful"
             
-            # Normalisieren
             jq --arg ts "$date_iso" \
                --arg host "$HOST" \
                --argjson port ${PORT:-0} '
-                def arrnames: if (.players.list|type)=="array" then .players.list else [] end;
-                def count:    if (.players.online|type)=="number" then .players.online else 0 end;
                 {
                   generated: $ts,
                   service: { name: "Minecraft Bedrock", host: $host, port: $port },
                   online: (.online // false),
                   motd: (if .motd.clean then (.motd.clean | join(" ")) else "" end),
-                  playerCount: count,
+                  playerCount: (if .players.online then .players.online else 0 end),
                   max: (.players.max // 0),
-                  players: arrnames
+                  players: (if .players.list then .players.list else [] end)
                 }
                ' api_raw.json > players_norm.json
           
-          # Methode 2: gamedig (Fallback)
           elif npx -y gamedig@4 --type minecraftbedrock --host "$HOST" --port "$PORT" > gamedig_raw.json 2>/dev/null; then
-            echo "✅ gamedig-Abfrage erfolgreich (Fallback)"
+            echo "gamedig query successful"
             
             jq --arg ts "$date_iso" \
                --arg host "$HOST" \
                --argjson port ${PORT:-0} '
-                def arrnames: if (.players|type)=="array" then (.players|map(.name)|unique) else [] end;
-                def count:    if (.players|type)=="array" then (.players|length) else 0 end;
                 {
                   generated: $ts,
                   service: { name: "Minecraft Bedrock", host: $host, port: $port },
-                  online: (has("name") or count > 0),
+                  online: (if .players then (.players | length > 0) else false end),
                   motd: (.name // ""),
-                  playerCount: count,
+                  playerCount: (if .players then (.players | length) else 0 end),
                   max: (.maxplayers // 0),
-                  players: arrnames
+                  players: (if .players then [.players[].name] else [] end)
                 }
                ' gamedig_raw.json > players_norm.json
           
-          # Methode 3: Offline (wenn beides fehlschlägt)
           else
-            echo "❌ Beide Methoden fehlgeschlagen → Offline"
+            echo "Both methods failed - offline"
             jq -n --arg ts "$date_iso" \
                   --arg host "$HOST" \
-                  --argjson port ${PORT:-0} '{
-                    generated: $ts,
-                    service: { name: "Minecraft Bedrock", host: $host, port: $port },
-                    online: false,
-                    motd: "",
-                    playerCount: 0,
-                    max: 0,
-                    players: []
-                  }' > players_norm.json
+                  --argjson port ${PORT:-0} \
+                  '{generated:$ts,service:{name:"Minecraft Bedrock",host:$host,port:$port},online:false,motd:"",playerCount:0,max:0,players:[]}' \
+                  > players_norm.json
           fi
 
-          echo "---- Normalisiertes Ergebnis ----"
+          echo "Result:"
           cat players_norm.json
-          echo "-----------------------------------"
 
           mkdir -p "$(dirname "$OUT_LIVE")" "$(dirname "$OUT_HISTORY")"
 
-          # Schreibe players.json (nur wenn geändert)
           if [ -s "$OUT_LIVE" ] && diff -q "$OUT_LIVE" players_norm.json >/dev/null 2>&1; then
-            echo "No change in $OUT_LIVE"
+            echo "No change"
           else
             cp players_norm.json "$OUT_LIVE"
-            echo "✅ Wrote $OUT_LIVE"
+            echo "Updated $OUT_LIVE"
           fi
 
-          # History-Datei initialisieren
           if ! [ -s "$OUT_HISTORY" ] || ! jq -e 'type=="array"' "$OUT_HISTORY" >/dev/null 2>&1; then
             echo "[]" > "$OUT_HISTORY"
           fi
 
-          # Neuen Sample anhängen und trimmen
           jq --arg ts "$date_iso" \
              --argjson c "$(jq -r '.playerCount' players_norm.json)" \
-             --argjson keep ${KEEP_SAMPLES:-2016} '
-               . + [{ts:$ts, online:$c}] | .[-($keep|tonumber):]
-             ' "$OUT_HISTORY" > "$OUT_HISTORY.tmp" && mv "$OUT_HISTORY.tmp" "$OUT_HISTORY"
-          
-          echo "✅ Updated history: $(jq 'length' "$OUT_HISTORY") samples"
+             --argjson keep ${KEEP_SAMPLES:-2016} \
+             '. + [{ts:$ts,online:$c}] | .[-($keep|tonumber):]' \
+             "$OUT_HISTORY" > "$OUT_HISTORY.tmp" && mv "$OUT_HISTORY.tmp" "$OUT_HISTORY"
 
-      - name: Commit & push if changed
+      - name: Commit and push
         shell: bash
         run: |
           set -euo pipefail
           if git diff --quiet -- data/players.json data/player-count-history.json; then
-            echo "No changes → nothing to commit."
+            echo "No changes"
           else
-            git config user.name  "${{ github.actor }}"
+            git config user.name "${{ github.actor }}"
             git config user.email "${{ github.actor }}@users.noreply.github.com"
             git add data/players.json data/player-count-history.json
             git commit -m "players: $(date -u +%FT%TZ) [auto]"
             git push origin main
-            echo "✅ Pushed updates."
           fi
