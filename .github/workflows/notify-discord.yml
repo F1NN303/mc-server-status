@@ -40,17 +40,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1) Live abrufen
           if ! curl -fsSL "$API_URL" -o "$STATUS_DIR/live_raw.json"; then
             echo '{}' > "$STATUS_DIR/live_raw.json"
           fi
 
-          # 2) JSON validieren
           if ! jq -e . "$STATUS_DIR/live_raw.json" >/dev/null 2>&1; then
             echo '{}' > "$STATUS_DIR/live_raw.json"
           fi
 
-          # 3) FIX: Korrekte Datumskonvertierung
           jq -r '
             def parse_timestamp:
               if type == "string" then
@@ -77,98 +74,175 @@ jobs:
             }
           ' "$STATUS_DIR/live_raw.json" > "$STATUS_DIR/live.json"
 
-          # 4) Fingerprint
-          printf '%s\t%s\t%s\n' \
-            "$(jq -r '.online' "$STATUS_DIR/live.json")" \
-            "$(jq -r '.players.online' "$STATUS_DIR/live.json")" \
-            "$(jq -r '.version' "$STATUS_DIR/live.json")" \
-            > "$STATUS_DIR/live.fingerprint"
-
-          if [ -f "$STATUS_DIR/prev.fingerprint" ]; then
-            if cmp -s "$STATUS_DIR/live.fingerprint" "$STATUS_DIR/prev.fingerprint"; then
-              echo "changed=0" >> "$GITHUB_OUTPUT"
-            else
-              echo "changed=1" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "changed=1" >> "$GITHUB_OUTPUT"
-          fi
+          # Immer Update senden (auch ohne Änderung)
+          echo "changed=1" >> "$GITHUB_OUTPUT"
 
       - name: Load previous status
-        if: steps.fetch.outputs.changed == '1'
         run: test -f "$STATUS_DIR/prev.json" || echo '{}' > "$STATUS_DIR/prev.json"
 
-      - name: Send Discord notification
-        if: steps.fetch.outputs.changed == '1'
+      - name: Update or Create Discord message
         env:
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         shell: bash
         run: |
           set -euo pipefail
 
-          # Debug: Webhook-URL prüfen
           if [ -z "${WEBHOOK_URL:-}" ]; then
-            echo "ERROR: DISCORD_WEBHOOK_URL Secret ist nicht gesetzt!"
+            echo "ERROR: DISCORD_WEBHOOK_URL Secret nicht gesetzt!"
             exit 1
           fi
 
           ONLINE=$(jq -r '.online' "$STATUS_DIR/live.json")
-          PLAYERS=$(jq -r '.players.online' "$STATUS_DIR/live.json")
+          PLAYERS_ONLINE=$(jq -r '.players.online' "$STATUS_DIR/live.json")
+          PLAYERS_MAX=$(jq -r '.players.max' "$STATUS_DIR/live.json")
           VERSION=$(jq -r '.version' "$STATUS_DIR/live.json")
+          MOTD=$(jq -r '.motd' "$STATUS_DIR/live.json")
           CHECKED=$(jq -r '.checked_at_iso' "$STATUS_DIR/live.json")
-          COLOR=$([ "$ONLINE" = "true" ] && echo 3066993 || echo 15158332)
+          PREV_ONLINE=$(jq -r '.online // "unknown"' "$STATUS_DIR/prev.json")
+
+          # Status-spezifische Variablen
+          if [ "$ONLINE" = "true" ]; then
+            COLOR=3066993
+            EMOJI="🟢"
+            STATUS_TEXT="ONLINE"
+            PING_CONTENT=""
+            if [ "$PREV_ONLINE" = "false" ]; then
+              TITLE="✅ Server ist wieder ONLINE!"
+              PING_CONTENT="@everyone"
+            else
+              TITLE="Server Status"
+            fi
+          else
+            COLOR=15158332
+            EMOJI="🔴"
+            STATUS_TEXT="OFFLINE"
+            PING_CONTENT=""
+            if [ "$PREV_ONLINE" = "true" ]; then
+              TITLE="⚠️ Server ist OFFLINE!"
+              PING_CONTENT="@everyone"
+            else
+              TITLE="Server Status"
+            fi
+          fi
+
+          # Player-Liste
+          PLAYER_SAMPLE=$(jq -r '
+            if .players.sample | length > 0 then
+              .players.sample | map("• " + .) | join("\n")
+            else
+              "_Keine Spieler online_"
+            end
+          ' "$STATUS_DIR/live.json")
+
+          # Uptime berechnen (letzte 24h)
+          if [ -f "public/history.json" ]; then
+            UPTIME_24H=$(jq -r '
+              [.history[] | select((.ts | fromdateiso8601) > (now - 86400))] as $last24h |
+              if ($last24h | length) > 0 then
+                ([$last24h[] | select(.ok == true)] | length) / ($last24h | length) * 100 | floor
+              else
+                0
+              end
+            ' public/history.json 2>/dev/null || echo "0")
+          else
+            UPTIME_24H="N/A"
+          fi
 
           # Payload erstellen
           jq -n \
-            --arg online "$ONLINE" \
-            --arg players "$PLAYERS" \
+            --arg content "$PING_CONTENT" \
+            --arg title "$TITLE" \
+            --arg status "$STATUS_TEXT" \
+            --arg emoji "$EMOJI" \
+            --arg players_online "$PLAYERS_ONLINE" \
+            --arg players_max "$PLAYERS_MAX" \
             --arg version "$VERSION" \
+            --arg motd "$MOTD" \
+            --arg player_sample "$PLAYER_SAMPLE" \
             --arg checked "$CHECKED" \
+            --arg uptime "$UPTIME_24H" \
             --argjson color "$COLOR" '
             {
+              content: (if $content != "" then $content else null end),
               embeds: [{
-                title: "Bedrock Server Status",
-                description: (if $online=="true" then "🟢 **ONLINE**" else "🔴 **OFFLINE**" end),
+                title: $title,
+                description: ($emoji + " **" + $status + "**\n" + $motd),
                 color: $color,
                 fields: [
-                  {name: "Players", value: ($players + " online"), inline: true},
-                  {name: "Version", value: $version, inline: true},
-                  {name: "Checked", value: $checked, inline: false}
+                  {name: "👥 Spieler", value: ($players_online + " / " + $players_max), inline: true},
+                  {name: "📦 Version", value: $version, inline: true},
+                  {name: "📊 Uptime 24h", value: ($uptime + "%"), inline: true},
+                  {name: "👤 Online Spieler", value: $player_sample, inline: false},
+                  {name: "🕐 Letzter Check", value: $checked, inline: false}
                 ],
-                timestamp: (now | todate)
+                timestamp: (now | todate),
+                footer: {text: "Auto-Update alle 5 Min"}
               }]
             }
           ' > payload.json
 
-          echo "Sending Discord notification..."
-          cat payload.json
-          
-          # Discord webhook senden
-          HTTP_CODE=$(curl -w "%{http_code}" -o response.txt -fsSL \
-            -H "Content-Type: application/json" \
-            -d @payload.json \
-            "$WEBHOOK_URL")
-
-          echo "Discord Response Code: $HTTP_CODE"
-          cat response.txt || true
-
-          if [ "$HTTP_CODE" != "204" ] && [ "$HTTP_CODE" != "200" ]; then
-            echo "ERROR: Discord webhook failed with code $HTTP_CODE"
-            exit 1
+          # Message ID aus vorherigem Run laden
+          MESSAGE_ID=""
+          if [ -f "$STATUS_DIR/message_id.txt" ]; then
+            MESSAGE_ID=$(cat "$STATUS_DIR/message_id.txt")
           fi
 
-          echo "Discord notification sent successfully!"
+          if [ -n "$MESSAGE_ID" ]; then
+            # UPDATE existierende Nachricht
+            echo "Updating existing message ID: $MESSAGE_ID"
+            
+            # Extrahiere Webhook-Token aus URL
+            WEBHOOK_ID=$(echo "$WEBHOOK_URL" | grep -oP 'webhooks/\K[0-9]+')
+            WEBHOOK_TOKEN=$(echo "$WEBHOOK_URL" | grep -oP 'webhooks/[0-9]+/\K[^/?]+')
+            
+            HTTP_CODE=$(curl -w "%{http_code}" -o response.txt -s \
+              -X PATCH \
+              -H "Content-Type: application/json" \
+              -d @payload.json \
+              "https://discord.com/api/v10/webhooks/${WEBHOOK_ID}/${WEBHOOK_TOKEN}/messages/${MESSAGE_ID}")
+
+            echo "Update Response: $HTTP_CODE"
+            cat response.txt || true
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Message updated successfully!"
+            else
+              echo "Update failed, creating new message..."
+              MESSAGE_ID=""
+            fi
+          fi
+
+          # Wenn keine Message ID oder Update fehlgeschlagen: Neue Nachricht senden
+          if [ -z "$MESSAGE_ID" ]; then
+            echo "Creating new Discord message..."
+            
+            HTTP_CODE=$(curl -w "%{http_code}" -o response.txt -s \
+              -H "Content-Type: application/json" \
+              -d @payload.json \
+              "${WEBHOOK_URL}?wait=true")
+
+            echo "Create Response: $HTTP_CODE"
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              # Speichere Message ID für zukünftige Updates
+              NEW_MESSAGE_ID=$(jq -r '.id' response.txt)
+              echo "$NEW_MESSAGE_ID" > "$STATUS_DIR/message_id.txt"
+              echo "New message created with ID: $NEW_MESSAGE_ID"
+            else
+              echo "Failed to create message"
+              cat response.txt || true
+              exit 1
+            fi
+          fi
 
       - name: Update cache
-        if: steps.fetch.outputs.changed == '1'
         shell: bash
         run: |
           set -euo pipefail
           cp "$STATUS_DIR/live.json" "$STATUS_DIR/prev.json"
-          cp "$STATUS_DIR/live.fingerprint" "$STATUS_DIR/prev.fingerprint"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "$STATUS_DIR/prev.json" "$STATUS_DIR/prev.fingerprint"
+          git add "$STATUS_DIR/prev.json" "$STATUS_DIR/message_id.txt"
           git commit -m "chore(status): update bedrock status [skip ci]" || exit 0
           git push
