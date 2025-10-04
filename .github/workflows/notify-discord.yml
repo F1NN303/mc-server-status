@@ -3,7 +3,7 @@ name: Notify Discord on status change
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *" # alle 5 Minuten
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
@@ -40,42 +40,48 @@ jobs:
         run: |
           set -euo pipefail
 
-          # 1) Live abrufen (bei Fehler leeres JSON)
+          # 1) Live abrufen
           if ! curl -fsSL "$API_URL" -o "$STATUS_DIR/live_raw.json"; then
             echo '{}' > "$STATUS_DIR/live_raw.json"
           fi
 
-          # 2) JSON validieren, sonst leeres JSON
+          # 2) JSON validieren
           if ! jq -e . "$STATUS_DIR/live_raw.json" >/dev/null 2>&1; then
             echo '{}' > "$STATUS_DIR/live_raw.json"
           fi
 
-          # 3) Robust normalisieren (FIX: Datum erst parsen, dann strftime)
+          # 3) FIX: Korrekte Datumskonvertierung
           jq -r '
-            def ts:
-              (.lastChanged // .updatedAt // .timestamp // now)
-              | (if type=="string" then fromdateiso8601? else . end)
-              // now;
+            def parse_timestamp:
+              if type == "string" then
+                try fromdateiso8601 catch now
+              elif type == "number" then
+                .
+              else
+                now
+              end;
 
+            . as $root |
+            ($root.lastChanged // $root.updatedAt // $root.timestamp // now) | parse_timestamp as $ts |
             {
-              online:      (.online // false),
-              version:     (.version // .bedrockVersion // ""),
-              motd:        (.motd // .serverName // ""),
+              online: ($root.online // false),
+              version: ($root.version // $root.bedrockVersion // "unknown"),
+              motd: ($root.motd // $root.serverName // ""),
               players: {
-                online: (.players.online // .playersOnline // 0),
-                max:    (.players.max    // .playersMax    // 0),
-                sample: (.players.sample // [])
+                online: ($root.players.online // $root.playersOnline // 0),
+                max: ($root.players.max // $root.playersMax // 0),
+                sample: ($root.players.sample // [])
               },
-              checked_at_unix: (ts | floor),
-              checked_at_iso:  (ts | strftime("%Y-%m-%d %H:%M:%S UTC"))
+              checked_at_unix: ($ts | floor),
+              checked_at_iso: ($ts | strftime("%Y-%m-%d %H:%M:%S UTC"))
             }
           ' "$STATUS_DIR/live_raw.json" > "$STATUS_DIR/live.json"
 
-          # 4) Fingerprint für Änderungsdetektion
+          # 4) Fingerprint
           printf '%s\t%s\t%s\n' \
-            "$(jq -r '.online'          "$STATUS_DIR/live.json")" \
-            "$(jq -r '.players.online'  "$STATUS_DIR/live.json")" \
-            "$(jq -r '.version'         "$STATUS_DIR/live.json")" \
+            "$(jq -r '.online' "$STATUS_DIR/live.json")" \
+            "$(jq -r '.players.online' "$STATUS_DIR/live.json")" \
+            "$(jq -r '.version' "$STATUS_DIR/live.json")" \
             > "$STATUS_DIR/live.fingerprint"
 
           if [ -f "$STATUS_DIR/prev.fingerprint" ]; then
@@ -85,15 +91,14 @@ jobs:
               echo "changed=1" >> "$GITHUB_OUTPUT"
             fi
           else
-            # Erster Lauf -> einmal benachrichtigen
             echo "changed=1" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Load previous status (if any)
+      - name: Load previous status
         if: steps.fetch.outputs.changed == '1'
         run: test -f "$STATUS_DIR/prev.json" || echo '{}' > "$STATUS_DIR/prev.json"
 
-      - name: Check change and (optionally) notify Discord
+      - name: Send Discord notification
         if: steps.fetch.outputs.changed == '1'
         env:
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -101,48 +106,68 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Debug: Webhook-URL prüfen
+          if [ -z "${WEBHOOK_URL:-}" ]; then
+            echo "ERROR: DISCORD_WEBHOOK_URL Secret ist nicht gesetzt!"
+            exit 1
+          fi
+
           ONLINE=$(jq -r '.online' "$STATUS_DIR/live.json")
           PLAYERS=$(jq -r '.players.online' "$STATUS_DIR/live.json")
           VERSION=$(jq -r '.version' "$STATUS_DIR/live.json")
           CHECKED=$(jq -r '.checked_at_iso' "$STATUS_DIR/live.json")
           COLOR=$([ "$ONLINE" = "true" ] && echo 3066993 || echo 15158332)
 
-          # Discord-Embed erzeugen (timestamp im Embed = jetzt)
-          jq -n --arg online "$ONLINE" \
-                --arg players "$PLAYERS" \
-                --arg version "$VERSION" \
-                --arg checked "$CHECKED" \
-                --argjson color "$COLOR" '
+          # Payload erstellen
+          jq -n \
+            --arg online "$ONLINE" \
+            --arg players "$PLAYERS" \
+            --arg version "$VERSION" \
+            --arg checked "$CHECKED" \
+            --argjson color "$COLOR" '
             {
               embeds: [{
                 title: "Bedrock Server Status",
                 description: (if $online=="true" then "🟢 **ONLINE**" else "🔴 **OFFLINE**" end),
                 color: $color,
                 fields: [
-                  {name:"Players", value: ($players + " online"), inline:true},
-                  {name:"Version", value: $version, inline:true},
-                  {name:"Checked", value: $checked, inline:true}
+                  {name: "Players", value: ($players + " online"), inline: true},
+                  {name: "Version", value: $version, inline: true},
+                  {name: "Checked", value: $checked, inline: false}
                 ],
                 timestamp: (now | todate)
               }]
             }
           ' > payload.json
 
-          if [ -n "${WEBHOOK_URL:-}" ]; then
-            curl -fsSL -H "Content-Type: application/json" -d @payload.json "$WEBHOOK_URL"
-          else
-            echo "WARN: Kein DISCORD_WEBHOOK_URL Secret gesetzt – überspringe Notify."
+          echo "Sending Discord notification..."
+          cat payload.json
+          
+          # Discord webhook senden
+          HTTP_CODE=$(curl -w "%{http_code}" -o response.txt -fsSL \
+            -H "Content-Type: application/json" \
+            -d @payload.json \
+            "$WEBHOOK_URL")
+
+          echo "Discord Response Code: $HTTP_CODE"
+          cat response.txt || true
+
+          if [ "$HTTP_CODE" != "204" ] && [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Discord webhook failed with code $HTTP_CODE"
+            exit 1
           fi
 
-      - name: Update cache file (commit only if changed)
+          echo "Discord notification sent successfully!"
+
+      - name: Update cache
         if: steps.fetch.outputs.changed == '1'
         shell: bash
         run: |
           set -euo pipefail
-          cp "$STATUS_DIR/live.json"        "$STATUS_DIR/prev.json"
+          cp "$STATUS_DIR/live.json" "$STATUS_DIR/prev.json"
           cp "$STATUS_DIR/live.fingerprint" "$STATUS_DIR/prev.fingerprint"
 
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "$STATUS_DIR/prev.json" "$STATUS_DIR/prev.fingerprint"
           git commit -m "chore(status): update bedrock status [skip ci]" || exit 0
