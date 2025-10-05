@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="dark light" />
     <title>Server Dashboard - Erweiterte Informationen</title>
     <style>
+        /* [Alle vorhandenen Styles bleiben gleich - hier nur der fehlende Teil] */
         :root {
             --bg: #0a0c10;
             --bg-secondary: #0f1419;
@@ -48,7 +49,6 @@
             padding: 2rem;
         }
 
-        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
@@ -108,7 +108,12 @@
             border-color: var(--accent-hover);
         }
 
-        /* Status Bar */
+        .btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
         .status-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -173,7 +178,6 @@
         .change-down { color: var(--danger); }
         .change-neutral { color: var(--text-muted); }
 
-        /* Cards */
         .card {
             background: var(--panel);
             border: 1px solid var(--line);
@@ -211,7 +215,6 @@
             color: var(--text-secondary);
         }
 
-        /* Grid Layouts */
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -224,7 +227,6 @@
             gap: 1rem;
         }
 
-        /* Charts */
         .chart-container {
             position: relative;
             height: 300px;
@@ -236,7 +238,6 @@
             height: 100% !important;
         }
 
-        /* Tables */
         .table-container {
             overflow-x: auto;
             margin: 1rem 0;
@@ -270,7 +271,6 @@
             background: var(--panel-hover);
         }
 
-        /* Player List */
         .player-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -310,7 +310,6 @@
             white-space: nowrap;
         }
 
-        /* Loading States */
         .loading {
             display: inline-block;
             width: 20px;
@@ -339,7 +338,6 @@
             100% { background-position: -200% 0; }
         }
 
-        /* Badges */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -376,7 +374,6 @@
             border: 1px solid rgba(6, 182, 212, 0.3);
         }
 
-        /* Tabs */
         .tabs {
             display: flex;
             gap: 0.5rem;
@@ -427,7 +424,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Alerts */
         .alert {
             padding: 1rem;
             border-radius: var(--radius);
@@ -455,7 +451,31 @@
             color: var(--warning);
         }
 
-        /* Responsive */
+        .alert-info {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            color: var(--info);
+        }
+
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: var(--line);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar.success { background: var(--success); }
+        .progress-bar.danger { background: var(--danger); }
+        .progress-bar.warning { background: var(--warning); }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -479,7 +499,6 @@
             }
         }
 
-        /* Tooltips */
         [data-tooltip] {
             position: relative;
         }
@@ -500,55 +519,30 @@
             z-index: 1000;
             margin-bottom: 0.5rem;
         }
-
-        /* Progress Bars */
-        .progress {
-            width: 100%;
-            height: 8px;
-            background: var(--line);
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: var(--accent);
-            border-radius: 999px;
-            transition: width 0.3s ease;
-        }
-
-        .progress-bar.success { background: var(--success); }
-        .progress-bar.danger { background: var(--danger); }
-        .progress-bar.warning { background: var(--warning); }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
-            <h1>🎮 Server Dashboard</h1>
+            <h1>Server Dashboard</h1>
             <nav class="nav-buttons">
-                <a href="./index.html" class="btn">📊 Status</a>
-                <a href="./ping.html" class="btn">🔧 Ping & Latenz</a>
-                <a href="./rules.html" class="btn">📜 Regeln</a>
-                <button class="btn btn-primary" onclick="refreshAll()">🔄 Aktualisieren</button>
+                <a href="./index.html" class="btn">Status</a>
+                <a href="./ping.html" class="btn">Ping & Latenz</a>
+                <button class="btn btn-primary" onclick="refreshAll()">Aktualisieren</button>
             </nav>
         </header>
 
-        <!-- Live Status Bar -->
         <div class="status-bar" id="statusBar">
             <div class="status-item" id="statusCard">
                 <div class="status-label">Server Status</div>
                 <div class="status-value" id="serverStatus">
                     <span class="loading"></span>
                 </div>
-                <div class="status-change" id="statusChange"></div>
             </div>
             
             <div class="status-item">
                 <div class="status-label">Spieler Online</div>
                 <div class="status-value" id="playersOnline">—</div>
-                <div class="status-change" id="playerChange"></div>
             </div>
             
             <div class="status-item">
@@ -562,37 +556,21 @@
             <div class="status-item">
                 <div class="status-label">Uptime Heute</div>
                 <div class="status-value" id="uptimeToday">—</div>
-                <div class="status-change" id="uptimeChange"></div>
-            </div>
-            
-            <div class="status-item">
-                <div class="status-label">Latenz</div>
-                <div class="status-value" id="latency">—</div>
-                <div class="status-change" id="latencyChange"></div>
-            </div>
-            
-            <div class="status-item">
-                <div class="status-label">Nächste Wartung</div>
-                <div class="status-value" id="nextMaintenance" style="font-size: 1rem">Keine geplant</div>
             </div>
         </div>
 
-        <!-- Alert Messages -->
         <div id="alertContainer"></div>
 
-        <!-- Main Content Grid -->
         <div class="grid-2">
-            <!-- Server Details Card -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">🖥️ Server Details</h2>
+                    <h2 class="card-title">Server Details</h2>
                     <span class="card-subtitle" id="serverUpdateTime">—</span>
                 </div>
                 
                 <div class="tabs">
-                    <button class="tab active" onclick="switchTab('general')">Allgemein</button>
-                    <button class="tab" onclick="switchTab('performance')">Performance</button>
-                    <button class="tab" onclick="switchTab('network')">Netzwerk</button>
+                    <button class="tab active" onclick="switchTab(event, 'general')">Allgemein</button>
+                    <button class="tab" onclick="switchTab(event, 'performance')">Performance</button>
                 </div>
                 
                 <div class="tab-content active" id="general-tab">
@@ -618,14 +596,6 @@
                                 <td><strong>MOTD</strong></td>
                                 <td id="serverMotd">—</td>
                             </tr>
-                            <tr>
-                                <td><strong>Gamemode</strong></td>
-                                <td id="serverGamemode">—</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Whitelist</strong></td>
-                                <td id="serverWhitelist">—</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -634,10 +604,6 @@
                     <table>
                         <tbody>
                             <tr>
-                                <td><strong>TPS (Ticks/s)</strong></td>
-                                <td id="serverTps">—</td>
-                            </tr>
-                            <tr>
                                 <td><strong>CPU Auslastung</strong></td>
                                 <td id="serverCpu">—</td>
                             </tr>
@@ -645,350 +611,82 @@
                                 <td><strong>RAM Nutzung</strong></td>
                                 <td id="serverRam">—</td>
                             </tr>
-                            <tr>
-                                <td><strong>Chunks geladen</strong></td>
-                                <td id="serverChunks">—</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Entities</strong></td>
-                                <td id="serverEntities">—</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <div class="tab-content" id="network-tab">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td><strong>Ping (ICMP)</strong></td>
-                                <td id="networkPing">—</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Packet Loss</strong></td>
-                                <td id="networkLoss">—</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Bandwidth In</strong></td>
-                                <td id="networkIn">—</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Bandwidth Out</strong></td>
-                                <td id="networkOut">—</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Verbindungen</strong></td>
-                                <td id="networkConnections">—</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Player Statistics Card -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">👥 Spieler Statistiken</h2>
+                    <h2 class="card-title">Spieler Statistiken</h2>
                     <span class="badge badge-info" id="playerCount">0 Online</span>
                 </div>
                 
                 <div class="player-grid" id="playerList">
                     <div class="skeleton" style="height: 48px"></div>
                 </div>
-                
-                <div style="margin-top: 1rem">
-                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Statistiken</h3>
-                    <div class="grid-3">
-                        <div>
-                            <div class="status-label">Ø Spieler (24h)</div>
-                            <div style="font-size: 1.25rem; font-weight: 600" id="avgPlayers24h">—</div>
-                        </div>
-                        <div>
-                            <div class="status-label">Peak (24h)</div>
-                            <div style="font-size: 1.25rem; font-weight: 600" id="peakPlayers24h">—</div>
-                        </div>
-                        <div>
-                            <div class="status-label">Unique (7d)</div>
-                            <div style="font-size: 1.25rem; font-weight: 600" id="uniquePlayers7d">—</div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- Charts Section -->
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">📈 Verlaufs-Diagramme</h2>
-                <div class="nav-buttons">
-                    <button class="btn" onclick="changeTimeRange('1h')">1h</button>
-                    <button class="btn" onclick="changeTimeRange('6h')">6h</button>
-                    <button class="btn active" onclick="changeTimeRange('24h')">24h</button>
-                    <button class="btn" onclick="changeTimeRange('7d')">7d</button>
-                    <button class="btn" onclick="changeTimeRange('30d')">30d</button>
-                </div>
+                <h2 class="card-title">Verlaufs-Diagramme</h2>
             </div>
             
-            <div class="grid-2">
-                <div>
-                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Spielerzahlen</h3>
-                    <div class="chart-container">
-                        <canvas id="playerChart"></canvas>
-                    </div>
-                </div>
-                <div>
-                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Server Performance</h3>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 1.5rem">
-                <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Uptime Historie</h3>
-                <div class="chart-container" style="height: 150px">
-                    <canvas id="uptimeChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Events & Logs -->
-        <div class="grid-2">
-            <!-- Recent Events -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">📋 Letzte Ereignisse</h2>
-                    <button class="btn" onclick="loadMoreEvents()">Mehr laden</button>
-                </div>
-                
-                <div id="eventsList" style="max-height: 400px; overflow-y: auto">
-                    <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem"></div>
-                    <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem"></div>
-                    <div class="skeleton" style="height: 60px"></div>
-                </div>
-            </div>
-
-            <!-- System Health -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">🏥 System Health</h2>
-                    <span class="badge badge-success" id="healthStatus">Healthy</span>
-                </div>
-                
-                <div id="healthMetrics">
-                    <div style="margin-bottom: 1rem">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
-                            <span class="status-label">API Response Time</span>
-                            <span id="apiResponseTime">—</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar success" id="apiBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
-                            <span class="status-label">Database Query Time</span>
-                            <span id="dbQueryTime">—</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar success" id="dbBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
-                            <span class="status-label">Cache Hit Rate</span>
-                            <span id="cacheHitRate">—</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar success" id="cacheBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
-                            <span class="status-label">Error Rate</span>
-                            <span id="errorRate">—</span>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar success" id="errorBar" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Advanced Analytics -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">🔍 Erweiterte Analysen</h2>
-                <button class="btn" onclick="exportAnalytics()">📥 Export</button>
-            </div>
-            
-            <div class="grid-3">
-                <div>
-                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Spieler-Aktivität Heatmap</h3>
-                    <div id="activityHeatmap" style="height: 200px; background: var(--bg-secondary); border-radius: 8px; padding: 1rem">
-                        <!-- Heatmap will be rendered here -->
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Top Spielzeiten</h3>
-                    <div id="topPlaytimes">
-                        <table style="width: 100%">
-                            <tbody id="playtimesList">
-                                <tr><td colspan="2"><div class="skeleton"></div></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Vorhersage (24h)</h3>
-                    <div id="predictions">
-                        <div style="margin-bottom: 0.5rem">
-                            <span class="status-label">Erwartete Spieler</span>
-                            <div style="font-size: 1.5rem; font-weight: 600" id="predictedPlayers">—</div>
-                        </div>
-                        <div>
-                            <span class="status-label">Peak-Zeit</span>
-                            <div style="font-size: 1rem; font-weight: 600" id="predictedPeak">—</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="chart-container">
+                <canvas id="playerChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Include Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns@2/index.min.js"></script>
 
     <script>
-    // Global variables
-    let charts = {};
-    let currentTimeRange = '24h';
-    let updateInterval = null;
-    let playerHistory = [];
-    let serverData = {};
-    let lastUpdate = null;
+    'use strict';
 
-    // API Configuration
-    const API_BASE = window.location.origin;
-    const GITHUB_RAW = 'https://raw.githubusercontent.com/F1NN303/mc-server-status/main';
+    const $ = (id) => document.getElementById(id);
+    const $$ = (selector) => document.querySelectorAll(selector);
     
+    let charts = {};
+    let updateInterval = null;
+    
+    const API_BASE = window.location.origin;
     const API_ENDPOINTS = {
         status: '/api/bedrock',
-        history: '/api/history',
-        players: '/data/players.json',
-        statusJson: '/data/status.json',
-        incidents: '/incidents.json'
+        history: '/api/history'
     };
 
-    // Utility Functions
-    const $ = (id) => document.getElementById(id);
-    const $ = (selector) => document.querySelectorAll(selector);
-    
-    function formatNumber(num) {
-        return new Intl.NumberFormat('de-DE').format(num);
-    }
-    
     function formatPercent(num) {
         return (num * 100).toFixed(1) + '%';
     }
-    
-    function formatBytes(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-    
-    function formatDuration(seconds) {
-        const days = Math.floor(seconds / 86400);
-        const hours = Math.floor((seconds % 86400) / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        
-        if (days > 0) return `${days}d ${hours}h`;
-        if (hours > 0) return `${hours}h ${minutes}m`;
-        return `${minutes}m`;
-    }
-    
-    function getRelativeTime(date) {
-        const seconds = Math.floor((Date.now() - new Date(date)) / 1000);
-        
-        if (seconds < 60) return 'vor wenigen Sekunden';
-        if (seconds < 3600) return `vor ${Math.floor(seconds / 60)} Minuten`;
-        if (seconds < 86400) return `vor ${Math.floor(seconds / 3600)} Stunden`;
-        return `vor ${Math.floor(seconds / 86400)} Tagen`;
-    }
 
-    // Data Fetching
-    async function fetchWithFallback(endpoint) {
-        const timestamp = Date.now();
-        
+    async function fetchWithTimeout(url, timeout = 5000) {
         try {
-            // Try local API first
-            const response = await fetch(`${API_BASE}${endpoint}?t=${timestamp}`, {
+            const response = await fetch(url, {
                 cache: 'no-store',
-                signal: AbortSignal.timeout(5000)
+                signal: AbortSignal.timeout(timeout)
             });
-            
-            if (response.ok) {
-                return await response.json();
-            }
+            if (response.ok) return await response.json();
         } catch (error) {
-            console.warn(`Local fetch failed for ${endpoint}:`, error);
+            console.error('Fetch error:', error);
         }
-        
-        // Fallback to GitHub raw
-        try {
-            const fallbackUrl = `${GITHUB_RAW}${endpoint}?t=${timestamp}`;
-            const response = await fetch(fallbackUrl, {
-                cache: 'no-store',
-                signal: AbortSignal.timeout(5000)
-            });
-            
-            if (response.ok) {
-                return await response.json();
-            }
-        } catch (error) {
-            console.error(`Fallback fetch failed for ${endpoint}:`, error);
-        }
-        
         return null;
     }
 
-    // Server Status Updates
     async function updateServerStatus() {
         try {
-            const [liveData, historyData, playerData] = await Promise.all([
-                fetchWithFallback(API_ENDPOINTS.status),
-                fetchWithFallback(API_ENDPOINTS.history),
-                fetchWithFallback(API_ENDPOINTS.players)
+            const [liveData, historyData] = await Promise.all([
+                fetchWithTimeout(API_BASE + API_ENDPOINTS.status),
+                fetchWithTimeout(API_BASE + API_ENDPOINTS.history)
             ]);
             
-            if (liveData) {
-                updateLiveStatus(liveData);
-            }
+            if (liveData) updateLiveStatus(liveData);
+            if (historyData) updateHistoryData(historyData);
             
-            if (historyData) {
-                updateHistoryData(historyData);
-            }
-            
-            if (playerData) {
-                updatePlayerData(playerData);
-            }
-            
-            lastUpdate = Date.now();
             $('serverUpdateTime').textContent = new Date().toLocaleTimeString('de-DE');
-            
         } catch (error) {
-            console.error('Error updating server status:', error);
+            console.error('Error updating:', error);
             showAlert('Fehler beim Laden der Server-Daten', 'danger');
         }
     }
@@ -998,33 +696,28 @@
         const statusCard = $('statusCard');
         const serverStatus = $('serverStatus');
         
-        // Update status card
         statusCard.className = 'status-item ' + (isOnline ? 'online' : 'offline');
         serverStatus.innerHTML = isOnline ? 
-            '<span style="color: var(--success)">🟢 Online</span>' : 
-            '<span style="color: var(--danger)">🔴 Offline</span>';
+            '<span style="color: var(--success)">Online</span>' : 
+            '<span style="color: var(--danger)">Offline</span>';
         
-        // Update player count
         const playersOnline = data.players?.online || 0;
         const maxPlayers = data.players?.max || 0;
         $('playersOnline').textContent = `${playersOnline}/${maxPlayers}`;
         $('playerCount').textContent = `${playersOnline} Online`;
         
-        // Update server load
         const load = maxPlayers > 0 ? (playersOnline / maxPlayers) * 100 : 0;
         $('serverLoad').textContent = formatPercent(load / 100);
         const loadBar = $('loadBar');
         loadBar.style.width = load + '%';
         loadBar.className = 'progress-bar ' + (load > 80 ? 'danger' : load > 60 ? 'warning' : 'success');
         
-        // Update server details
         $('serverName').textContent = data.service?.name || 'Minecraft Bedrock';
         $('serverHost').textContent = data.service?.host || '—';
         $('serverPort').textContent = data.service?.port || '—';
         $('serverVersion').textContent = data.version || '—';
         $('serverMotd').textContent = data.motd || '—';
         
-        // Update player list
         updatePlayerList(data.players?.sample || []);
     }
 
@@ -1038,7 +731,7 @@
         
         playerList.innerHTML = players.map(player => `
             <div class="player-card" data-tooltip="${player}">
-                <img class="player-avatar" src="https://crafatar.com/avatars/${player}?size=32&overlay" alt="${player}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>'">
+                <div class="player-avatar"></div>
                 <span class="player-name">${player}</span>
             </div>
         `).join('');
@@ -1047,7 +740,6 @@
     function updateHistoryData(data) {
         const history = data.history || [];
         
-        // Calculate uptime for today
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         
@@ -1057,41 +749,17 @@
         
         $('uptimeToday').textContent = formatPercent(uptime);
         
-        // Update charts
-        updateCharts(history);
+        updateChart(history);
     }
 
-    function updatePlayerData(data) {
-        playerHistory = data.history || data.samples || [];
-        
-        // Calculate statistics
-        const last24h = playerHistory.filter(p => 
-            new Date(p.ts || p.time) >= new Date(Date.now() - 24 * 60 * 60 * 1000)
-        );
-        
-        if (last24h.length > 0) {
-            const counts = last24h.map(p => p.online || p.players || 0);
-            const avg = counts.reduce((a, b) => a + b, 0) / counts.length;
-            const peak = Math.max(...counts);
-            
-            $('avgPlayers24h').textContent = avg.toFixed(1);
-            $('peakPlayers24h').textContent = peak.toString();
-        }
-        
-        // Update player chart
-        updatePlayerChart();
-    }
-
-    // Chart Management
-    function initCharts() {
-        // Player Chart
-        const playerCtx = $('playerChart').getContext('2d');
-        charts.playerChart = new Chart(playerCtx, {
+    function initChart() {
+        const ctx = $('playerChart').getContext('2d');
+        charts.playerChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Spieler Online',
+                    label: 'Status',
                     data: [],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -1107,112 +775,16 @@
                 },
                 scales: {
                     x: {
-                        type: 'time',
-                        time: { unit: 'hour' },
                         grid: { color: 'rgba(255, 255, 255, 0.1)' },
                         ticks: { color: '#9ca3af' }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#9ca3af' }
-                    }
-                }
-            }
-        });
-        
-        // Performance Chart
-        const perfCtx = $('performanceChart').getContext('2d');
-        charts.performanceChart = new Chart(perfCtx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'TPS',
-                        data: [],
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: 'Latenz (ms)',
-                        data: [],
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        tension: 0.4,
-                        yAxisID: 'y1'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { 
-                        display: true,
-                        labels: { color: '#9ca3af' }
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: { unit: 'hour' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        ticks: { color: '#9ca3af' }
-                    }
-                }
-            }
-        });
-        
-        // Uptime Chart
-        const uptimeCtx = $('uptimeChart').getContext('2d');
-        charts.uptimeChart = new Chart(uptimeCtx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Uptime',
-                    data: [],
-                    backgroundColor: [],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#9ca3af' }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        max: 100,
+                        max: 1,
                         grid: { color: 'rgba(255, 255, 255, 0.1)' },
                         ticks: { 
                             color: '#9ca3af',
-                            callback: function(value) {
-                                return value + '%';
-                            }
+                            callback: (value) => value === 1 ? 'Online' : value === 0 ? 'Offline' : ''
                         }
                     }
                 }
@@ -1220,98 +792,31 @@
         });
     }
 
-    function updatePlayerChart() {
-        if (!charts.playerChart || playerHistory.length === 0) return;
+    function updateChart(history) {
+        if (!charts.playerChart || !history.length) return;
         
-        const timeRange = getTimeRangeMs(currentTimeRange);
-        const filteredData = playerHistory.filter(p => 
-            new Date(p.ts || p.time) >= new Date(Date.now() - timeRange)
+        const last24h = history.filter(h => 
+            new Date(h.ts) >= new Date(Date.now() - 24 * 60 * 60 * 1000)
         );
         
-        charts.playerChart.data.labels = filteredData.map(p => new Date(p.ts || p.time));
-        charts.playerChart.data.datasets[0].data = filteredData.map(p => p.online || p.players || 0);
-        charts.playerChart.update();
+        charts.playerChart.data.labels = last24h.map(h => new Date(h.ts));
+        charts.playerChart.data.datasets[0].data = last24h.map(h => h.ok ? 1 : 0);
+        charts.playerChart.update('none');
     }
 
-    function updateCharts(history) {
-        if (!history || history.length === 0) return;
+    function switchTab(event, tabName) {
+        $$('.tab').forEach(tab => tab.classList.remove('active'));
+        $$('.tab-content').forEach(content => content.classList.remove('active'));
         
-        // Update uptime chart with daily data
-        const days = 7;
-        const dailyUptime = [];
-        const labels = [];
-        const colors = [];
-        
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            date.setHours(0, 0, 0, 0);
-            
-            const dayEnd = new Date(date);
-            dayEnd.setHours(23, 59, 59, 999);
-            
-            const dayHistory = history.filter(h => {
-                const ts = new Date(h.ts);
-                return ts >= date && ts <= dayEnd;
-            });
-            
-            const uptime = dayHistory.length > 0 ? 
-                (dayHistory.filter(h => h.ok).length / dayHistory.length) * 100 : 0;
-            
-            dailyUptime.push(uptime);
-            labels.push(date.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric' }));
-            colors.push(uptime >= 95 ? '#10b981' : uptime >= 80 ? '#f59e0b' : '#ef4444');
-        }
-        
-        if (charts.uptimeChart) {
-            charts.uptimeChart.data.labels = labels;
-            charts.uptimeChart.data.datasets[0].data = dailyUptime;
-            charts.uptimeChart.data.datasets[0].backgroundColor = colors;
-            charts.uptimeChart.update();
-        }
-    }
-
-    function getTimeRangeMs(range) {
-        const ranges = {
-            '1h': 60 * 60 * 1000,
-            '6h': 6 * 60 * 60 * 1000,
-            '24h': 24 * 60 * 60 * 1000,
-            '7d': 7 * 24 * 60 * 60 * 1000,
-            '30d': 30 * 24 * 60 * 60 * 1000
-        };
-        return ranges[range] || ranges['24h'];
-    }
-
-    // UI Functions
-    function switchTab(tabName) {
-        // Remove active class from all tabs and contents
-        $('.tab').forEach(tab => tab.classList.remove('active'));
-        $('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        // Add active class to selected tab and content
         event.target.classList.add('active');
-        $(`${tabName}-tab`).classList.add('active');
-    }
-
-    function changeTimeRange(range) {
-        currentTimeRange = range;
-        
-        // Update button states
-        $('.nav-buttons .btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        
-        // Update charts
-        updatePlayerChart();
+        $(tabName + '-tab').classList.add('active');
     }
 
     function showAlert(message, type = 'info') {
         const alertContainer = $('alertContainer');
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
-        alert.innerHTML = `
-            <span>${type === 'danger' ? '⚠️' : type === 'warning' ? '⚡' : 'ℹ️'}</span>
-            <span>${message}</span>
-        `;
+        alert.innerHTML = `<span>${message}</span>`;
         
         alertContainer.appendChild(alert);
         
@@ -1326,28 +831,12 @@
         showAlert('Daten wurden aktualisiert', 'success');
     }
 
-    function loadMoreEvents() {
-        // Placeholder for loading more events
-        showAlert('Weitere Events werden geladen...', 'info');
-    }
-
-    function exportAnalytics() {
-        // Placeholder for export functionality
-        showAlert('Export wird vorbereitet...', 'info');
-    }
-
-    // Health Monitoring
-    async function updateHealthMetrics() {
-        // Simulate health metrics
-        const apiTime = Math.random() * 100 + 50;
-        const dbTime = Math.random() * 50 + 10;
-        const cacheRate = Math.random() * 0.3 + 0.7;
-        const errorRate = Math.random() * 0.05;
-        
-        $('apiResponseTime').textContent = apiTime.toFixed(0) + ' ms';
-        $('apiBar').style.width = Math.min((apiTime / 500) * 100, 100) + '%';
-        $('apiBar').className = 'progress-bar ' + (apiTime < 200 ? 'success' : apiTime < 500 ? 'warning' : 'danger');
-        
-        $('dbQueryTime').textContent = dbTime.toFixed(0) + ' ms';
-        $('dbBar').style.width = Math.min((dbTime / 100) * 100, 100) + '%';
-        $('dbBar').className = 'progress
+    // Initialize
+    initChart();
+    updateServerStatus();
+    
+    // Auto-refresh every 60 seconds
+    updateInterval = setInterval(updateServerStatus, 60000);
+    </script>
+</body>
+</html>
