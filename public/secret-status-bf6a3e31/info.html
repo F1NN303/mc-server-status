@@ -1,298 +1,1353 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
-  <title>Server-Informationen</title>
-  <style>
-    :root{
-      --bg:#0b0d11; --panel:#101522; --line:#1b2231;
-      --muted:#6e7eb0; --good:#19c37d; --warn:#f0a019; --bad:#ef4444; --u:#95a3b6;
-      --radius:12px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:#e6ebff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
-    .wrap{max-width:1000px;margin:28px auto;padding:0 16px}
-    a{color:#93c5fd;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-    h1{margin:0;font-size:26px}
-    .nav{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel),#0b0f1a);color:var(--u);cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Server Dashboard - Erweiterte Informationen</title>
+    <style>
+        :root {
+            --bg: #0a0c10;
+            --bg-secondary: #0f1419;
+            --panel: #141922;
+            --panel-hover: #1a202c;
+            --line: #2a3441;
+            --line-light: #3a4556;
+            --text: #e8eaed;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-    .card{background:linear-gradient(180deg,var(--panel),#0c111c);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:18px;box-shadow:inset 0 0 1px rgba(0,0,0,.25)}
-    .card h2{margin:0 0 12px 0;font-size:20px}
-    .muted{color:var(--muted)}
-    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    @media (min-width:680px){ .kpis{grid-template-columns:repeat(4,minmax(0,1fr))} }
-    .kpi{border:1px solid var(--line);border-radius:10px;padding:12px 12px}
-    .kpi strong{display:block;font-size:13px;color:var(--u);font-weight:600;margin-bottom:6px}
-    .kpi .val{font-weight:700;font-size:20px}
-    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:rgba(255,255,255,.02);font-size:13px}
-    .dot{display:inline-block;width:10px;height:10px;border-radius:999px;background:#666}
-    .dot.ok{background:var(--good)}
-    .dot.warn{background:var(--warn)}
-    .dot.bad{background:var(--bad)}
-    .list{border:1px solid var(--line);border-radius:10px;padding:10px;min-height:42px;background:rgba(255,255,255,.02)}
-    .error{color:#ff6b6b;font-weight:600}
-    .src{display:inline-block;margin-left:8px;padding:4px 8px;border-radius:8px;border:1px solid var(--line);color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;font-size:12px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media (max-width:520px){ .row{grid-template-columns:1fr} }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    /* Mini-Chart */
-    .chartbox{position:relative;height:200px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02);overflow:hidden}
-    canvas{display:block;width:100%;height:200px}
-    .chart-legend{margin-top:8px;color:var(--muted);font-size:13px}
+        body {
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
 
-    .footer-note{margin-top:8px;color:var(--muted);font-size:13px}
-  </style>
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--info) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: var(--panel-hover);
+            border-color: var(--line-light);
+            color: var(--text);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-item {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .status-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--line);
+        }
+
+        .status-item.online::before { background: var(--success); }
+        .status-item.offline::before { background: var(--danger); }
+        .status-item.warning::before { background: var(--warning); }
+        .status-item.info::before { background: var(--info); }
+
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--line-light);
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .status-change {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .change-up { color: var(--success); }
+        .change-down { color: var(--danger); }
+        .change-neutral { color: var(--text-muted); }
+
+        /* Cards */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--line);
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--line);
+            color: var(--text);
+        }
+
+        tr:hover td {
+            background: var(--panel-hover);
+        }
+
+        /* Player List */
+        .player-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .player-card {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--line);
+            border-radius: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .player-card:hover {
+            background: var(--panel-hover);
+            transform: translateX(4px);
+        }
+
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background: var(--line);
+        }
+
+        .player-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--line);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--panel) 25%, var(--panel-hover) 50%, var(--panel) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+            height: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-info {
+            background: rgba(6, 182, 212, 0.2);
+            color: var(--info);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--line);
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--text);
+        }
+
+        .tab.active {
+            color: var(--accent);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--warning);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .status-bar {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid-2,
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+        }
+
+        /* Tooltips */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Progress Bars */
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: var(--line);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar.success { background: var(--success); }
+        .progress-bar.danger { background: var(--danger); }
+        .progress-bar.warning { background: var(--warning); }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <h1>Server-Informationen</h1>
-      <nav class="nav">
-        <a class="btn" href="./index.html">Statusseite</a>
-        <a class="btn" href="./ping.html">Ping &amp; Latenz</a>
-        <a class="btn" href="./rules.html">Regeln</a>
-      </nav>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎮 Server Dashboard</h1>
+            <nav class="nav-buttons">
+                <a href="./index.html" class="btn">📊 Status</a>
+                <a href="./ping.html" class="btn">🔧 Ping & Latenz</a>
+                <a href="./rules.html" class="btn">📜 Regeln</a>
+                <button class="btn btn-primary" onclick="refreshAll()">🔄 Aktualisieren</button>
+            </nav>
+        </header>
+
+        <!-- Live Status Bar -->
+        <div class="status-bar" id="statusBar">
+            <div class="status-item" id="statusCard">
+                <div class="status-label">Server Status</div>
+                <div class="status-value" id="serverStatus">
+                    <span class="loading"></span>
+                </div>
+                <div class="status-change" id="statusChange"></div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Spieler Online</div>
+                <div class="status-value" id="playersOnline">—</div>
+                <div class="status-change" id="playerChange"></div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Server Auslastung</div>
+                <div class="status-value" id="serverLoad">—</div>
+                <div class="progress" style="margin-top: 0.5rem">
+                    <div class="progress-bar" id="loadBar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Uptime Heute</div>
+                <div class="status-value" id="uptimeToday">—</div>
+                <div class="status-change" id="uptimeChange"></div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Latenz</div>
+                <div class="status-value" id="latency">—</div>
+                <div class="status-change" id="latencyChange"></div>
+            </div>
+            
+            <div class="status-item">
+                <div class="status-label">Nächste Wartung</div>
+                <div class="status-value" id="nextMaintenance" style="font-size: 1rem">Keine geplant</div>
+            </div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alertContainer"></div>
+
+        <!-- Main Content Grid -->
+        <div class="grid-2">
+            <!-- Server Details Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🖥️ Server Details</h2>
+                    <span class="card-subtitle" id="serverUpdateTime">—</span>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('general')">Allgemein</button>
+                    <button class="tab" onclick="switchTab('performance')">Performance</button>
+                    <button class="tab" onclick="switchTab('network')">Netzwerk</button>
+                </div>
+                
+                <div class="tab-content active" id="general-tab">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td><strong>Server Name</strong></td>
+                                <td id="serverName">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Host</strong></td>
+                                <td id="serverHost">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Port</strong></td>
+                                <td id="serverPort">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Version</strong></td>
+                                <td id="serverVersion">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>MOTD</strong></td>
+                                <td id="serverMotd">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gamemode</strong></td>
+                                <td id="serverGamemode">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Whitelist</strong></td>
+                                <td id="serverWhitelist">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="tab-content" id="performance-tab">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td><strong>TPS (Ticks/s)</strong></td>
+                                <td id="serverTps">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>CPU Auslastung</strong></td>
+                                <td id="serverCpu">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>RAM Nutzung</strong></td>
+                                <td id="serverRam">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chunks geladen</strong></td>
+                                <td id="serverChunks">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Entities</strong></td>
+                                <td id="serverEntities">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="tab-content" id="network-tab">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td><strong>Ping (ICMP)</strong></td>
+                                <td id="networkPing">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Packet Loss</strong></td>
+                                <td id="networkLoss">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Bandwidth In</strong></td>
+                                <td id="networkIn">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Bandwidth Out</strong></td>
+                                <td id="networkOut">—</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Verbindungen</strong></td>
+                                <td id="networkConnections">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Player Statistics Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">👥 Spieler Statistiken</h2>
+                    <span class="badge badge-info" id="playerCount">0 Online</span>
+                </div>
+                
+                <div class="player-grid" id="playerList">
+                    <div class="skeleton" style="height: 48px"></div>
+                </div>
+                
+                <div style="margin-top: 1rem">
+                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Statistiken</h3>
+                    <div class="grid-3">
+                        <div>
+                            <div class="status-label">Ø Spieler (24h)</div>
+                            <div style="font-size: 1.25rem; font-weight: 600" id="avgPlayers24h">—</div>
+                        </div>
+                        <div>
+                            <div class="status-label">Peak (24h)</div>
+                            <div style="font-size: 1.25rem; font-weight: 600" id="peakPlayers24h">—</div>
+                        </div>
+                        <div>
+                            <div class="status-label">Unique (7d)</div>
+                            <div style="font-size: 1.25rem; font-weight: 600" id="uniquePlayers7d">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">📈 Verlaufs-Diagramme</h2>
+                <div class="nav-buttons">
+                    <button class="btn" onclick="changeTimeRange('1h')">1h</button>
+                    <button class="btn" onclick="changeTimeRange('6h')">6h</button>
+                    <button class="btn active" onclick="changeTimeRange('24h')">24h</button>
+                    <button class="btn" onclick="changeTimeRange('7d')">7d</button>
+                    <button class="btn" onclick="changeTimeRange('30d')">30d</button>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <div>
+                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Spielerzahlen</h3>
+                    <div class="chart-container">
+                        <canvas id="playerChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Server Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem">
+                <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Uptime Historie</h3>
+                <div class="chart-container" style="height: 150px">
+                    <canvas id="uptimeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events & Logs -->
+        <div class="grid-2">
+            <!-- Recent Events -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📋 Letzte Ereignisse</h2>
+                    <button class="btn" onclick="loadMoreEvents()">Mehr laden</button>
+                </div>
+                
+                <div id="eventsList" style="max-height: 400px; overflow-y: auto">
+                    <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem"></div>
+                    <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem"></div>
+                    <div class="skeleton" style="height: 60px"></div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🏥 System Health</h2>
+                    <span class="badge badge-success" id="healthStatus">Healthy</span>
+                </div>
+                
+                <div id="healthMetrics">
+                    <div style="margin-bottom: 1rem">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
+                            <span class="status-label">API Response Time</span>
+                            <span id="apiResponseTime">—</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar success" id="apiBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
+                            <span class="status-label">Database Query Time</span>
+                            <span id="dbQueryTime">—</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar success" id="dbBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
+                            <span class="status-label">Cache Hit Rate</span>
+                            <span id="cacheHitRate">—</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar success" id="cacheBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem">
+                            <span class="status-label">Error Rate</span>
+                            <span id="errorRate">—</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar success" id="errorBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">🔍 Erweiterte Analysen</h2>
+                <button class="btn" onclick="exportAnalytics()">📥 Export</button>
+            </div>
+            
+            <div class="grid-3">
+                <div>
+                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Spieler-Aktivität Heatmap</h3>
+                    <div id="activityHeatmap" style="height: 200px; background: var(--bg-secondary); border-radius: 8px; padding: 1rem">
+                        <!-- Heatmap will be rendered here -->
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Top Spielzeiten</h3>
+                    <div id="topPlaytimes">
+                        <table style="width: 100%">
+                            <tbody id="playtimesList">
+                                <tr><td colspan="2"><div class="skeleton"></div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem">Vorhersage (24h)</h3>
+                    <div id="predictions">
+                        <div style="margin-bottom: 0.5rem">
+                            <span class="status-label">Erwartete Spieler</span>
+                            <div style="font-size: 1.5rem; font-weight: 600" id="predictedPlayers">—</div>
+                        </div>
+                        <div>
+                            <span class="status-label">Peak-Zeit</span>
+                            <div style="font-size: 1rem; font-weight: 600" id="predictedPeak">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- LIVE -->
-    <section class="card" id="live">
-      <h2>Live-Status
-        <span class="src" id="srcLive">Quelle: /data/players.json</span>
-      </h2>
+    <!-- Include Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2/index.min.js"></script>
 
-      <div class="row">
-        <div class="kpi">
-          <strong>Status</strong>
-          <div class="val"><span class="dot" id="dot"></span> <span id="statusTxt">—</span></div>
-        </div>
-        <div class="kpi">
-          <strong>Online</strong>
-          <div class="val" id="onlineVal">—</div>
-        </div>
-        <div class="kpi">
-          <strong>Max</strong>
-          <div class="val" id="maxVal">—</div>
-        </div>
-        <div class="kpi">
-          <strong>MOTD</strong>
-          <div class="val" id="motdVal">—</div>
-        </div>
-      </div>
+    <script>
+    // Global variables
+    let charts = {};
+    let currentTimeRange = '24h';
+    let updateInterval = null;
+    let playerHistory = [];
+    let serverData = {};
+    let lastUpdate = null;
 
-      <div class="kpi" style="margin-top:10px;">
-        <strong>Zuletzt</strong>
-        <div class="val" id="tsVal">—</div>
-      </div>
-
-      <div style="margin-top:12px">
-        <strong>Spieler (letzter Stand)</strong>
-        <div class="list" id="playersList">Keine Namen vom Server geliefert.</div>
-        <div class="error" id="liveErr" style="display:none;margin-top:8px;"></div>
-      </div>
-    </section>
-
-    <!-- Verlauf 24h -->
-    <section class="card">
-      <h2>Spieler-Verlauf (24 h)
-        <span class="src" id="srcHist">Quelle: /data/players.json</span>
-      </h2>
-      <div class="chartbox"><canvas id="hist24"></canvas></div>
-      <div class="chart-legend">
-        Ø 24 h: <strong id="avg24">—</strong> &nbsp; • &nbsp; Peak 24 h: <strong id="peak24">—</strong>
-      </div>
-      <div class="footer-note">Falls kein Verlauf in <code>players.json</code> vorhanden ist, bleibt dieser Chart leer.</div>
-    </section>
-
-    <!-- Server-Block -->
-    <section class="card">
-      <h2>Server
-        <span class="src" id="srcSrv">Quelle: /data/status.json</span>
-      </h2>
-      <div class="kpis">
-        <div class="kpi">
-          <strong>Name</strong>
-          <div class="val" id="srvName">—</div>
-        </div>
-        <div class="kpi">
-          <strong>Host:Port</strong>
-          <div class="val" id="srvHost">—</div>
-        </div>
-        <div class="kpi">
-          <strong>Zuletzt Status</strong>
-          <div class="val" id="srvLast">—</div>
-        </div>
-        <div class="kpi">
-          <strong>Letzter Zustand</strong>
-          <div class="val" id="srvOk">—</div>
-        </div>
-      </div>
-      <div class="error" id="srvErr" style="display:none;margin-top:8px;"></div>
-      <div class="footer-note">Aktualisierung alle 5 Min.</div>
-    </section>
-
-  </div>
-
-  <script>
-  (function(){
-    // ----- Quellen (lokal → Fallback Raw-GitHub) -----
-    const RAW_BASE = "https://raw.githubusercontent.com/F1NN303/mc-server-status/main";
-    const SRC_PLAYERS_LOCAL = "/data/players.json";
-    const SRC_PLAYERS_RAW   = RAW_BASE + "/data/players.json";
-    const SRC_STATUS_LOCAL  = "/data/status.json";
-    const SRC_STATUS_RAW    = RAW_BASE + "/data/status.json";
-
-    // kleine Helfer
-    const $ = sel => document.querySelector(sel);
-    const fmtNum = n => (n==null||Number.isNaN(n) ? "—" : new Intl.NumberFormat("de-DE").format(n));
-    const fmtTs = s => {
-      if(!s) return "—";
-      // akzepiere ISO (mit/ohne Z) oder UNIX(ms)
-      try{
-        let d = (typeof s==="number") ? new Date(s) : new Date(String(s));
-        if(isNaN(d)) return "—";
-        return d.toLocaleString("de-DE",{hour12:false});
-      }catch{ return "—"; }
+    // API Configuration
+    const API_BASE = window.location.origin;
+    const GITHUB_RAW = 'https://raw.githubusercontent.com/F1NN303/mc-server-status/main';
+    
+    const API_ENDPOINTS = {
+        status: '/api/bedrock',
+        history: '/api/history',
+        players: '/data/players.json',
+        statusJson: '/data/status.json',
+        incidents: '/incidents.json'
     };
 
-    async function fetchWithFallback(localUrl, rawUrl){
-      // cache-buster, um Vercel/Browser-Caches zu umgehen
-      const t = Date.now();
-      try{
-        const r = await fetch(localUrl + "?t=" + t, {cache:"no-store"});
-        if(r.ok) return { data: await r.json(), src: localUrl };
-        // 404 → Fallback
-      }catch(e){}
-      // Fallback versuchen
-      const r2 = await fetch(rawUrl + "?" + t, {cache:"no-store"});
-      if(!r2.ok) throw new Error("HTTP "+r2.status+" bei "+rawUrl);
-      return { data: await r2.json(), src: rawUrl.replace(RAW_BASE,"(raw)") };
+    // Utility Functions
+    const $ = (id) => document.getElementById(id);
+    const $ = (selector) => document.querySelectorAll(selector);
+    
+    function formatNumber(num) {
+        return new Intl.NumberFormat('de-DE').format(num);
+    }
+    
+    function formatPercent(num) {
+        return (num * 100).toFixed(1) + '%';
+    }
+    
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function formatDuration(seconds) {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        if (days > 0) return `${days}d ${hours}h`;
+        if (hours > 0) return `${hours}h ${minutes}m`;
+        return `${minutes}m`;
+    }
+    
+    function getRelativeTime(date) {
+        const seconds = Math.floor((Date.now() - new Date(date)) / 1000);
+        
+        if (seconds < 60) return 'vor wenigen Sekunden';
+        if (seconds < 3600) return `vor ${Math.floor(seconds / 60)} Minuten`;
+        if (seconds < 86400) return `vor ${Math.floor(seconds / 3600)} Stunden`;
+        return `vor ${Math.floor(seconds / 86400)} Tagen`;
     }
 
-    function renderLive(players, srcUsed){
-      $("#srcLive").textContent = "Quelle: " + srcUsed.replace(location.origin,"");
-      const last = players?.last || players; // erlaubt sowohl {last:{...}} als auch flach
-      const ok = !!last?.online || last?.ok === true;
-
-      $("#statusTxt").textContent = ok ? "online" : "offline";
-      $("#dot").className = "dot " + (ok ? "ok" : "bad");
-      $("#onlineVal").textContent = fmtNum(last?.online ?? last?.players ?? 0);
-      $("#maxVal").textContent = fmtNum(last?.max ?? last?.maxPlayers ?? 0);
-      $("#motdVal").textContent = (last?.motd ?? last?.motd_raw ?? last?.motd_clean ?? "—").toString().slice(0,120);
-      $("#tsVal").textContent = fmtTs(last?.ts ?? last?.time ?? players?.generated);
-
-      const names = last?.names || last?.playerSample || [];
-      $("#playersList").textContent = (Array.isArray(names) && names.length)
-        ? names.join(", ")
-        : "Keine Namen vom Server geliefert.";
+    // Data Fetching
+    async function fetchWithFallback(endpoint) {
+        const timestamp = Date.now();
+        
+        try {
+            // Try local API first
+            const response = await fetch(`${API_BASE}${endpoint}?t=${timestamp}`, {
+                cache: 'no-store',
+                signal: AbortSignal.timeout(5000)
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.warn(`Local fetch failed for ${endpoint}:`, error);
+        }
+        
+        // Fallback to GitHub raw
+        try {
+            const fallbackUrl = `${GITHUB_RAW}${endpoint}?t=${timestamp}`;
+            const response = await fetch(fallbackUrl, {
+                cache: 'no-store',
+                signal: AbortSignal.timeout(5000)
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.error(`Fallback fetch failed for ${endpoint}:`, error);
+        }
+        
+        return null;
     }
 
-    function renderHist24(players, srcUsed){
-      $("#srcHist").textContent = "Quelle: " + srcUsed.replace(location.origin,"");
-      const hist = players?.history || players?.samples || [];
-      if(!Array.isArray(hist) || hist.length === 0){
-        // kein Verlauf → Canvas leer lassen
-        $("#avg24").textContent = "—";
-        $("#peak24").textContent = "—";
-        return;
-      }
-      const now = Date.now();
-      const cutoff = now - 24*60*60*1000;
-      const pts = hist
-        .map(p => ({ t: (typeof p.ts==="number"?p.ts:Date.parse(p.ts)), v: Number(p.online ?? p.players ?? 0) }))
-        .filter(p => !isNaN(p.t) && p.t >= cutoff)
-        .sort((a,b)=>a.t-b.t);
-
-      if(pts.length === 0){
-        $("#avg24").textContent = "—"; $("#peak24").textContent = "—"; return;
-      }
-      // Metriken
-      const sum = pts.reduce((s,p)=>s+p.v,0);
-      const avg = sum / pts.length;
-      const peak = Math.max(...pts.map(p=>p.v));
-      $("#avg24").textContent = fmtNum(avg.toFixed(2));
-      $("#peak24").textContent = fmtNum(peak);
-
-      // zeichnen (simple canvas line)
-      const cv = $("#hist24");
-      const ctx = cv.getContext("2d");
-      // Canvas richtig skalieren (für DPR)
-      const DPR = Math.max(1, devicePixelRatio || 1);
-      const W = cv.clientWidth, H = cv.clientHeight;
-      cv.width = Math.floor(W*DPR); cv.height = Math.floor(H*DPR);
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-
-      ctx.clearRect(0,0,W,H);
-      // Gitter
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
-      ctx.lineWidth = 1;
-      for(let i=0;i<10;i++){
-        const y = (H-20) * (i/10) + 10;
-        ctx.beginPath(); ctx.moveTo(40,y); ctx.lineTo(W-10,y); ctx.stroke();
-      }
-      // Achsen
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
-      ctx.beginPath(); ctx.moveTo(40,10); ctx.lineTo(40,H-10); ctx.lineTo(W-10,H-10); ctx.stroke();
-
-      // Skalen
-      const minT = pts[0].t, maxT = pts[pts.length-1].t;
-      const minV = 0, maxV = Math.max(1, peak);
-      function xOf(t){ return 40 + (W-50) * ((t - minT) / (maxT - minT || 1)); }
-      function yOf(v){ return (H-10) - (H-20) * ((v - minV) / (maxV - minV || 1)); }
-
-      // Linie
-      ctx.strokeStyle = "#4fb7ff";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      pts.forEach((p,i)=>{
-        const x = xOf(p.t), y = yOf(p.v);
-        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      });
-      ctx.stroke();
+    // Server Status Updates
+    async function updateServerStatus() {
+        try {
+            const [liveData, historyData, playerData] = await Promise.all([
+                fetchWithFallback(API_ENDPOINTS.status),
+                fetchWithFallback(API_ENDPOINTS.history),
+                fetchWithFallback(API_ENDPOINTS.players)
+            ]);
+            
+            if (liveData) {
+                updateLiveStatus(liveData);
+            }
+            
+            if (historyData) {
+                updateHistoryData(historyData);
+            }
+            
+            if (playerData) {
+                updatePlayerData(playerData);
+            }
+            
+            lastUpdate = Date.now();
+            $('serverUpdateTime').textContent = new Date().toLocaleTimeString('de-DE');
+            
+        } catch (error) {
+            console.error('Error updating server status:', error);
+            showAlert('Fehler beim Laden der Server-Daten', 'danger');
+        }
     }
 
-    function renderServer(status, srcUsed){
-      $("#srcSrv").textContent = "Quelle: " + srcUsed.replace(location.origin,"");
-      const svc = status?.service || {};
-      $("#srvName").textContent = svc?.name || "—";
-      $("#srvHost").textContent = (svc?.host && svc?.port!=null) ? `${svc.host}:${svc.port}` : "—";
-      $("#srvLast").textContent = fmtTs(status?.generated);
-      const lastOk = Array.isArray(status?.history) ? status.history.at(-1)?.ok : undefined;
-      $("#srvOk").textContent = (lastOk===true) ? "online" : (lastOk===false ? "offline" : "—");
+    function updateLiveStatus(data) {
+        const isOnline = data.ok || data.online;
+        const statusCard = $('statusCard');
+        const serverStatus = $('serverStatus');
+        
+        // Update status card
+        statusCard.className = 'status-item ' + (isOnline ? 'online' : 'offline');
+        serverStatus.innerHTML = isOnline ? 
+            '<span style="color: var(--success)">🟢 Online</span>' : 
+            '<span style="color: var(--danger)">🔴 Offline</span>';
+        
+        // Update player count
+        const playersOnline = data.players?.online || 0;
+        const maxPlayers = data.players?.max || 0;
+        $('playersOnline').textContent = `${playersOnline}/${maxPlayers}`;
+        $('playerCount').textContent = `${playersOnline} Online`;
+        
+        // Update server load
+        const load = maxPlayers > 0 ? (playersOnline / maxPlayers) * 100 : 0;
+        $('serverLoad').textContent = formatPercent(load / 100);
+        const loadBar = $('loadBar');
+        loadBar.style.width = load + '%';
+        loadBar.className = 'progress-bar ' + (load > 80 ? 'danger' : load > 60 ? 'warning' : 'success');
+        
+        // Update server details
+        $('serverName').textContent = data.service?.name || 'Minecraft Bedrock';
+        $('serverHost').textContent = data.service?.host || '—';
+        $('serverPort').textContent = data.service?.port || '—';
+        $('serverVersion').textContent = data.version || '—';
+        $('serverMotd').textContent = data.motd || '—';
+        
+        // Update player list
+        updatePlayerList(data.players?.sample || []);
     }
 
-    async function loadAll(){
-      // LIVE / PLAYERS
-      try{
-        const {data,src} = await fetchWithFallback(SRC_PLAYERS_LOCAL, SRC_PLAYERS_RAW);
-        renderLive(data, src);
-        renderHist24(data, src);
-        $("#liveErr").style.display = "none";
-      }catch(e){
-        $("#liveErr").style.display = "";
-        $("#liveErr").textContent = "Fehler beim Laden: " + (e.message || e);
-      }
-
-      // SERVER / STATUS
-      try{
-        const {data,src} = await fetchWithFallback(SRC_STATUS_LOCAL, SRC_STATUS_RAW);
-        renderServer(data, src);
-        $("#srvErr").style.display = "none";
-      }catch(e){
-        $("#srvErr").style.display = "";
-        $("#srvErr").textContent = "Status konnte nicht geladen werden: " + (e.message || e);
-      }
+    function updatePlayerList(players) {
+        const playerList = $('playerList');
+        
+        if (players.length === 0) {
+            playerList.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem">Keine Spieler online</div>';
+            return;
+        }
+        
+        playerList.innerHTML = players.map(player => `
+            <div class="player-card" data-tooltip="${player}">
+                <img class="player-avatar" src="https://crafatar.com/avatars/${player}?size=32&overlay" alt="${player}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>'">
+                <span class="player-name">${player}</span>
+            </div>
+        `).join('');
     }
 
-    loadAll();
-    // Auto-Refresh alle 5 Min
-    setInterval(loadAll, 5*60*1000);
-  })();
-  </script>
-</body>
-</html>
+    function updateHistoryData(data) {
+        const history = data.history || [];
+        
+        // Calculate uptime for today
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const todayHistory = history.filter(h => new Date(h.ts) >= todayStart);
+        const onlineCount = todayHistory.filter(h => h.ok).length;
+        const uptime = todayHistory.length > 0 ? onlineCount / todayHistory.length : 0;
+        
+        $('uptimeToday').textContent = formatPercent(uptime);
+        
+        // Update charts
+        updateCharts(history);
+    }
+
+    function updatePlayerData(data) {
+        playerHistory = data.history || data.samples || [];
+        
+        // Calculate statistics
+        const last24h = playerHistory.filter(p => 
+            new Date(p.ts || p.time) >= new Date(Date.now() - 24 * 60 * 60 * 1000)
+        );
+        
+        if (last24h.length > 0) {
+            const counts = last24h.map(p => p.online || p.players || 0);
+            const avg = counts.reduce((a, b) => a + b, 0) / counts.length;
+            const peak = Math.max(...counts);
+            
+            $('avgPlayers24h').textContent = avg.toFixed(1);
+            $('peakPlayers24h').textContent = peak.toString();
+        }
+        
+        // Update player chart
+        updatePlayerChart();
+    }
+
+    // Chart Management
+    function initCharts() {
+        // Player Chart
+        const playerCtx = $('playerChart').getContext('2d');
+        charts.playerChart = new Chart(playerCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Spieler Online',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: { unit: 'hour' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#9ca3af' }
+                    }
+                }
+            }
+        });
+        
+        // Performance Chart
+        const perfCtx = $('performanceChart').getContext('2d');
+        charts.performanceChart = new Chart(perfCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'TPS',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Latenz (ms)',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        labels: { color: '#9ca3af' }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: { unit: 'hour' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        ticks: { color: '#9ca3af' }
+                    }
+                }
+            }
+        });
+        
+        // Uptime Chart
+        const uptimeCtx = $('uptimeChart').getContext('2d');
+        charts.uptimeChart = new Chart(uptimeCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Uptime',
+                    data: [],
+                    backgroundColor: [],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9ca3af' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { 
+                            color: '#9ca3af',
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updatePlayerChart() {
+        if (!charts.playerChart || playerHistory.length === 0) return;
+        
+        const timeRange = getTimeRangeMs(currentTimeRange);
+        const filteredData = playerHistory.filter(p => 
+            new Date(p.ts || p.time) >= new Date(Date.now() - timeRange)
+        );
+        
+        charts.playerChart.data.labels = filteredData.map(p => new Date(p.ts || p.time));
+        charts.playerChart.data.datasets[0].data = filteredData.map(p => p.online || p.players || 0);
+        charts.playerChart.update();
+    }
+
+    function updateCharts(history) {
+        if (!history || history.length === 0) return;
+        
+        // Update uptime chart with daily data
+        const days = 7;
+        const dailyUptime = [];
+        const labels = [];
+        const colors = [];
+        
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            
+            const dayEnd = new Date(date);
+            dayEnd.setHours(23, 59, 59, 999);
+            
+            const dayHistory = history.filter(h => {
+                const ts = new Date(h.ts);
+                return ts >= date && ts <= dayEnd;
+            });
+            
+            const uptime = dayHistory.length > 0 ? 
+                (dayHistory.filter(h => h.ok).length / dayHistory.length) * 100 : 0;
+            
+            dailyUptime.push(uptime);
+            labels.push(date.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric' }));
+            colors.push(uptime >= 95 ? '#10b981' : uptime >= 80 ? '#f59e0b' : '#ef4444');
+        }
+        
+        if (charts.uptimeChart) {
+            charts.uptimeChart.data.labels = labels;
+            charts.uptimeChart.data.datasets[0].data = dailyUptime;
+            charts.uptimeChart.data.datasets[0].backgroundColor = colors;
+            charts.uptimeChart.update();
+        }
+    }
+
+    function getTimeRangeMs(range) {
+        const ranges = {
+            '1h': 60 * 60 * 1000,
+            '6h': 6 * 60 * 60 * 1000,
+            '24h': 24 * 60 * 60 * 1000,
+            '7d': 7 * 24 * 60 * 60 * 1000,
+            '30d': 30 * 24 * 60 * 60 * 1000
+        };
+        return ranges[range] || ranges['24h'];
+    }
+
+    // UI Functions
+    function switchTab(tabName) {
+        // Remove active class from all tabs and contents
+        $('.tab').forEach(tab => tab.classList.remove('active'));
+        $('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // Add active class to selected tab and content
+        event.target.classList.add('active');
+        $(`${tabName}-tab`).classList.add('active');
+    }
+
+    function changeTimeRange(range) {
+        currentTimeRange = range;
+        
+        // Update button states
+        $('.nav-buttons .btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Update charts
+        updatePlayerChart();
+    }
+
+    function showAlert(message, type = 'info') {
+        const alertContainer = $('alertContainer');
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type}`;
+        alert.innerHTML = `
+            <span>${type === 'danger' ? '⚠️' : type === 'warning' ? '⚡' : 'ℹ️'}</span>
+            <span>${message}</span>
+        `;
+        
+        alertContainer.appendChild(alert);
+        
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }, 5000);
+    }
+
+    function refreshAll() {
+        updateServerStatus();
+        showAlert('Daten wurden aktualisiert', 'success');
+    }
+
+    function loadMoreEvents() {
+        // Placeholder for loading more events
+        showAlert('Weitere Events werden geladen...', 'info');
+    }
+
+    function exportAnalytics() {
+        // Placeholder for export functionality
+        showAlert('Export wird vorbereitet...', 'info');
+    }
+
+    // Health Monitoring
+    async function updateHealthMetrics() {
+        // Simulate health metrics
+        const apiTime = Math.random() * 100 + 50;
+        const dbTime = Math.random() * 50 + 10;
+        const cacheRate = Math.random() * 0.3 + 0.7;
+        const errorRate = Math.random() * 0.05;
+        
+        $('apiResponseTime').textContent = apiTime.toFixed(0) + ' ms';
+        $('apiBar').style.width = Math.min((apiTime / 500) * 100, 100) + '%';
+        $('apiBar').className = 'progress-bar ' + (apiTime < 200 ? 'success' : apiTime < 500 ? 'warning' : 'danger');
+        
+        $('dbQueryTime').textContent = dbTime.toFixed(0) + ' ms';
+        $('dbBar').style.width = Math.min((dbTime / 100) * 100, 100) + '%';
+        $('dbBar').className = 'progress
