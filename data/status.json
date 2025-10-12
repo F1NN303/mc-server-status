@@ -1,5 +1,5 @@
 {
-  "generated": "2025-10-12T15:14:32.723Z",
+  "generated": "2025-10-12T15:28:40.206Z",
   "service": {
     "name": "Minecraft Bedrock",
     "host": "important-instrumentation.gl.at.ply.gg",
@@ -7980,6 +7980,10 @@
     },
     {
       "ts": "2025-10-12T15:14:32.723Z",
+      "ok": true
+    },
+    {
+      "ts": "2025-10-12T15:28:40.206Z",
       "ok": true
     }
   ]
