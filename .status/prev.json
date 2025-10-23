@@ -1,12 +1,12 @@
 {
-  "online": false,
-  "version": "unknown",
-  "motd": "",
+  "online": true,
+  "version": "1.21.111",
+  "motd": "Dedicated Server\nBedrock level",
   "players": {
     "online": 0,
-    "max": 0,
+    "max": 10,
     "sample": []
   },
-  "checked_at_unix": 1761252981,
-  "checked_at_iso": "2025-10-23 20:56:21 UTC"
+  "checked_at_unix": 1761254504,
+  "checked_at_iso": "2025-10-23 21:21:44 UTC"
 }
