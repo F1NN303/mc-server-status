@@ -1,12 +1,12 @@
 {
-  "online": true,
-  "version": "1.21.111",
-  "motd": "Dedicated Server",
+  "online": false,
+  "version": "unknown",
+  "motd": "",
   "players": {
     "online": 0,
-    "max": 10,
+    "max": 0,
     "sample": []
   },
-  "checked_at_unix": 1762046838,
-  "checked_at_iso": "2025-11-02 01:27:18 UTC"
+  "checked_at_unix": 1762055544,
+  "checked_at_iso": "2025-11-02 03:52:24 UTC"
 }
