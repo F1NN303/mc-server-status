@@ -1,15 +1,11 @@
 {
-  "generated": "2025-12-18T21:14:09.374Z",
+  "generated": "2025-12-18T21:29:03.819Z",
   "service": {
     "name": "Minecraft Bedrock",
     "host": "important-instrumentation.gl.at.ply.gg",
     "port": 18232
   },
   "history": [
-    {
-      "ts": "2025-11-20T12:00:04.572Z",
-      "ok": true
-    },
     {
       "ts": "2025-11-20T12:53:13.293Z",
       "ok": true
@@ -8068,6 +8064,10 @@
     },
     {
       "ts": "2025-12-18T21:14:09.374Z",
+      "ok": true
+    },
+    {
+      "ts": "2025-12-18T21:29:03.819Z",
       "ok": true
     }
   ]
